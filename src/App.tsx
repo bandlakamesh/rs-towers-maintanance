@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
-import { Table, Zap, Building, Wrench, Contact, Megaphone, Landmark } from 'lucide-react';
+import { Table, Zap, Building, Wrench, Contact, Megaphone, Landmark, BarChart2 } from 'lucide-react';
 import type { AppState, MonthMaintenanceRecord, FlatReading, WaterCalculationConfig, CommonExpenseItem, PaymentMode, PeriodicTask, ApartmentVendor, NoticeItem, CorpusFundConfig } from './types';
 import { loadAppState, fetchLatestCloudState, syncToCloudRemote } from './utils/storage';
 import { recalculateMonthRecord } from './utils/calculator';
@@ -16,11 +16,12 @@ import { PeriodicMaintenanceHub } from './components/PeriodicMaintenanceHub';
 import { VendorDirectory } from './components/VendorDirectory';
 import { NoticeBoard } from './components/NoticeBoard';
 import { CorpusFundTracker } from './components/CorpusFundTracker';
+import { AnalyticsDashboard } from './components/AnalyticsDashboard';
 import { subscribeToFirebaseState } from './utils/firebaseStorage';
 
 export const App: React.FC = () => {
   const [appState, setAppState] = useState<AppState>(() => loadAppState());
-  const [activeTab, setActiveTab] = useState<'table' | 'expenses' | 'directory' | 'amc' | 'vendors' | 'notices' | 'corpus'>('table');
+  const [activeTab, setActiveTab] = useState<'table' | 'analytics' | 'corpus' | 'amc' | 'expenses' | 'directory' | 'vendors' | 'notices'>('table');
 
   // Role Security State
   const [isAdmin, setIsAdmin] = useState<boolean>(() => localStorage.getItem('rs_towers_maint_is_admin') === 'true');
@@ -298,6 +299,13 @@ export const App: React.FC = () => {
           </button>
 
           <button
+            className={`chip ${activeTab === 'analytics' ? 'active' : ''}`}
+            onClick={() => setActiveTab('analytics')}
+          >
+            <BarChart2 size={15} /> 📈 Analytics & Leak Alerts
+          </button>
+
+          <button
             className={`chip ${activeTab === 'corpus' ? 'active' : ''}`}
             onClick={() => setActiveTab('corpus')}
           >
@@ -357,6 +365,14 @@ export const App: React.FC = () => {
               onUpdateCommonExpenses={handleUpdateCommonExpenses}
             />
           </>
+        )}
+
+        {/* Tab 2: Analytics Dashboard */}
+        {activeTab === 'analytics' && (
+          <AnalyticsDashboard
+            appState={appState}
+            activeRecord={activeRecord}
+          />
         )}
 
         {/* Tab 2: Dedicated Corpus Fund Tracker */}
