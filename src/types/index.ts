@@ -54,6 +54,46 @@ export interface MonthMaintenanceRecord {
   lastUpdated: number;
 }
 
+export interface ServiceLogEntry {
+  id: string;
+  date: string;
+  amount: number;
+  technician: string;
+  notes: string;
+}
+
+export interface PeriodicTask {
+  id: string;
+  title: string;
+  category: 'Lift AMC' | 'CCTV Audit' | 'Water Tank Sump' | 'Generator & Pump' | 'Fire Safety' | 'Pest Control';
+  intervalMonths: number;
+  lastServicedDate: string;
+  nextDueDate: string;
+  estimatedCost: number;
+  vendorName: string;
+  vendorPhone: string;
+  serviceLogs: ServiceLogEntry[];
+  notes?: string;
+}
+
+export interface ApartmentVendor {
+  id: string;
+  name: string;
+  role: string;
+  phone: string;
+  upiId?: string;
+  notes?: string;
+}
+
+export interface NoticeItem {
+  id: string;
+  title: string;
+  content: string;
+  date: string;
+  postedBy: string;
+  priority: 'Normal' | 'Urgent';
+}
+
 export interface AppState {
   activeMonthId: string;
   months: Record<string, MonthMaintenanceRecord>;
@@ -61,4 +101,9 @@ export interface AppState {
   rootFlat: string;
   lastUpdated: number;
   cloudSyncKey: string;
+  periodicTasks: PeriodicTask[];
+  vendors: ApartmentVendor[];
+  notices: NoticeItem[];
+  dueDateDay: number; // default 10
 }
+

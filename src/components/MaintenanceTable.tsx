@@ -1,23 +1,28 @@
 import React, { useState } from 'react';
-import { Table, Send, CheckCircle2, AlertCircle, Edit2 } from 'lucide-react';
+import { Table, Send, CheckCircle2, AlertCircle, Edit2, AlertTriangle, Bell } from 'lucide-react';
 import type { MonthMaintenanceRecord, FlatReading } from '../types';
-import { generateWhatsAppFlatBillText, openWhatsAppShareLink } from '../utils/whatsappFormatter';
+import { generateWhatsAppFlatBillText, generateWhatsAppOverdueReminderText, openWhatsAppShareLink } from '../utils/whatsappFormatter';
 
 interface MaintenanceTableProps {
   record: MonthMaintenanceRecord;
   isAdmin: boolean;
+  dueDateDay?: number;
   onUpdateReadings: (updatedReadings: FlatReading[]) => void;
 }
 
 export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
   record,
   isAdmin,
+  dueDateDay = 10,
   onUpdateReadings,
 }) => {
   const [editingFlatNo, setEditingFlatNo] = useState<string | null>(null);
   const [tempPrev, setTempPrev] = useState<number>(0);
   const [tempCurr, setTempCurr] = useState<number>(0);
   const [tempNotes, setTempNotes] = useState<string>('');
+
+  const todayDate = new Date().getDate();
+  const isPastDueDate = todayDate > dueDateDay;
 
   const handleStartEdit = (flat: FlatReading) => {
     setEditingFlatNo(flat.flatNo);
@@ -47,12 +52,55 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
     openWhatsAppShareLink(text);
   };
 
+  const handleSendOverdueWhatsApp = (flat: FlatReading) => {
+    const text = generateWhatsAppOverdueReminderText(flat, record, dueDateDay);
+    openWhatsAppShareLink(text);
+  };
+
   const occupiedCount = record.flatReadings.filter((f) => f.flatNo !== 'WM' && f.isOccupied).length;
+  const pendingFlats = record.flatReadings.filter((f) => f.flatNo !== 'WM' && f.isOccupied && f.status !== 'Received');
+  const totalPendingAmount = pendingFlats.reduce((sum, f) => sum + (f.roundedValue - f.paidAmount), 0);
   const wmReading = record.flatReadings.find((f) => f.flatNo === 'WM');
   const wmUnits = wmReading ? wmReading.consumedUnits : 8;
 
   return (
     <div style={{ marginBottom: '28px' }}>
+      {/* 10th of Month Overdue Alert Banner */}
+      {pendingFlats.length > 0 && (
+        <div className={`mb-4 p-4 rounded-2xl border backdrop-blur-md shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 ${
+          isPastDueDate
+            ? 'bg-gradient-to-r from-red-950/60 via-slate-900 to-amber-950/40 border-red-500/50 text-red-200'
+            : 'bg-gradient-to-r from-slate-900 via-amber-950/30 to-slate-900 border-amber-500/40 text-amber-200'
+        }`}>
+          <div className="flex items-center gap-3">
+            <div className={`p-2.5 rounded-xl border ${isPastDueDate ? 'bg-red-500/20 text-red-400 border-red-500/40' : 'bg-amber-500/20 text-amber-400 border-amber-500/40'}`}>
+              <AlertTriangle className="w-6 h-6" />
+            </div>
+            <div>
+              <h4 className="font-bold text-white text-base flex items-center gap-2">
+                {isPastDueDate ? `🚨 OVERDUE NOTICE: Past ${dueDateDay}th Deadline!` : `⏳ Maintenance Payment Tracker (Due by ${dueDateDay}th)`}
+              </h4>
+              <p className="text-xs opacity-90 mt-0.5">
+                <strong>{pendingFlats.length} Flats Pending</strong> • Total Uncollected: <strong className="text-amber-300 font-bold">₹{totalPendingAmount.toLocaleString('en-IN')}</strong>
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                if (pendingFlats.length > 0) {
+                  handleSendOverdueWhatsApp(pendingFlats[0]);
+                }
+              }}
+              className="px-4 py-2 bg-gradient-to-r from-red-500 to-amber-600 hover:from-red-400 hover:to-amber-500 text-slate-950 font-bold text-xs rounded-xl transition-all duration-200 shadow-lg flex items-center gap-2"
+            >
+              <Bell className="w-4 h-4" />
+              Send Overdue WhatsApp Reminder
+            </button>
+          </div>
+        </div>
+      )}
       
       {/* Table Header Bar */}
       <div className="table-header-bar">
@@ -81,9 +129,9 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
               <th style={{ padding: '12px 14px', textAlign: 'right', whiteSpace: 'nowrap', minWidth: '120px' }}>Common Maint</th>
               <th style={{ padding: '12px 14px', textAlign: 'right', whiteSpace: 'nowrap', minWidth: '105px' }}>Total Value</th>
               <th style={{ padding: '12px 14px', textAlign: 'right', whiteSpace: 'nowrap', minWidth: '110px' }}>Rounded Due</th>
-              <th style={{ padding: '12px 14px', textAlign: 'center', whiteSpace: 'nowrap', minWidth: '100px' }}>Status</th>
+              <th style={{ padding: '12px 14px', textAlign: 'center', whiteSpace: 'nowrap', minWidth: '110px' }}>Status</th>
               <th style={{ padding: '12px 14px', whiteSpace: 'nowrap', minWidth: '150px' }}>Resident Notes</th>
-              {isAdmin && <th style={{ padding: '12px 14px', textAlign: 'right', whiteSpace: 'nowrap', minWidth: '100px' }}>Actions</th>}
+              {isAdmin && <th style={{ padding: '12px 14px', textAlign: 'right', whiteSpace: 'nowrap', minWidth: '120px' }}>Actions</th>}
             </tr>
           </thead>
           <tbody>
@@ -98,7 +146,7 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
                   key={f.flatNo}
                   style={{
                     borderBottom: '1px solid #F1F5F9',
-                    background: isWM ? '#FFFBEB' : isVacant ? '#F8FAFC' : isPaid ? '#F0FDF4' : '#FFFFFF',
+                    background: isWM ? '#FFFBEB' : isVacant ? '#F8FAFC' : isPaid ? '#F0FDF4' : isPastDueDate ? '#FEF2F2' : '#FFFFFF',
                     transition: 'background 0.15s ease',
                   }}
                 >
@@ -195,8 +243,12 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
                       <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#059669', background: '#ECFDF5', border: '1px solid #A7F3D0', padding: '2px 8px', borderRadius: '10px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
                         <CheckCircle2 size={11} /> Paid
                       </span>
+                    ) : isPastDueDate ? (
+                      <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#B91C1C', background: '#FEE2E2', border: '1px solid #FCA5A5', padding: '2px 8px', borderRadius: '10px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                        <AlertTriangle size={11} /> OVERDUE (10th)
+                      </span>
                     ) : (
-                      <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#DC2626', background: '#FEF2F2', border: '1px solid #FECACA', padding: '2px 8px', borderRadius: '10px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                      <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#D97706', background: '#FEF3C7', border: '1px solid #FDE68A', padding: '2px 8px', borderRadius: '10px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
                         <AlertCircle size={11} /> Pending
                       </span>
                     )}
@@ -240,13 +292,25 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
                         )}
 
                         {!isWM && f.isOccupied && (
-                          <button
-                            onClick={() => handleSendFlatWhatsApp(f)}
-                            style={{ background: 'none', border: 'none', color: '#25D366', cursor: 'pointer', padding: '4px' }}
-                            title="Send WhatsApp Bill"
-                          >
-                            <Send size={14} />
-                          </button>
+                          <>
+                            <button
+                              onClick={() => handleSendFlatWhatsApp(f)}
+                              style={{ background: 'none', border: 'none', color: '#25D366', cursor: 'pointer', padding: '4px' }}
+                              title="Send WhatsApp Bill"
+                            >
+                              <Send size={14} />
+                            </button>
+
+                            {!isPaid && (
+                              <button
+                                onClick={() => handleSendOverdueWhatsApp(f)}
+                                style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', padding: '4px' }}
+                                title="Send 10th Overdue WhatsApp Reminder"
+                              >
+                                <Bell size={14} />
+                              </button>
+                            )}
+                          </>
                         )}
                       </div>
                     </td>
@@ -291,3 +355,4 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
     </div>
   );
 };
+

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
-import { Table, Zap, Building } from 'lucide-react';
-import type { AppState, MonthMaintenanceRecord, FlatReading, WaterCalculationConfig, CommonExpenseItem, PaymentMode } from './types';
+import { Table, Zap, Building, Wrench, Contact, Megaphone } from 'lucide-react';
+import type { AppState, MonthMaintenanceRecord, FlatReading, WaterCalculationConfig, CommonExpenseItem, PaymentMode, PeriodicTask, ApartmentVendor, NoticeItem } from './types';
 import { loadAppState, fetchLatestCloudState, syncToCloudRemote } from './utils/storage';
 import { recalculateMonthRecord } from './utils/calculator';
 
@@ -12,10 +12,13 @@ import { FlatDirectory } from './components/FlatDirectory';
 import { PaymentModal } from './components/PaymentModal';
 import { AdminPinModal } from './components/AdminPinModal';
 import { MonthSelectorModal } from './components/MonthSelectorModal';
+import { PeriodicMaintenanceHub } from './components/PeriodicMaintenanceHub';
+import { VendorDirectory } from './components/VendorDirectory';
+import { NoticeBoard } from './components/NoticeBoard';
 
 export const App: React.FC = () => {
   const [appState, setAppState] = useState<AppState>(() => loadAppState());
-  const [activeTab, setActiveTab] = useState<'table' | 'expenses' | 'directory'>('table');
+  const [activeTab, setActiveTab] = useState<'table' | 'expenses' | 'directory' | 'amc' | 'vendors' | 'notices'>('table');
 
   // Role Security State
   const [isAdmin, setIsAdmin] = useState<boolean>(() => localStorage.getItem('rs_towers_maint_is_admin') === 'true');
@@ -160,6 +163,75 @@ export const App: React.FC = () => {
     syncToCloudRemote(newState);
   };
 
+  // Handlers for Periodic AMC Tasks
+  const handleUpdatePeriodicTask = (updatedTask: PeriodicTask) => {
+    const updatedTasks = (appState.periodicTasks || []).map((t) => (t.id === updatedTask.id ? updatedTask : t));
+    const newState: AppState = {
+      ...appState,
+      periodicTasks: updatedTasks,
+      lastUpdated: Date.now(),
+    };
+    setAppState(newState);
+    syncToCloudRemote(newState);
+  };
+
+  const handleAddPeriodicTask = (newTask: PeriodicTask) => {
+    const updatedTasks = [newTask, ...(appState.periodicTasks || [])];
+    const newState: AppState = {
+      ...appState,
+      periodicTasks: updatedTasks,
+      lastUpdated: Date.now(),
+    };
+    setAppState(newState);
+    syncToCloudRemote(newState);
+  };
+
+  // Handlers for Vendors
+  const handleAddVendor = (newVendor: ApartmentVendor) => {
+    const updatedVendors = [newVendor, ...(appState.vendors || [])];
+    const newState: AppState = {
+      ...appState,
+      vendors: updatedVendors,
+      lastUpdated: Date.now(),
+    };
+    setAppState(newState);
+    syncToCloudRemote(newState);
+  };
+
+  const handleDeleteVendor = (vendorId: string) => {
+    const updatedVendors = (appState.vendors || []).filter((v) => v.id !== vendorId);
+    const newState: AppState = {
+      ...appState,
+      vendors: updatedVendors,
+      lastUpdated: Date.now(),
+    };
+    setAppState(newState);
+    syncToCloudRemote(newState);
+  };
+
+  // Handlers for Notices
+  const handleAddNotice = (newNotice: NoticeItem) => {
+    const updatedNotices = [newNotice, ...(appState.notices || [])];
+    const newState: AppState = {
+      ...appState,
+      notices: updatedNotices,
+      lastUpdated: Date.now(),
+    };
+    setAppState(newState);
+    syncToCloudRemote(newState);
+  };
+
+  const handleDeleteNotice = (noticeId: string) => {
+    const updatedNotices = (appState.notices || []).filter((n) => n.id !== noticeId);
+    const newState: AppState = {
+      ...appState,
+      notices: updatedNotices,
+      lastUpdated: Date.now(),
+    };
+    setAppState(newState);
+    syncToCloudRemote(newState);
+  };
+
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       
@@ -188,10 +260,17 @@ export const App: React.FC = () => {
           </button>
 
           <button
+            className={`chip ${activeTab === 'amc' ? 'active' : ''}`}
+            onClick={() => setActiveTab('amc')}
+          >
+            <Wrench size={15} /> 🛠️ Building Asset AMC (Lift 6m, CCTV, Tank)
+          </button>
+
+          <button
             className={`chip ${activeTab === 'expenses' ? 'active' : ''}`}
             onClick={() => setActiveTab('expenses')}
           >
-            <Zap size={15} /> Building & Water Expenses Breakdown
+            <Zap size={15} /> Building & Water Expenses
           </button>
 
           <button
@@ -199,6 +278,20 @@ export const App: React.FC = () => {
             onClick={() => setActiveTab('directory')}
           >
             <Building size={15} /> Per-Flat Payment Cards ({activeRecord.flatReadings.filter((f) => f.flatNo !== 'WM' && f.isOccupied).length})
+          </button>
+
+          <button
+            className={`chip ${activeTab === 'vendors' ? 'active' : ''}`}
+            onClick={() => setActiveTab('vendors')}
+          >
+            <Contact size={15} /> ☎️ Vendor Directory ({appState.vendors?.length || 0})
+          </button>
+
+          <button
+            className={`chip ${activeTab === 'notices' ? 'active' : ''}`}
+            onClick={() => setActiveTab('notices')}
+          >
+            <Megaphone size={15} /> 📢 Notice Board
           </button>
         </nav>
 
@@ -208,6 +301,7 @@ export const App: React.FC = () => {
             <MaintenanceTable
               record={activeRecord}
               isAdmin={isAdmin}
+              dueDateDay={appState.dueDateDay || 10}
               onUpdateReadings={handleUpdateReadings}
             />
 
@@ -220,7 +314,17 @@ export const App: React.FC = () => {
           </>
         )}
 
-        {/* Tab 2: Expenses Breakdown */}
+        {/* Tab 2: Building Asset AMC Hub */}
+        {activeTab === 'amc' && (
+          <PeriodicMaintenanceHub
+            tasks={appState.periodicTasks || []}
+            isAdmin={isAdmin}
+            onUpdateTask={handleUpdatePeriodicTask}
+            onAddTask={handleAddPeriodicTask}
+          />
+        )}
+
+        {/* Tab 3: Expenses Breakdown */}
         {activeTab === 'expenses' && (
           <ExpenseBreakdown
             record={activeRecord}
@@ -230,7 +334,7 @@ export const App: React.FC = () => {
           />
         )}
 
-        {/* Tab 3: Flat Directory Cards */}
+        {/* Tab 4: Flat Directory Cards */}
         {activeTab === 'directory' && (
           <FlatDirectory
             record={activeRecord}
@@ -239,6 +343,26 @@ export const App: React.FC = () => {
               setSelectedFlatForPayment(flatNo);
               setIsPaymentModalOpen(true);
             }}
+          />
+        )}
+
+        {/* Tab 5: Vendors Directory */}
+        {activeTab === 'vendors' && (
+          <VendorDirectory
+            vendors={appState.vendors || []}
+            isAdmin={isAdmin}
+            onAddVendor={handleAddVendor}
+            onDeleteVendor={handleDeleteVendor}
+          />
+        )}
+
+        {/* Tab 6: Notice Board */}
+        {activeTab === 'notices' && (
+          <NoticeBoard
+            notices={appState.notices || []}
+            isAdmin={isAdmin}
+            onAddNotice={handleAddNotice}
+            onDeleteNotice={handleDeleteNotice}
           />
         )}
 
@@ -295,3 +419,4 @@ export const App: React.FC = () => {
 };
 
 export default App;
+

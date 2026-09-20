@@ -55,8 +55,47 @@ https://bandlakamesh.github.io/rs-towers-maintanance/
 Thank you! 🙏`;
 }
 
+export function generateWhatsAppOverdueReminderText(
+  flat: FlatReading,
+  record: MonthMaintenanceRecord,
+  dueDateDay: number = 10
+): string {
+  const pendingAmount = Math.max(0, flat.roundedValue - flat.paidAmount);
+
+  return `⚠️ *RS TOWERS MAINTENANCE - OVERDUE REMINDER* ⚠️
+📅 *Period*: ${record.monthTitle}
+🏠 *Flat*: *#${flat.flatNo} - ${flat.residentName}*
+
+Dear Resident,
+Friendly reminder that your monthly maintenance payment of *₹${pendingAmount.toLocaleString('en-IN')}* was due on the *${dueDateDay}th of the month*.
+
+----------------------------------------
+💰 *Total Amount Due*: *₹${pendingAmount.toLocaleString('en-IN')}*
+📲 *UPI ID*: 9876543210@upi (Flat 302 - Kamesh)
+----------------------------------------
+
+Please complete the transfer at your earliest convenience to assist in uninterrupted building services (Lift, Water Tanker & Watchman). If already paid, please ignore this notice.
+
+Thank you! 🙏
+*RS TOWERS APARTMENT ASSOCIATION*`;
+}
+
+export function generateWhatsAppNoticeText(notice: { title: string; content: string; date: string; postedBy: string }): string {
+  return `📢 *RS TOWERS APARTMENT ANNOUNCEMENT* 📢
+📌 *${notice.title}*
+📅 *Date*: ${notice.date}
+👤 *Posted By*: ${notice.postedBy}
+
+${notice.content}
+
+----------------------------------------
+🔗 *Live App*: https://bandlakamesh.github.io/rs-towers-maintanance/
+Thank you! 🙏`;
+}
+
 export function openWhatsAppShareLink(text: string): void {
   const encodedText = encodeURIComponent(text);
   const whatsappUrl = `https://api.whatsapp.com/send?text=${encodedText}`;
   window.open(whatsappUrl, '_blank');
 }
+
