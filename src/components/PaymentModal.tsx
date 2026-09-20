@@ -108,6 +108,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             />
           </div>
 
+          <div style={{ background: '#F0F9FF', border: '1px solid #B2D8E5', padding: '10px 12px', borderRadius: '10px', fontSize: '0.78rem', color: '#0077B6', marginBottom: '14px' }}>
+            📲 <strong>Official Building UPI:</strong> <code>9963275455@upi</code> (Flat 101 - Bobby)
+          </div>
+
           <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '18px' }}>
             <button type="button" className="app-btn app-btn-secondary" onClick={onClose} style={{ padding: '8px 14px', fontSize: '0.82rem' }}>
               Cancel

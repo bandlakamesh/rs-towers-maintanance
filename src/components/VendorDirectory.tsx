@@ -45,7 +45,6 @@ export const VendorDirectory: React.FC<VendorDirectoryProps> = ({
 
     onAddVendor(newVendor);
     setShowAddModal(false);
-    // Reset form
     setName('');
     setRole('');
     setPhone('');
@@ -54,18 +53,39 @@ export const VendorDirectory: React.FC<VendorDirectoryProps> = ({
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-slate-900 via-teal-950/60 to-slate-900 border border-teal-500/30 rounded-2xl p-6 shadow-xl backdrop-blur-md flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div className="flex items-center gap-3">
-          <div className="p-3 bg-teal-500/20 text-teal-400 rounded-xl border border-teal-500/30">
-            <Contact className="w-7 h-7" />
+    <div style={{ marginBottom: '32px' }}>
+      
+      {/* Header Banner */}
+      <div className="app-card" style={{
+        background: 'linear-gradient(135deg, #0E5A73 0%, #137A9A 100%)',
+        color: '#FFFFFF',
+        marginBottom: '20px',
+        padding: '20px 24px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: '14px',
+        borderColor: '#48CAE4',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{
+            width: '44px',
+            height: '44px',
+            borderRadius: '12px',
+            background: 'rgba(255, 255, 255, 0.18)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+          }}>
+            <Contact size={24} color="#FFD166" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: '#FFFFFF' }}>
               Apartment Vendor & Maintenance Directory
             </h2>
-            <p className="text-teal-200/80 text-sm mt-0.5">
+            <p style={{ margin: 0, fontSize: '0.8rem', color: '#E0F2FE' }}>
               Direct emergency contacts for Lift Technicians, CCTV Engineers, Tank Cleaners, Electricians & Tanker Drivers
             </p>
           </div>
@@ -74,30 +94,50 @@ export const VendorDirectory: React.FC<VendorDirectoryProps> = ({
         {isAdmin && (
           <button
             onClick={() => setShowAddModal(true)}
-            className="px-4 py-2.5 bg-gradient-to-r from-teal-500 to-emerald-600 text-slate-950 font-bold rounded-xl transition-all duration-200 shadow-lg shadow-teal-500/20 flex items-center gap-2"
+            className="app-btn"
+            style={{
+              background: '#FFD166',
+              color: '#0E5A73',
+              fontWeight: 800,
+              boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)',
+            }}
           >
-            <Plus className="w-5 h-5" />
-            Add Vendor Contact
+            <Plus size={16} /> Add Vendor Contact
           </button>
         )}
       </div>
 
-      {/* Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Vendor Cards Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(310px, 1fr))', gap: '18px' }}>
         {vendors.map((vendor) => (
           <div
             key={vendor.id}
-            className="bg-slate-900/70 border border-slate-800 hover:border-teal-500/40 rounded-2xl p-5 shadow-xl transition-all duration-300 flex flex-col justify-between"
+            className="app-card"
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              padding: '18px',
+            }}
           >
             <div>
-              <div className="flex justify-between items-start">
-                <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-teal-500/10 text-teal-300 border border-teal-500/20">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{
+                  fontSize: '0.74rem',
+                  fontWeight: 800,
+                  padding: '2px 8px',
+                  borderRadius: '6px',
+                  background: '#E0F7FA',
+                  color: '#0077B6',
+                  border: '1px solid #48CAE4',
+                }}>
                   {vendor.role}
                 </span>
+
                 {isAdmin && (
                   <button
                     onClick={() => onDeleteVendor(vendor.id)}
-                    className="text-slate-500 hover:text-red-400 text-xs font-bold px-2 py-1 transition-colors"
+                    style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 700 }}
                     title="Delete Vendor"
                   >
                     Delete
@@ -105,140 +145,140 @@ export const VendorDirectory: React.FC<VendorDirectoryProps> = ({
                 )}
               </div>
 
-              <h3 className="text-lg font-bold text-white mt-3 flex items-center gap-2">
-                <User className="w-4 h-4 text-teal-400" />
-                {vendor.name}
+              <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F172A', marginTop: '10px', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <User size={16} color="#0096C7" /> {vendor.name}
               </h3>
 
-              <div className="mt-3 space-y-2 text-xs">
-                <div className="flex items-center gap-2 text-slate-300 bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80">
-                  <Phone className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span className="font-mono text-white text-sm font-semibold">{vendor.phone}</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.82rem' }}>
+                <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', padding: '8px 10px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Phone size={14} color="#059669" />
+                  <span style={{ fontWeight: 800, color: '#0F172A', fontFamily: 'monospace', fontSize: '0.9rem' }}>{vendor.phone}</span>
                 </div>
 
                 {vendor.upiId && (
-                  <div className="flex justify-between items-center bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80 text-slate-300">
-                    <span className="text-slate-400">UPI ID: <strong className="text-teal-300 font-mono">{vendor.upiId}</strong></span>
+                  <div style={{ background: '#F0F9FF', border: '1px solid #B2D8E5', padding: '8px 10px', borderRadius: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#0077B6' }}>
+                    <span>UPI ID: <strong style={{ fontFamily: 'monospace' }}>{vendor.upiId}</strong></span>
                     <button
                       onClick={() => handleCopyUpi(vendor.upiId!)}
-                      className="p-1 text-teal-400 hover:text-teal-300"
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#0096C7' }}
                       title="Copy UPI ID"
                     >
-                      {copiedUpi === vendor.upiId ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                      {copiedUpi === vendor.upiId ? <Check size={14} color="#059669" /> : <Copy size={14} />}
                     </button>
                   </div>
                 )}
 
                 {vendor.notes && (
-                  <p className="text-slate-400 text-xs italic bg-slate-950/30 p-2 rounded-lg border border-slate-800/40">
+                  <p style={{ margin: 0, fontSize: '0.76rem', color: '#64748B', fontStyle: 'italic', background: '#F8FAFC', padding: '6px 8px', borderRadius: '8px' }}>
                     "{vendor.notes}"
                   </p>
                 )}
               </div>
             </div>
 
-            {/* Actions */}
-            <div className="mt-4 pt-3 border-t border-slate-800 grid grid-cols-2 gap-2">
+            {/* Action Buttons */}
+            <div style={{ marginTop: '14px', paddingTop: '10px', borderTop: '1px solid #E2E8F0', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
               <a
                 href={`tel:${vendor.phone}`}
-                className="py-2 px-3 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 font-bold text-xs rounded-xl transition-colors flex items-center justify-center gap-1.5 border border-emerald-500/30"
+                className="app-btn"
+                style={{ background: '#ECFDF5', border: '1px solid #A7F3D0', color: '#059669', padding: '6px 10px', fontSize: '0.78rem', textDecoration: 'none' }}
               >
-                <Phone className="w-3.5 h-3.5" />
-                Call Now
+                <Phone size={14} /> Call Now
               </a>
 
               <a
                 href={`https://api.whatsapp.com/send?phone=91${vendor.phone}&text=${encodeURIComponent(`Hi ${vendor.name}, regarding RS Towers Apartment maintenance.`)}`}
                 target="_blank"
                 rel="noreferrer"
-                className="py-2 px-3 bg-teal-500/20 hover:bg-teal-500/30 text-teal-300 font-bold text-xs rounded-xl transition-colors flex items-center justify-center gap-1.5 border border-teal-500/30"
+                className="app-btn app-btn-whatsapp"
+                style={{ padding: '6px 10px', fontSize: '0.78rem', textDecoration: 'none' }}
               >
-                <MessageSquare className="w-3.5 h-3.5" />
-                WhatsApp
+                <MessageSquare size={14} /> WhatsApp
               </a>
             </div>
+
           </div>
         ))}
       </div>
 
       {/* Add Vendor Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-teal-500/40 rounded-2xl p-6 w-full max-w-md shadow-2xl space-y-4">
-            <h3 className="text-xl font-bold text-white flex items-center gap-2">
-              <Plus className="w-5 h-5 text-teal-400" />
-              Add Vendor Contact
+        <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
+          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0096C7', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Plus size={20} /> Add Vendor Contact
             </h3>
 
-            <form onSubmit={handleAddSubmit} className="space-y-3 text-xs">
-              <div>
-                <label className="block text-slate-300 mb-1">Vendor / Technician Name</label>
+            <form onSubmit={handleAddSubmit}>
+              <div className="form-group">
+                <label>Vendor / Technician Name:</label>
                 <input
                   type="text"
+                  className="form-control"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-teal-500"
                   placeholder="e.g. Raju Mechanic"
                   required
                 />
               </div>
 
-              <div>
-                <label className="block text-slate-300 mb-1">Role / Service Type</label>
+              <div className="form-group">
+                <label>Role / Service Type:</label>
                 <input
                   type="text"
+                  className="form-control"
                   value={role}
                   onChange={(e) => setRole(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-teal-500"
                   placeholder="e.g. Lift Mechanic, Plumber, CCTV Installer"
                   required
                 />
               </div>
 
-              <div>
-                <label className="block text-slate-300 mb-1">Phone Number</label>
+              <div className="form-group">
+                <label>Phone Number:</label>
                 <input
                   type="text"
+                  className="form-control"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-teal-500"
                   placeholder="10-digit mobile number"
                   required
                 />
               </div>
 
-              <div>
-                <label className="block text-slate-300 mb-1">UPI ID (Optional)</label>
+              <div className="form-group">
+                <label>UPI ID (Optional):</label>
                 <input
                   type="text"
+                  className="form-control"
                   value={upiId}
                   onChange={(e) => setUpiId(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-teal-500"
                   placeholder="e.g. vendor@upi"
                 />
               </div>
 
-              <div>
-                <label className="block text-slate-300 mb-1">Notes / Service Details</label>
+              <div className="form-group">
+                <label>Notes / Availability:</label>
                 <textarea
+                  className="form-control"
+                  style={{ height: '60px', resize: 'vertical' }}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-teal-500 h-16"
                   placeholder="Availability, response time..."
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-2">
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '16px' }}>
                 <button
                   type="button"
+                  className="app-btn app-btn-secondary"
                   onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2 bg-slate-800 text-slate-300 hover:bg-slate-700 rounded-xl font-medium"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-gradient-to-r from-teal-500 to-emerald-600 text-slate-950 font-bold rounded-xl shadow-lg shadow-teal-500/20"
+                  className="app-btn app-btn-primary"
                 >
                   Add Contact
                 </button>
@@ -247,6 +287,7 @@ export const VendorDirectory: React.FC<VendorDirectoryProps> = ({
           </div>
         </div>
       )}
+
     </div>
   );
 };

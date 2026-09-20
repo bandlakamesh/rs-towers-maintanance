@@ -1,5 +1,6 @@
 import type { AppState } from '../types';
 import { INITIAL_APP_STATE } from '../data/initialData';
+import { saveAppStateToFirebase, fetchInitialFirebaseState, subscribeToFirebaseState } from './firebaseStorage';
 
 const LOCAL_STORAGE_KEY = 'rs_towers_maintenance_app_state_v1';
 const REMOTE_ENDPOINT = 'https://kvdb.io/4y7PZrNnE62L825e36fR6v/rs_towers_maintenance_state';
@@ -33,6 +34,21 @@ export function saveAppStateLocal(state: AppState): void {
 }
 
 export async function fetchLatestCloudState(): Promise<AppState | null> {
+  // First try Firebase 100% Free Lifetime Realtime Database
+  try {
+    const fbState = await fetchInitialFirebaseState();
+    if (fbState && fbState.months && fbState.activeMonthId) {
+      const localState = loadAppState();
+      if (!localState || (fbState.lastUpdated && fbState.lastUpdated > localState.lastUpdated)) {
+        saveAppStateLocal(fbState);
+        return fbState;
+      }
+    }
+  } catch (err) {
+    // Fallback to KVDB if offline
+  }
+
+  // Secondary Fallback endpoint
   try {
     const response = await fetch(REMOTE_ENDPOINT, { cache: 'no-store' });
     if (response.ok) {
@@ -53,6 +69,11 @@ export async function fetchLatestCloudState(): Promise<AppState | null> {
 
 export async function syncToCloudRemote(state: AppState): Promise<void> {
   saveAppStateLocal(state);
+
+  // Sync to Firebase 100% Free Lifetime Realtime Database
+  saveAppStateToFirebase(state).catch(() => {});
+
+  // Backup sync to KVDB endpoint
   try {
     await fetch(REMOTE_ENDPOINT, {
       method: 'POST',
@@ -63,6 +84,7 @@ export async function syncToCloudRemote(state: AppState): Promise<void> {
     // Silent error handling
   }
 }
+
 
 export function exportAppStateJSON(state: AppState): void {
   const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(state, null, 2));

@@ -42,11 +42,11 @@ export const PeriodicMaintenanceHub: React.FC<PeriodicMaintenanceHubProps> = ({
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
     if (diffDays < 0) {
-      return { label: `OVERDUE by ${Math.abs(diffDays)} Days`, badgeClass: 'bg-red-500/20 text-red-300 border-red-500/40', icon: AlertTriangle, days: diffDays };
+      return { label: `OVERDUE (${Math.abs(diffDays)}d)`, background: '#FEF2F2', border: '1px solid #FCA5A5', color: '#DC2626', icon: AlertTriangle };
     } else if (diffDays <= 30) {
-      return { label: `Due Soon (${diffDays} Days Left)`, badgeClass: 'bg-amber-500/20 text-amber-300 border-amber-500/40', icon: Clock, days: diffDays };
+      return { label: `Due Soon (${diffDays}d)`, background: '#FEF3C7', border: '1px solid #FDE68A', color: '#D97706', icon: Clock };
     } else {
-      return { label: `Healthy (${diffDays} Days Left)`, badgeClass: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40', icon: CheckCircle2, days: diffDays };
+      return { label: `Healthy (${diffDays}d)`, background: '#ECFDF5', border: '1px solid #A7F3D0', color: '#059669', icon: CheckCircle2 };
     }
   };
 
@@ -63,7 +63,6 @@ export const PeriodicMaintenanceHub: React.FC<PeriodicMaintenanceHubProps> = ({
     e.preventDefault();
     if (!selectedTask) return;
 
-    // Calculate next due date by adding intervalMonths to serviceDate
     const dateObj = new Date(serviceDate);
     dateObj.setMonth(dateObj.getMonth() + selectedTask.intervalMonths);
     const calculatedNextDue = dateObj.toISOString().split('T')[0];
@@ -112,45 +111,66 @@ export const PeriodicMaintenanceHub: React.FC<PeriodicMaintenanceHubProps> = ({
 
     onAddTask(newTask);
     setShowNewTaskModal(false);
-    // Reset
     setNewTaskTitle('');
   };
 
   return (
-    <div className="space-y-6">
+    <div style={{ marginBottom: '32px' }}>
+      
       {/* Header Banner */}
-      <div className="bg-gradient-to-r from-teal-900/40 via-cyan-900/40 to-emerald-900/40 border border-teal-500/30 rounded-2xl p-6 shadow-xl backdrop-blur-md">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-teal-500/20 text-teal-400 rounded-xl border border-teal-500/30">
-                <Wrench className="w-7 h-7" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                  Building Asset AMC & Maintenance Hub
-                </h2>
-                <p className="text-teal-200/80 text-sm mt-0.5">
-                  Track 6-Month Lift Servicing, CCTV Audits, Water Tank Sanitization, Motors & Fire Safety
-                </p>
-              </div>
-            </div>
+      <div className="app-card" style={{
+        background: 'linear-gradient(135deg, #0E5A73 0%, #137A9A 100%)',
+        color: '#FFFFFF',
+        marginBottom: '20px',
+        padding: '20px 24px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: '14px',
+        borderColor: '#48CAE4',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{
+            width: '44px',
+            height: '44px',
+            borderRadius: '12px',
+            background: 'rgba(255, 255, 255, 0.18)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+          }}>
+            <Wrench size={24} color="#FFD166" />
           </div>
-
-          {isAdmin && (
-            <button
-              onClick={() => setShowNewTaskModal(true)}
-              className="px-4 py-2.5 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-400 hover:to-emerald-500 text-slate-950 font-bold rounded-xl transition-all duration-200 shadow-lg shadow-teal-500/20 flex items-center gap-2"
-            >
-              <Plus className="w-5 h-5" />
-              Add Periodic AMC Task
-            </button>
-          )}
+          <div>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: '#FFFFFF' }}>
+              Building Asset AMC & Maintenance Hub
+            </h2>
+            <p style={{ margin: 0, fontSize: '0.8rem', color: '#E0F2FE' }}>
+              Track 6-Month Lift Servicing, CCTV Audits, Water Tank Sanitization, Motors & Fire Safety
+            </p>
+          </div>
         </div>
+
+        {isAdmin && (
+          <button
+            onClick={() => setShowNewTaskModal(true)}
+            className="app-btn"
+            style={{
+              background: '#FFD166',
+              color: '#0E5A73',
+              fontWeight: 800,
+              boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)',
+            }}
+          >
+            <Plus size={16} /> Add AMC Task
+          </button>
+        )}
       </div>
 
       {/* Grid of Periodic Tasks */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '18px' }}>
         {tasks.map((task) => {
           const status = getStatusBadge(task.nextDueDate);
           const StatusIcon = status.icon;
@@ -158,76 +178,120 @@ export const PeriodicMaintenanceHub: React.FC<PeriodicMaintenanceHubProps> = ({
           return (
             <div
               key={task.id}
-              className="bg-slate-900/70 border border-slate-800 hover:border-teal-500/50 rounded-2xl p-5 shadow-xl transition-all duration-300 flex flex-col justify-between group"
+              className="app-card"
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                padding: '18px',
+              }}
             >
               <div>
-                {/* Category & Status */}
-                <div className="flex justify-between items-start gap-2 mb-3">
-                  <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-teal-500/10 text-teal-300 border border-teal-500/20 uppercase tracking-wider">
-                    {task.category} ({task.intervalMonths} Months)
+                {/* Category & Status Badges */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                  <span style={{
+                    fontSize: '0.72rem',
+                    fontWeight: 800,
+                    padding: '2px 8px',
+                    borderRadius: '6px',
+                    background: '#E0F7FA',
+                    color: '#0077B6',
+                    border: '1px solid #48CAE4',
+                    textTransform: 'uppercase',
+                  }}>
+                    {task.category} ({task.intervalMonths}M)
                   </span>
 
-                  <span className={`text-xs font-bold px-2.5 py-1 rounded-lg border flex items-center gap-1.5 ${status.badgeClass}`}>
-                    <StatusIcon className="w-3.5 h-3.5" />
-                    {status.label}
+                  <span style={{
+                    fontSize: '0.72rem',
+                    fontWeight: 800,
+                    padding: '2px 8px',
+                    borderRadius: '6px',
+                    background: status.background,
+                    border: status.border,
+                    color: status.color,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}>
+                    <StatusIcon size={12} /> {status.label}
                   </span>
                 </div>
 
-                <h3 className="text-lg font-bold text-white group-hover:text-teal-300 transition-colors">
+                <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F172A', marginBottom: '4px' }}>
                   {task.title}
                 </h3>
-                <p className="text-slate-400 text-xs mt-1 line-clamp-2">
+                <p style={{ fontSize: '0.78rem', color: '#64748B', margin: 0, lineHeight: 1.4 }}>
                   {task.notes || 'Routine maintenance and health inspection schedule.'}
                 </p>
 
-                {/* Dates & Financials */}
-                <div className="mt-4 p-3 bg-slate-950/60 rounded-xl border border-slate-800/80 space-y-2 text-xs">
-                  <div className="flex justify-between items-center text-slate-300">
-                    <span className="flex items-center gap-1.5 text-slate-400">
-                      <Calendar className="w-3.5 h-3.5 text-teal-400" />
-                      Last Serviced:
+                {/* Dates Box */}
+                <div style={{
+                  background: '#F8FAFC',
+                  border: '1px solid #E2E8F0',
+                  borderRadius: '12px',
+                  padding: '10px 12px',
+                  marginTop: '14px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '6px',
+                  fontSize: '0.8rem',
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', color: '#475569' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <Calendar size={13} color="#0096C7" /> Last Serviced:
                     </span>
-                    <span className="font-medium text-white">{task.lastServicedDate || 'N/A'}</span>
+                    <strong style={{ color: '#0F172A' }}>{task.lastServicedDate || 'N/A'}</strong>
                   </div>
 
-                  <div className="flex justify-between items-center text-slate-300">
-                    <span className="flex items-center gap-1.5 text-slate-400">
-                      <Clock className="w-3.5 h-3.5 text-amber-400" />
-                      Next Due Date:
+                  <div style={{ display: 'flex', justifyContent: 'space-between', color: '#475569' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <Clock size={13} color="#D97706" /> Next Due Date:
                     </span>
-                    <span className="font-bold text-teal-300">{task.nextDueDate}</span>
+                    <strong style={{ color: '#0077B6' }}>{task.nextDueDate}</strong>
                   </div>
 
-                  <div className="flex justify-between items-center text-slate-300 pt-1 border-t border-slate-800">
-                    <span className="text-slate-400">Est. AMC Cost:</span>
-                    <span className="font-bold text-amber-400">₹{task.estimatedCost.toLocaleString('en-IN')}</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', color: '#475569', paddingTop: '4px', borderTop: '1px solid #E2E8F0' }}>
+                    <span>Est. AMC Cost:</span>
+                    <strong style={{ color: '#D97706' }}>₹{task.estimatedCost.toLocaleString('en-IN')}</strong>
                   </div>
                 </div>
 
-                {/* Vendor Contact */}
+                {/* Vendor Contact Box */}
                 {task.vendorName && (
-                  <div className="mt-3 flex items-center justify-between text-xs text-slate-400 bg-slate-950/40 p-2.5 rounded-lg border border-slate-800/50">
-                    <span className="truncate max-w-[160px] font-medium text-slate-300">
+                  <div style={{
+                    marginTop: '10px',
+                    padding: '8px 10px',
+                    background: '#F0F9FF',
+                    border: '1px solid #B2D8E5',
+                    borderRadius: '10px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    fontSize: '0.76rem',
+                    color: '#0077B6',
+                  }}>
+                    <span style={{ fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '170px' }}>
                       👤 {task.vendorName}
                     </span>
 
                     {task.vendorPhone && (
-                      <div className="flex items-center gap-1.5">
+                      <div style={{ display: 'flex', gap: '6px' }}>
                         <a
                           href={`tel:${task.vendorPhone}`}
-                          className="p-1.5 bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 rounded-md transition-colors"
+                          style={{ background: '#ECFDF5', border: '1px solid #A7F3D0', color: '#059669', padding: '3px 6px', borderRadius: '6px', textDecoration: 'none' }}
                           title="Call Vendor"
                         >
-                          <Phone className="w-3.5 h-3.5" />
+                          <Phone size={12} />
                         </a>
                         <a
                           href={`https://api.whatsapp.com/send?phone=91${task.vendorPhone}&text=${encodeURIComponent(`Hi ${task.vendorName}, regarding ${task.title} for RS Towers Apartment.`)}`}
                           target="_blank"
                           rel="noreferrer"
-                          className="p-1.5 bg-teal-500/20 text-teal-400 hover:bg-teal-500/30 rounded-md transition-colors"
+                          style={{ background: '#E0F7FA', border: '1px solid #48CAE4', color: '#0077B6', padding: '3px 6px', borderRadius: '6px', textDecoration: 'none' }}
                           title="WhatsApp Vendor"
                         >
-                          <MessageSquare className="w-3.5 h-3.5" />
+                          <MessageSquare size={12} />
                         </a>
                       </div>
                     )}
@@ -236,28 +300,29 @@ export const PeriodicMaintenanceHub: React.FC<PeriodicMaintenanceHubProps> = ({
               </div>
 
               {/* Action Buttons */}
-              <div className="mt-5 pt-3 border-t border-slate-800 flex items-center gap-2">
+              <div style={{ marginTop: '16px', paddingTop: '10px', borderTop: '1px solid #E2E8F0', display: 'flex', gap: '8px' }}>
                 <button
                   onClick={() => {
                     setSelectedTask(task);
                     setShowHistoryModal(true);
                   }}
-                  className="flex-1 py-2 px-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs rounded-xl transition-colors flex items-center justify-center gap-1.5"
+                  className="app-btn app-btn-secondary"
+                  style={{ flex: 1, padding: '6px 10px', fontSize: '0.78rem' }}
                 >
-                  <History className="w-3.5 h-3.5 text-teal-400" />
-                  History ({task.serviceLogs?.length || 0})
+                  <History size={14} color="#0096C7" /> History ({task.serviceLogs?.length || 0})
                 </button>
 
                 {isAdmin && (
                   <button
                     onClick={() => handleOpenLogModal(task)}
-                    className="flex-1 py-2 px-3 bg-teal-500/20 hover:bg-teal-500/30 text-teal-300 border border-teal-500/40 font-bold text-xs rounded-xl transition-colors flex items-center justify-center gap-1.5"
+                    className="app-btn app-btn-primary"
+                    style={{ flex: 1, padding: '6px 10px', fontSize: '0.78rem' }}
                   >
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    Log Service
+                    <CheckCircle2 size={14} /> Log Service
                   </button>
                 )}
               </div>
+
             </div>
           );
         })}
@@ -265,61 +330,61 @@ export const PeriodicMaintenanceHub: React.FC<PeriodicMaintenanceHubProps> = ({
 
       {/* Log Service Modal */}
       {showLogModal && selectedTask && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-teal-500/40 rounded-2xl p-6 w-full max-w-md shadow-2xl space-y-4">
-            <h3 className="text-xl font-bold text-white flex items-center gap-2">
-              <Wrench className="w-5 h-5 text-teal-400" />
-              Log Completed Service / AMC
+        <div className="modal-overlay" onClick={() => setShowLogModal(false)}>
+          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0096C7', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Wrench size={20} /> Log Completed Service / AMC
             </h3>
-            <p className="text-xs text-teal-200/80">
-              Task: <strong className="text-white">{selectedTask.title}</strong> ({selectedTask.intervalMonths}-Month Cycle)
+            <p style={{ fontSize: '0.8rem', color: '#64748B', marginBottom: '14px' }}>
+              Task: <strong style={{ color: '#0F172A' }}>{selectedTask.title}</strong> ({selectedTask.intervalMonths}-Month Cycle)
             </p>
 
-            <form onSubmit={handleSaveServiceLog} className="space-y-4 text-xs">
-              <div>
-                <label className="block text-slate-300 mb-1">Service Completion Date</label>
+            <form onSubmit={handleSaveServiceLog}>
+              <div className="form-group">
+                <label>Service Completion Date:</label>
                 <input
                   type="date"
+                  className="form-control"
                   value={serviceDate}
                   onChange={(e) => setServiceDate(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-teal-500"
                   required
                 />
               </div>
 
-              <div>
-                <label className="block text-slate-300 mb-1">Actual Amount Paid (₹)</label>
+              <div className="form-group">
+                <label>Actual Amount Paid (₹):</label>
                 <input
                   type="number"
+                  className="form-control"
                   value={serviceAmount}
                   onChange={(e) => setServiceAmount(Number(e.target.value))}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-teal-500"
                   required
                 />
               </div>
 
-              <div>
-                <label className="block text-slate-300 mb-1">Technician / Vendor Name</label>
+              <div className="form-group">
+                <label>Technician / Vendor Name:</label>
                 <input
                   type="text"
+                  className="form-control"
                   value={serviceTechnician}
                   onChange={(e) => setServiceTechnician(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-teal-500"
                   placeholder="e.g. Raju Elevator Technician"
                 />
               </div>
 
-              <div>
-                <label className="block text-slate-300 mb-1">Service Notes / Parts Replaced</label>
+              <div className="form-group">
+                <label>Service Notes / Parts Replaced:</label>
                 <textarea
+                  className="form-control"
+                  style={{ height: '70px', resize: 'vertical' }}
                   value={serviceNotes}
                   onChange={(e) => setServiceNotes(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-teal-500 h-20"
-                  placeholder="e.g. Wire rope oiled, safety limit switch checked, bill receipt saved."
+                  placeholder="e.g. Wire rope oiled, safety limit switch checked."
                 />
               </div>
 
-              <div className="p-3 bg-teal-500/10 border border-teal-500/30 rounded-xl text-teal-300 text-[11px]">
+              <div style={{ background: '#F0F9FF', border: '1px solid #B2D8E5', padding: '10px 12px', borderRadius: '10px', fontSize: '0.78rem', color: '#0077B6', marginBottom: '14px' }}>
                 ℹ️ Saving this log will automatically update the <strong>Next Due Date</strong> to{' '}
                 <strong>
                   {(() => {
@@ -330,17 +395,17 @@ export const PeriodicMaintenanceHub: React.FC<PeriodicMaintenanceHubProps> = ({
                 </strong>.
               </div>
 
-              <div className="flex justify-end gap-3 pt-2">
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '16px' }}>
                 <button
                   type="button"
+                  className="app-btn app-btn-secondary"
                   onClick={() => setShowLogModal(false)}
-                  className="px-4 py-2 bg-slate-800 text-slate-300 hover:bg-slate-700 rounded-xl font-medium"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-gradient-to-r from-teal-500 to-emerald-600 text-slate-950 font-bold rounded-xl shadow-lg shadow-teal-500/20"
+                  className="app-btn app-btn-primary"
                 >
                   Save & Update Schedule
                 </button>
@@ -350,37 +415,35 @@ export const PeriodicMaintenanceHub: React.FC<PeriodicMaintenanceHubProps> = ({
         </div>
       )}
 
-      {/* Service History Modal */}
+      {/* History Modal */}
       {showHistoryModal && selectedTask && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-lg shadow-2xl space-y-4 max-h-[80vh] flex flex-col">
-            <div className="flex justify-between items-center border-b border-slate-800 pb-3">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <History className="w-5 h-5 text-teal-400" />
-                Service History - {selectedTask.title}
+        <div className="modal-overlay" onClick={() => setShowHistoryModal(false)}>
+          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #E2E8F0', paddingBottom: '10px', marginBottom: '14px' }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0096C7', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <History size={18} /> Service History - {selectedTask.title}
               </h3>
-              <button
-                onClick={() => setShowHistoryModal(false)}
-                className="text-slate-400 hover:text-white text-sm font-bold"
-              >
+              <button onClick={() => setShowHistoryModal(false)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#64748B' }}>
                 ✕
               </button>
             </div>
 
-            <div className="overflow-y-auto flex-1 space-y-3 pr-1 text-xs">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '60vh', overflowY: 'auto' }}>
               {selectedTask.serviceLogs && selectedTask.serviceLogs.length > 0 ? (
                 selectedTask.serviceLogs.map((log) => (
-                  <div key={log.id} className="p-3 bg-slate-950 border border-slate-800 rounded-xl space-y-1">
-                    <div className="flex justify-between items-center text-white font-bold">
-                      <span className="text-teal-300">{log.date}</span>
-                      <span className="text-amber-400">₹{log.amount.toLocaleString('en-IN')}</span>
+                  <div key={log.id} style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', padding: '10px 12px', borderRadius: '10px', fontSize: '0.82rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700 }}>
+                      <span style={{ color: '#0077B6' }}>{log.date}</span>
+                      <span style={{ color: '#D97706' }}>₹{log.amount.toLocaleString('en-IN')}</span>
                     </div>
-                    <div className="text-slate-400">Technician: {log.technician || 'N/A'}</div>
-                    {log.notes && <div className="text-slate-300 italic pt-1 border-t border-slate-900">{log.notes}</div>}
+                    <div style={{ color: '#475569', marginTop: '2px' }}>Technician: {log.technician || 'N/A'}</div>
+                    {log.notes && <div style={{ color: '#64748B', fontStyle: 'italic', marginTop: '4px', paddingTop: '4px', borderTop: '1px solid #F1F5F9' }}>{log.notes}</div>}
                   </div>
                 ))
               ) : (
-                <p className="text-slate-400 text-center py-6">No previous service logs recorded yet.</p>
+                <p style={{ color: '#64748B', textAlign: 'center', padding: '20px 0', fontSize: '0.86rem' }}>
+                  No previous service logs recorded yet.
+                </p>
               )}
             </div>
           </div>
@@ -389,33 +452,32 @@ export const PeriodicMaintenanceHub: React.FC<PeriodicMaintenanceHubProps> = ({
 
       {/* Add New AMC Task Modal */}
       {showNewTaskModal && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-teal-500/40 rounded-2xl p-6 w-full max-w-md shadow-2xl space-y-4">
-            <h3 className="text-xl font-bold text-white flex items-center gap-2">
-              <Plus className="w-5 h-5 text-teal-400" />
-              Add New AMC / Servicing Schedule
+        <div className="modal-overlay" onClick={() => setShowNewTaskModal(false)}>
+          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0096C7', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Plus size={20} /> Add New AMC / Servicing Schedule
             </h3>
 
-            <form onSubmit={handleCreateTask} className="space-y-3 text-xs">
-              <div>
-                <label className="block text-slate-300 mb-1">Task Title</label>
+            <form onSubmit={handleCreateTask}>
+              <div className="form-group">
+                <label>Task Title:</label>
                 <input
                   type="text"
+                  className="form-control"
                   value={newTaskTitle}
                   onChange={(e) => setNewTaskTitle(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-teal-500"
                   placeholder="e.g. Generator Oil & Filter Replacement"
                   required
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-slate-300 mb-1">Category</label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <div className="form-group">
+                  <label>Category:</label>
                   <select
+                    className="form-control"
                     value={newTaskCategory}
-                    onChange={(e) => setNewTaskCategory(e.target.value as PeriodicTask['category'])}
-                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-teal-500"
+                    onChange={(e: any) => setNewTaskCategory(e.target.value)}
                   >
                     <option value="Lift AMC">Lift AMC</option>
                     <option value="CCTV Audit">CCTV Audit</option>
@@ -426,13 +488,13 @@ export const PeriodicMaintenanceHub: React.FC<PeriodicMaintenanceHubProps> = ({
                   </select>
                 </div>
 
-                <div>
-                  <label className="block text-slate-300 mb-1">Interval (Months)</label>
+                <div className="form-group">
+                  <label>Interval (Months):</label>
                   <input
                     type="number"
+                    className="form-control"
                     value={newTaskInterval}
                     onChange={(e) => setNewTaskInterval(Number(e.target.value))}
-                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-teal-500"
                     min="1"
                     max="24"
                     required
@@ -440,61 +502,62 @@ export const PeriodicMaintenanceHub: React.FC<PeriodicMaintenanceHubProps> = ({
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-slate-300 mb-1">Est. AMC Cost (₹)</label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <div className="form-group">
+                  <label>Est. AMC Cost (₹):</label>
                   <input
                     type="number"
+                    className="form-control"
                     value={newTaskCost}
                     onChange={(e) => setNewTaskCost(Number(e.target.value))}
-                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-teal-500"
                   />
                 </div>
 
-                <div>
-                  <label className="block text-slate-300 mb-1">Vendor Name</label>
+                <div className="form-group">
+                  <label>Vendor Name:</label>
                   <input
                     type="text"
+                    className="form-control"
                     value={newTaskVendor}
                     onChange={(e) => setNewTaskVendor(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-teal-500"
                     placeholder="Technician Company"
                   />
                 </div>
               </div>
 
-              <div>
-                <label className="block text-slate-300 mb-1">Vendor Phone Number</label>
+              <div className="form-group">
+                <label>Vendor Phone Number:</label>
                 <input
                   type="text"
+                  className="form-control"
                   value={newTaskPhone}
                   onChange={(e) => setNewTaskPhone(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-teal-500"
                   placeholder="10-digit mobile number"
                 />
               </div>
 
-              <div>
-                <label className="block text-slate-300 mb-1">Maintenance Notes</label>
+              <div className="form-group">
+                <label>Maintenance Notes:</label>
                 <textarea
+                  className="form-control"
+                  style={{ height: '60px', resize: 'vertical' }}
                   value={newTaskNotes}
                   onChange={(e) => setNewTaskNotes(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-teal-500 h-16"
-                  placeholder="Instructions for servicing..."
+                  placeholder="Servicing instructions..."
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-2">
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '16px' }}>
                 <button
                   type="button"
+                  className="app-btn app-btn-secondary"
                   onClick={() => setShowNewTaskModal(false)}
-                  className="px-4 py-2 bg-slate-800 text-slate-300 hover:bg-slate-700 rounded-xl font-medium"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-gradient-to-r from-teal-500 to-emerald-600 text-slate-950 font-bold rounded-xl shadow-lg shadow-teal-500/20"
+                  className="app-btn app-btn-primary"
                 >
                   Create Task
                 </button>
@@ -503,6 +566,7 @@ export const PeriodicMaintenanceHub: React.FC<PeriodicMaintenanceHubProps> = ({
           </div>
         </div>
       )}
+
     </div>
   );
 };

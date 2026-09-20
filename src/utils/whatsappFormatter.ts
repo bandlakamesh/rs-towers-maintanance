@@ -25,7 +25,7 @@ export function generateWhatsAppFlatBillText(
 ----------------------------------------
 📌 *Payment Status*: *${flat.status === 'Received' ? '✅ PAID' : '⏳ PENDING'}*
 ${flat.notes ? `📝 *Note*: ${flat.notes}\n` : ''}
-📲 *UPI Payment*: 9876543210@upi (Flat 302 - Kamesh)
+📲 *UPI Payment*: 9963275455@upi (Flat 101 - Bobby)
 
 *Ganpati Bappa Morya!* 🙏`;
 }
@@ -71,7 +71,7 @@ Friendly reminder that your monthly maintenance payment of *₹${pendingAmount.t
 
 ----------------------------------------
 💰 *Total Amount Due*: *₹${pendingAmount.toLocaleString('en-IN')}*
-📲 *UPI ID*: 9876543210@upi (Flat 302 - Kamesh)
+📲 *UPI ID*: 9963275455@upi (Flat 101 - Bobby)
 ----------------------------------------
 
 Please complete the transfer at your earliest convenience to assist in uninterrupted building services (Lift, Water Tanker & Watchman). If already paid, please ignore this notice.

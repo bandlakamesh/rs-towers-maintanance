@@ -15,6 +15,7 @@ import { MonthSelectorModal } from './components/MonthSelectorModal';
 import { PeriodicMaintenanceHub } from './components/PeriodicMaintenanceHub';
 import { VendorDirectory } from './components/VendorDirectory';
 import { NoticeBoard } from './components/NoticeBoard';
+import { subscribeToFirebaseState } from './utils/firebaseStorage';
 
 export const App: React.FC = () => {
   const [appState, setAppState] = useState<AppState>(() => loadAppState());
@@ -32,9 +33,16 @@ export const App: React.FC = () => {
 
   const activeRecord: MonthMaintenanceRecord = appState.months[appState.activeMonthId] || Object.values(appState.months)[0];
 
-  // Auto-fetch cloud data & 10-second polling sync
+  // Live Firebase Realtime DB listener & polling fallback
   useEffect(() => {
     let isMounted = true;
+
+    // Subscribe to Firebase Realtime DB for instantaneous live cloud sync across all devices
+    const unsubscribeFirebase = subscribeToFirebaseState((remoteState) => {
+      if (isMounted && remoteState) {
+        setAppState(remoteState);
+      }
+    });
 
     const pullCloud = async () => {
       const cloud = await fetchLatestCloudState();
@@ -58,6 +66,7 @@ export const App: React.FC = () => {
 
     return () => {
       isMounted = false;
+      unsubscribeFirebase();
       clearInterval(interval);
     };
   }, []);

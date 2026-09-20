@@ -19,7 +19,7 @@ export const NoticeBoard: React.FC<NoticeBoardProps> = ({
   const [showAddModal, setShowAddModal] = useState(false);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [postedBy, setPostedBy] = useState('Kamesh (Flat 302 - Root Admin)');
+  const [postedBy, setPostedBy] = useState('Bobby (Flat 101 - Maintenance In-Charge)');
   const [priority, setPriority] = useState<'Normal' | 'Urgent'>('Urgent');
 
   const handleAddSubmit = (e: React.FormEvent) => {
@@ -37,7 +37,6 @@ export const NoticeBoard: React.FC<NoticeBoardProps> = ({
 
     onAddNotice(newNotice);
     setShowAddModal(false);
-    // Reset
     setTitle('');
     setContent('');
   };
@@ -48,19 +47,40 @@ export const NoticeBoard: React.FC<NoticeBoardProps> = ({
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-cyan-950/80 via-teal-900/60 to-slate-900 border border-teal-500/30 rounded-2xl p-6 shadow-xl backdrop-blur-md flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div className="flex items-center gap-3">
-          <div className="p-3 bg-teal-500/20 text-teal-400 rounded-xl border border-teal-500/30">
-            <Megaphone className="w-7 h-7" />
+    <div style={{ marginBottom: '32px' }}>
+      
+      {/* Header Banner Card */}
+      <div className="app-card" style={{
+        background: 'linear-gradient(135deg, #0E5A73 0%, #137A9A 100%)',
+        color: '#FFFFFF',
+        marginBottom: '20px',
+        padding: '20px 24px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: '14px',
+        borderColor: '#48CAE4',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{
+            width: '44px',
+            height: '44px',
+            borderRadius: '12px',
+            background: 'rgba(255, 255, 255, 0.18)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+          }}>
+            <Megaphone size={24} color="#FFD166" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: '#FFFFFF' }}>
               Apartment Notice Board & Broadcast
             </h2>
-            <p className="text-teal-200/80 text-sm mt-0.5">
-              Official announcements, water tank cleaning alerts, maintenance payment deadlines, and festival notices
+            <p style={{ margin: 0, fontSize: '0.8rem', color: '#E0F2FE' }}>
+              Official maintenance notices, payment deadlines, lift AMC alerts & tank cleaning schedules
             </p>
           </div>
         </div>
@@ -68,149 +88,179 @@ export const NoticeBoard: React.FC<NoticeBoardProps> = ({
         {isAdmin && (
           <button
             onClick={() => setShowAddModal(true)}
-            className="px-4 py-2.5 bg-gradient-to-r from-teal-500 to-emerald-600 text-slate-950 font-bold rounded-xl transition-all duration-200 shadow-lg shadow-teal-500/20 flex items-center gap-2"
+            className="app-btn"
+            style={{
+              background: '#FFD166',
+              color: '#0E5A73',
+              fontWeight: 800,
+              boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)',
+            }}
           >
-            <Plus className="w-5 h-5" />
-            Post New Announcement
+            <Plus size={16} /> Post New Announcement
           </button>
         )}
       </div>
 
-      {/* Feed */}
-      <div className="space-y-4">
-        {notices.map((notice) => (
-          <div
-            key={notice.id}
-            className={`p-5 rounded-2xl border transition-all duration-300 shadow-xl ${
-              notice.priority === 'Urgent'
-                ? 'bg-gradient-to-r from-red-950/30 via-slate-900 to-slate-900 border-red-500/40 hover:border-red-500/70'
-                : 'bg-slate-900/70 border-slate-800 hover:border-teal-500/40'
-            }`}
-          >
-            <div className="flex justify-between items-start gap-4">
-              <div className="flex items-start gap-3">
-                <span
-                  className={`px-3 py-1 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1 shrink-0 ${
-                    notice.priority === 'Urgent'
-                      ? 'bg-red-500/20 text-red-300 border border-red-500/30'
-                      : 'bg-teal-500/20 text-teal-300 border border-teal-500/30'
-                  }`}
-                >
-                  {notice.priority === 'Urgent' && <AlertCircle className="w-3.5 h-3.5" />}
-                  {notice.priority}
-                </span>
+      {/* Announcements Feed */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        {notices.map((notice) => {
+          const isUrgent = notice.priority === 'Urgent';
 
+          return (
+            <div
+              key={notice.id}
+              className="app-card"
+              style={{
+                borderLeft: isUrgent ? '6px solid #DC2626' : '6px solid #0096C7',
+                background: isUrgent ? '#FEF2F2' : '#FFFFFF',
+                padding: '20px',
+              }}
+            >
+              {/* Notice Title Header */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px', marginBottom: '12px' }}>
+                
                 <div>
-                  <h3 className="text-lg font-bold text-white">{notice.title}</h3>
-                  <div className="flex items-center gap-4 text-xs text-slate-400 mt-1">
-                    <span className="flex items-center gap-1 text-slate-400">
-                      <Calendar className="w-3.5 h-3.5 text-teal-400" />
-                      {notice.date}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                    <span style={{
+                      padding: '3px 10px',
+                      borderRadius: '999px',
+                      fontSize: '0.72rem',
+                      fontWeight: 800,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      background: isUrgent ? '#FEE2E2' : '#E0F7FA',
+                      color: isUrgent ? '#DC2626' : '#0077B6',
+                      border: isUrgent ? '1px solid #FCA5A5' : '1px solid #48CAE4',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}>
+                      {isUrgent && <AlertCircle size={12} />} {notice.priority}
                     </span>
-                    <span className="flex items-center gap-1 text-slate-400">
-                      <User className="w-3.5 h-3.5 text-teal-400" />
-                      {notice.postedBy}
+
+                    <span style={{ fontSize: '0.78rem', color: '#64748B', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <Calendar size={13} color="#0096C7" /> {notice.date}
+                    </span>
+
+                    <span style={{ fontSize: '0.78rem', color: '#64748B', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <User size={13} color="#0096C7" /> {notice.postedBy}
                     </span>
                   </div>
+
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0F172A', margin: 0 }}>
+                    {notice.title}
+                  </h3>
                 </div>
-              </div>
 
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => handleBroadcastWhatsApp(notice)}
-                  className="px-3 py-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 shadow-md"
-                  title="Share to RS Towers WhatsApp Group"
-                >
-                  <Share2 className="w-3.5 h-3.5" />
-                  WhatsApp Group
-                </button>
-
-                {isAdmin && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <button
-                    onClick={() => onDeleteNotice(notice.id)}
-                    className="p-1.5 text-slate-500 hover:text-red-400 transition-colors"
-                    title="Delete Notice"
+                    onClick={() => handleBroadcastWhatsApp(notice)}
+                    className="app-btn app-btn-whatsapp"
+                    style={{ padding: '6px 12px', fontSize: '0.78rem' }}
+                    title="Share to RS Towers WhatsApp Group"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Share2 size={14} /> WhatsApp Group
                   </button>
-                )}
-              </div>
-            </div>
 
-            <div className="mt-4 p-4 bg-slate-950/70 border border-slate-800/80 rounded-xl text-slate-200 text-sm whitespace-pre-line leading-relaxed">
-              {notice.content}
+                  {isAdmin && (
+                    <button
+                      onClick={() => onDeleteNotice(notice.id)}
+                      style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer', padding: '6px' }}
+                      title="Delete Notice"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  )}
+                </div>
+
+              </div>
+
+              {/* Notice Details Content */}
+              <div style={{
+                background: isUrgent ? 'rgba(255, 255, 255, 0.8)' : '#F8FAFC',
+                border: '1px solid #E2E8F0',
+                borderRadius: '12px',
+                padding: '14px 16px',
+                fontSize: '0.9rem',
+                color: '#1E293B',
+                lineHeight: 1.6,
+                whiteSpace: 'pre-line',
+              }}>
+                {notice.content}
+              </div>
+
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Post Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-teal-500/40 rounded-2xl p-6 w-full max-w-md shadow-2xl space-y-4">
-            <h3 className="text-xl font-bold text-white flex items-center gap-2">
-              <Megaphone className="w-5 h-5 text-teal-400" />
-              Post Apartment Announcement
+        <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
+          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0096C7', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Megaphone size={20} /> Post Apartment Announcement
             </h3>
 
-            <form onSubmit={handleAddSubmit} className="space-y-3 text-xs">
-              <div>
-                <label className="block text-slate-300 mb-1">Notice Title</label>
+            <form onSubmit={handleAddSubmit}>
+              <div className="form-group">
+                <label>Announcement Title:</label>
                 <input
                   type="text"
+                  className="form-control"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-teal-500"
                   placeholder="e.g. Tank cleaning scheduled for Sunday"
                   required
                 />
               </div>
 
-              <div>
-                <label className="block text-slate-300 mb-1">Priority Level</label>
+              <div className="form-group">
+                <label>Priority Level:</label>
                 <select
+                  className="form-control"
                   value={priority}
-                  onChange={(e) => setPriority(e.target.value as 'Normal' | 'Urgent')}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-teal-500"
+                  onChange={(e: any) => setPriority(e.target.value)}
                 >
-                  <option value="Urgent">🚨 Urgent (Notice / Payment Alert)</option>
+                  <option value="Urgent">🚨 Urgent (Payment / Notice Alert)</option>
                   <option value="Normal">📌 Normal Information</option>
                 </select>
               </div>
 
-              <div>
-                <label className="block text-slate-300 mb-1">Posted By</label>
+              <div className="form-group">
+                <label>Posted By:</label>
                 <input
                   type="text"
+                  className="form-control"
                   value={postedBy}
                   onChange={(e) => setPostedBy(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-teal-500"
-                  placeholder="e.g. Kamesh (Flat 302)"
+                  placeholder="e.g. Bobby (Flat 101)"
                 />
               </div>
 
-              <div>
-                <label className="block text-slate-300 mb-1">Announcement Details</label>
+              <div className="form-group">
+                <label>Announcement Content:</label>
                 <textarea
+                  className="form-control"
+                  style={{ height: '110px', resize: 'vertical' }}
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-teal-500 h-28"
                   placeholder="Write message details for flat owners..."
                   required
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-2">
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '18px' }}>
                 <button
                   type="button"
+                  className="app-btn app-btn-secondary"
                   onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2 bg-slate-800 text-slate-300 hover:bg-slate-700 rounded-xl font-medium"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-gradient-to-r from-teal-500 to-emerald-600 text-slate-950 font-bold rounded-xl shadow-lg shadow-teal-500/20"
+                  className="app-btn app-btn-primary"
                 >
                   Post Notice
                 </button>
@@ -219,6 +269,7 @@ export const NoticeBoard: React.FC<NoticeBoardProps> = ({
           </div>
         </div>
       )}
+
     </div>
   );
 };

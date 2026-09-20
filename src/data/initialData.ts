@@ -154,9 +154,9 @@ export const INITIAL_APP_STATE: AppState = {
     {
       id: 'n-1',
       title: '🚨 Monthly Maintenance Payment Due by 10th',
-      content: 'Respected RS Towers Flat Owners, please transfer your monthly maintenance dues by the 10th of every month via UPI (9876543210@upi - Kamesh Flat 302). Thank you for your cooperation!',
+      content: 'Respected RS Towers Flat Owners, please transfer your monthly maintenance dues by the 10th of every month via UPI (9963275455@upi - Bobby Flat 101). Thank you for your cooperation!',
       date: '2026-09-01',
-      postedBy: 'Kamesh (Flat 302 - Root Admin)',
+      postedBy: 'Bobby (Flat 101 - Maintenance Lead)',
       priority: 'Urgent'
     },
     {
