@@ -629,7 +629,9 @@ export const App: React.FC = () => {
           <>
             <MaintenanceTable
               record={activeRecord}
-              isAdmin={canEditMaintenance || userRole === 'CoAdmin'}
+              isAdmin={isAdmin}
+              userRole={userRole}
+              currentAdminFlat={currentAdminFlat}
               dueDateDay={appState.dueDateDay || 10}
               onUpdateReadings={handleUpdateReadings}
               onSelectFlatPayment={(flatNo) => {
