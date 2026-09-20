@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
-import { Table, Building, Wrench, Contact, Megaphone, Landmark, BarChart2 } from 'lucide-react';
+import { Table, Building, Wrench, Contact, Megaphone, Landmark, BarChart2, Calendar, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import type { AppState, MonthMaintenanceRecord, FlatReading, WaterCalculationConfig, CommonExpenseItem, PaymentMode, PeriodicTask, ApartmentVendor, NoticeItem, CorpusFundConfig } from './types';
 import { loadAppState, fetchLatestCloudState, syncToCloudRemote } from './utils/storage';
 import { recalculateMonthRecord } from './utils/calculator';
@@ -271,6 +271,18 @@ export const App: React.FC = () => {
     ]
   };
 
+  const monthIds = Object.keys(appState.months);
+  const activeMonthIndex = monthIds.indexOf(appState.activeMonthId);
+  const hasPrevMonth = activeMonthIndex > 0;
+  const hasNextMonth = activeMonthIndex >= 0 && activeMonthIndex < monthIds.length - 1;
+
+  const totalCollected = activeRecord.flatReadings
+    .filter((f) => f.flatNo !== 'WM' && f.isOccupied)
+    .reduce((sum, f) => sum + f.paidAmount, 0);
+  const collectionPercentage = activeRecord.totalGrandCollectionTarget > 0
+    ? Math.round((totalCollected / activeRecord.totalGrandCollectionTarget) * 100)
+    : 0;
+
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       
@@ -282,12 +294,139 @@ export const App: React.FC = () => {
         isAdmin={isAdmin}
         currentAdminFlat={currentAdminFlat}
         onOpenAdminModal={() => setIsAdminModalOpen(true)}
-        onOpenNewMonthModal={() => setIsNewMonthModalOpen(true)}
-        onSelectMonth={handleSelectMonth}
       />
 
       {/* Main Container */}
       <main style={{ maxWidth: '1240px', width: '100%', margin: '0 auto', padding: '16px 16px 0 16px', flex: 1 }}>
+        
+        {/* Dedicated Month Filter & Navigation Control Bar */}
+        <div className="no-print" style={{
+          background: 'linear-gradient(135deg, #FFFFFF 0%, #F0F9FF 100%)',
+          border: '1.5px solid #B2D8E5',
+          borderRadius: '16px',
+          padding: '14px 18px',
+          marginBottom: '20px',
+          boxShadow: '0 4px 16px rgba(14, 90, 115, 0.08)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '12px',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              background: 'linear-gradient(135deg, #0E5A73 0%, #189AB4 100%)',
+              color: '#FFFFFF',
+              padding: '8px 14px',
+              borderRadius: '10px',
+              fontWeight: 700,
+              fontSize: '0.88rem',
+              boxShadow: '0 2px 8px rgba(14, 90, 115, 0.25)',
+            }}>
+              <Calendar size={18} color="#FFD166" />
+              <span>Maintenance Month:</span>
+              <select
+                value={appState.activeMonthId}
+                onChange={(e) => handleSelectMonth(e.target.value)}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.2)',
+                  border: '1px solid rgba(255, 255, 255, 0.4)',
+                  borderRadius: '6px',
+                  color: '#FFFFFF',
+                  fontWeight: 800,
+                  fontSize: '0.88rem',
+                  outline: 'none',
+                  padding: '3px 8px',
+                  cursor: 'pointer',
+                }}
+              >
+                {monthIds.map((id) => (
+                  <option key={id} value={id} style={{ color: '#0F172A', background: '#FFFFFF' }}>
+                    {appState.months[id]?.monthTitle || id}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Quick Prev / Next Month Nav Buttons */}
+            <div style={{ display: 'flex', gap: '6px' }}>
+              <button
+                disabled={!hasPrevMonth}
+                onClick={() => hasPrevMonth && handleSelectMonth(monthIds[activeMonthIndex - 1])}
+                style={{
+                  background: hasPrevMonth ? '#FFFFFF' : '#F1F5F9',
+                  border: '1px solid #CBD5E1',
+                  color: hasPrevMonth ? '#0077B6' : '#94A3B8',
+                  borderRadius: '8px',
+                  padding: '7px 12px',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  cursor: hasPrevMonth ? 'pointer' : 'not-allowed',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                }}
+              >
+                <ChevronLeft size={15} /> Prev Month
+              </button>
+
+              <button
+                disabled={!hasNextMonth}
+                onClick={() => hasNextMonth && handleSelectMonth(monthIds[activeMonthIndex + 1])}
+                style={{
+                  background: hasNextMonth ? '#FFFFFF' : '#F1F5F9',
+                  border: '1px solid #CBD5E1',
+                  color: hasNextMonth ? '#0077B6' : '#94A3B8',
+                  borderRadius: '8px',
+                  padding: '7px 12px',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  cursor: hasNextMonth ? 'pointer' : 'not-allowed',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                }}
+              >
+                Next Month <ChevronRight size={15} />
+              </button>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+            {/* Quick Month Collection Summary Pill */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              fontSize: '0.82rem',
+              color: '#0F172A',
+              background: '#E0F2FE',
+              border: '1px solid #BAE6FD',
+              padding: '6px 14px',
+              borderRadius: '10px',
+              fontWeight: 600,
+            }}>
+              <span>Target: <strong>₹{activeRecord.totalGrandCollectionTarget.toLocaleString('en-IN')}</strong></span>
+              <span style={{ color: '#94A3B8' }}>•</span>
+              <span>Collected: <strong style={{ color: '#059669' }}>₹{totalCollected.toLocaleString('en-IN')}</strong> ({collectionPercentage}%)</span>
+            </div>
+
+            {/* Admin Action for New Month */}
+            {isAdmin && (
+              <button
+                onClick={() => setIsNewMonthModalOpen(true)}
+                className="app-btn app-btn-primary"
+                style={{ padding: '7px 14px', fontSize: '0.82rem' }}
+                title="Create New Month Calculation Sheet"
+              >
+                <Plus size={15} /> Create New Month
+              </button>
+            )}
+          </div>
+        </div>
         
         {/* Navigation Tabs */}
         <nav className="chip-group" style={{ marginBottom: '20px' }}>
@@ -295,7 +434,7 @@ export const App: React.FC = () => {
             className={`chip ${activeTab === 'table' ? 'active' : ''}`}
             onClick={() => setActiveTab('table')}
           >
-            <Table size={15} /> Calculations Sheet Table
+            <Table size={15} /> 📊 Monthly Maintenance Sheet
           </button>
 
           <button

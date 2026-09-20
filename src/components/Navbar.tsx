@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { Share2, Download, Upload, Printer, Lock, Unlock, Calendar, Plus } from 'lucide-react';
+import { Share2, Download, Upload, Printer, Lock, Unlock } from 'lucide-react';
 import type { AppState } from '../types';
 import { exportAppStateJSON, importAppStateJSON } from '../utils/storage';
 import { generateWhatsAppMonthlySummary, openWhatsAppShareLink } from '../utils/whatsappFormatter';
@@ -11,8 +11,6 @@ interface NavbarProps {
   isAdmin: boolean;
   currentAdminFlat?: string;
   onOpenAdminModal: () => void;
-  onOpenNewMonthModal: () => void;
-  onSelectMonth: (monthId: string) => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -22,8 +20,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   isAdmin,
   currentAdminFlat,
   onOpenAdminModal,
-  onOpenNewMonthModal,
-  onSelectMonth,
 }) => {
   const jsonInputRef = useRef<HTMLInputElement>(null);
   const activeRecord = state.months[state.activeMonthId];
@@ -56,7 +52,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   const loggedInFlat = currentAdminFlat || '302';
-  const monthIds = Object.keys(state.months);
 
   return (
     <header className="navbar-container" style={{
@@ -104,56 +99,9 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         </div>
 
-        {/* Month Selector Dropdown & Actions */}
+        {/* Navbar Action Buttons */}
         <div className="no-print" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
           
-          {/* Active Month Dropdown */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(255, 255, 255, 0.15)', border: '1px solid rgba(255, 255, 255, 0.3)', borderRadius: '10px', padding: '4px 10px' }}>
-            <Calendar size={15} color="#FFD166" />
-            <select
-              value={state.activeMonthId}
-              onChange={(e) => onSelectMonth(e.target.value)}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: '#FFFFFF',
-                fontWeight: 700,
-                fontSize: '0.84rem',
-                outline: 'none',
-                cursor: 'pointer',
-              }}
-            >
-              {monthIds.map((id) => (
-                <option key={id} value={id} style={{ color: '#0F172A', background: '#FFFFFF' }}>
-                  {state.months[id]?.monthTitle || id}
-                </option>
-              ))}
-            </select>
-
-            {isAdmin && (
-              <button
-                onClick={onOpenNewMonthModal}
-                style={{
-                  background: '#FFD166',
-                  color: '#0E5A73',
-                  border: 'none',
-                  borderRadius: '6px',
-                  padding: '3px 8px',
-                  fontSize: '0.74rem',
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '3px',
-                  marginLeft: '4px',
-                }}
-                title="Create New Month Calculation"
-              >
-                <Plus size={13} /> New Month
-              </button>
-            )}
-          </div>
-
           {/* Share WhatsApp */}
           <button className="app-btn app-btn-whatsapp" onClick={handleShareSummaryWhatsApp} style={{ padding: '7px 12px', fontSize: '0.8rem' }}>
             <Share2 size={15} /> <span>Share</span>
