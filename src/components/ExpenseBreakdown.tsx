@@ -32,10 +32,21 @@ export const ExpenseBreakdown: React.FC<ExpenseBreakdownProps> = ({
   const [editExpName, setEditExpName] = useState('');
   const [editExpAmount, setEditExpAmount] = useState(0);
 
+  // Occupied living flats count
+  const occupiedFlats = record.flatReadings.filter((f) => f.flatNo !== 'WM' && f.isOccupied);
+  const occupiedCount = Math.max(1, occupiedFlats.length);
+
+  // Compute exact billable water units directly from flat readings
+  const totalConsumedUnits = record.flatReadings.reduce((sum, f) => sum + Math.max(0, f.currentReading - f.previousReading), 0);
+  const wmEntry = record.flatReadings.find((f) => f.flatNo === 'WM');
+  const wmUnits = wmEntry ? Math.max(0, wmEntry.currentReading - wmEntry.previousReading) : (record.waterConfig.watchmanUnits || 8);
+  const realNetUnits = Math.max(1, totalConsumedUnits > wmUnits ? totalConsumedUnits - wmUnits : (record.netBillableWaterUnits || 137));
+
   // Dynamic live auto-calculated unit rate computation
   const liveTankersTotal = Number(tankerCount) * Number(tankerRate);
-  const liveNetUnits = Math.max(1, record.netBillableWaterUnits || 137);
-  const liveAutoUnitRate = Math.round(liveTankersTotal / liveNetUnits) || 105;
+  const liveTotalWaterBill = liveTankersTotal + Number(panchayatBill);
+  const liveAutoUnitRate = Math.round(liveTankersTotal / realNetUnits) || 105;
+  const livePanchayatSharePerFlat = (Number(panchayatBill) / occupiedCount).toFixed(2);
 
   const handleSaveWaterConfig = (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,8 +106,7 @@ export const ExpenseBreakdown: React.FC<ExpenseBreakdownProps> = ({
     onUpdateCommonExpenses(updated);
   };
 
-  const occupiedCount = record.flatReadings.filter((f) => f.flatNo !== 'WM' && f.isOccupied).length;
-  const commonPerFlat = record.totalCommonMaintenance / (occupiedCount || 1);
+  const commonPerFlat = record.totalCommonMaintenance / occupiedCount;
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '20px', marginBottom: '32px' }}>
@@ -171,14 +181,17 @@ export const ExpenseBreakdown: React.FC<ExpenseBreakdownProps> = ({
             </div>
 
             {/* Auto Rate Live Preview / Manual Box */}
-            <div style={{ background: '#FDE68A', padding: '10px 12px', borderRadius: '10px', border: '1px solid #FCD34D', marginBottom: '12px', fontSize: '0.82rem' }}>
+            <div style={{ background: '#FDE68A', padding: '12px', borderRadius: '10px', border: '1px solid #FCD34D', marginBottom: '12px', fontSize: '0.82rem' }}>
               {useAutoRate ? (
                 <div>
-                  <div style={{ fontWeight: 800, color: '#92400E', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <Calculator size={14} /> Auto-Calculated Unit Rate: <span style={{ fontSize: '1rem', color: '#B45309' }}>₹{liveAutoUnitRate} / Unit</span>
+                  <div style={{ fontWeight: 800, color: '#92400E', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.94rem', marginBottom: '4px' }}>
+                    <Calculator size={15} /> Live Calculated Unit Rate: <span style={{ fontSize: '1.1rem', color: '#B45309' }}>₹{liveAutoUnitRate} / Unit</span>
                   </div>
-                  <div style={{ fontSize: '0.74rem', color: '#B45309', marginTop: '2px' }}>
-                    Formula: (Tanker Cost ₹{liveTankersTotal.toLocaleString('en-IN')}) ÷ {liveNetUnits} Billable Units = <strong>₹{liveAutoUnitRate}/unit</strong>
+                  <div style={{ fontSize: '0.78rem', color: '#B45309', lineHeight: 1.5 }}>
+                    • Total Water Supply Bill: ₹{panchayatBill} (Panchayat) + ₹{liveTankersTotal.toLocaleString('en-IN')} (Tankers) = <strong>₹{liveTotalWaterBill.toLocaleString('en-IN')}</strong><br />
+                    • Net Billable Units: {totalConsumedUnits} total - {wmUnits} (watchman) = <strong>{realNetUnits} Units</strong><br />
+                    • Water Unit Rate Formula: ₹{liveTankersTotal.toLocaleString('en-IN')} ÷ {realNetUnits} Units = <strong>₹{liveAutoUnitRate} / Unit</strong><br />
+                    • Panchayat Share Formula: ₹{panchayatBill} ÷ {occupiedCount} Living Flats = <strong>₹{livePanchayatSharePerFlat} / Flat</strong>
                   </div>
                 </div>
               ) : (
@@ -208,13 +221,14 @@ export const ExpenseBreakdown: React.FC<ExpenseBreakdownProps> = ({
           <div>
             {/* Highlighted Yellow Box Formula matching Excel */}
             <div style={{ padding: '14px', borderRadius: '12px', background: '#FDE68A', border: '1px solid #FCD34D', marginBottom: '14px' }}>
-              <div style={{ fontSize: '0.86rem', fontWeight: 800, color: '#78350F', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Calculator size={16} color="#B45309" /> Auto-Calculated Water Unit Rate:
+              <div style={{ fontSize: '0.86rem', fontWeight: 800, color: '#78350F', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Calculator size={16} color="#B45309" /> Auto-Calculated Water Unit Rate & Shares:
               </div>
               <div style={{ fontSize: '0.82rem', color: '#92400E', lineHeight: 1.5 }}>
-                Total Tankers Cost = <strong>₹{(record.waterConfig.municipalTankerCount * record.waterConfig.municipalTankerRate).toLocaleString('en-IN')}</strong> ({record.waterConfig.municipalTankerCount} tankers × ₹{record.waterConfig.municipalTankerRate})<br />
-                Net Water Units = <strong>{record.totalUnitsConsumed} - 8 (watchman) = {record.netBillableWaterUnits} units</strong><br />
-                Unit Rate = <strong>₹{(record.waterConfig.municipalTankerCount * record.waterConfig.municipalTankerRate).toLocaleString('en-IN')} ÷ {record.netBillableWaterUnits}</strong> = <strong style={{ fontSize: '1.05rem', color: '#B45309' }}>₹{record.calculatedUnitRate} / Unit</strong>
+                • Panchayat Water Bill: ₹{record.waterConfig.panchayatWaterBill.toLocaleString('en-IN')} ÷ {occupiedCount} Living Flats = <strong>₹{(record.waterConfig.panchayatWaterBill / occupiedCount).toFixed(2)} / Flat</strong><br />
+                • Municipal Tankers: {record.waterConfig.municipalTankerCount} tankers × ₹{record.waterConfig.municipalTankerRate} = <strong>₹{(record.waterConfig.municipalTankerCount * record.waterConfig.municipalTankerRate).toLocaleString('en-IN')}</strong><br />
+                • Net Water Units: {record.totalUnitsConsumed} total - {wmUnits} (watchman) = <strong>{realNetUnits} Units</strong><br />
+                • Calculated Water Unit Rate = ₹{(record.waterConfig.municipalTankerCount * record.waterConfig.municipalTankerRate).toLocaleString('en-IN')} ÷ {realNetUnits} Units = <strong style={{ fontSize: '1.05rem', color: '#B45309' }}>₹{record.calculatedUnitRate} / Unit</strong>
               </div>
             </div>
 
