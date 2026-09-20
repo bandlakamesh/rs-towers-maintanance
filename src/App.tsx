@@ -597,24 +597,13 @@ export const App: React.FC = () => {
 
         {/* Tab 3: Flat Occupants & Directory */}
         {activeTab === 'occupants' && (
-          <>
-            <ApartmentCommittee
-              committeeMembers={appState.committeeMembers || INITIAL_APP_STATE.committeeMembers || []}
-              userRole={userRole}
-              isAdmin={isAdmin}
-              onAddMember={handleAddCommitteeMember}
-              onUpdateMember={handleUpdateCommitteeMember}
-              onDeleteMember={handleDeleteCommitteeMember}
-            />
-
-            <FlatOccupantsDirectory
-              record={activeRecord}
-              isAdmin={isAdmin}
-              userRole={userRole}
-              onUpdateReadings={handleUpdateReadings}
-              onOpenAdminModal={() => setIsAdminModalOpen(true)}
-            />
-          </>
+          <FlatOccupantsDirectory
+            record={activeRecord}
+            isAdmin={isAdmin}
+            userRole={userRole}
+            onUpdateReadings={handleUpdateReadings}
+            onOpenAdminModal={() => setIsAdminModalOpen(true)}
+          />
         )}
 
         {/* Tab 4: Executive Committee Dedicated Tab */}
