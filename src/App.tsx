@@ -296,48 +296,15 @@ export const App: React.FC = () => {
       <main style={{ maxWidth: '1240px', width: '100%', margin: '0 auto', padding: '16px 16px 0 16px', flex: 1 }}>
         
         {/* Dedicated Month Filter & Control Bar */}
-        <div className="no-print" style={{
-          background: 'linear-gradient(135deg, #FFFFFF 0%, #F0F9FF 100%)',
-          border: '1.5px solid #B2D8E5',
-          borderRadius: '16px',
-          padding: '14px 18px',
-          marginBottom: '20px',
-          boxShadow: '0 4px 16px rgba(14, 90, 115, 0.08)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: '12px',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              background: 'linear-gradient(135deg, #0E5A73 0%, #189AB4 100%)',
-              color: '#FFFFFF',
-              padding: '8px 14px',
-              borderRadius: '10px',
-              fontWeight: 700,
-              fontSize: '0.88rem',
-              boxShadow: '0 2px 8px rgba(14, 90, 115, 0.25)',
-            }}>
-              <Calendar size={18} color="#FFD166" />
-              <span>Maintenance Month:</span>
+        <div className="month-control-bar no-print">
+          <div className="month-pill-group">
+            <div className="month-pill">
+              <Calendar size={18} color="#FFD166" style={{ flexShrink: 0 }} />
+              <span className="month-label">Maintenance Month:</span>
               <select
                 value={appState.activeMonthId}
                 onChange={(e) => handleSelectMonth(e.target.value)}
-                style={{
-                  background: 'rgba(255, 255, 255, 0.2)',
-                  border: '1px solid rgba(255, 255, 255, 0.4)',
-                  borderRadius: '6px',
-                  color: '#FFFFFF',
-                  fontWeight: 800,
-                  fontSize: '0.88rem',
-                  outline: 'none',
-                  padding: '3px 8px',
-                  cursor: 'pointer',
-                }}
+                className="month-select"
               >
                 {monthIds.map((id) => (
                   <option key={id} value={id} style={{ color: '#0F172A', background: '#FFFFFF' }}>
@@ -348,22 +315,11 @@ export const App: React.FC = () => {
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          <div className="month-actions-group">
             {/* Quick Month Collection Summary Pill */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              fontSize: '0.82rem',
-              color: '#0F172A',
-              background: '#E0F2FE',
-              border: '1px solid #BAE6FD',
-              padding: '6px 14px',
-              borderRadius: '10px',
-              fontWeight: 600,
-            }}>
+            <div className="month-kpi-pill">
               <span>Target: <strong>₹{activeRecord.totalGrandCollectionTarget.toLocaleString('en-IN')}</strong></span>
-              <span style={{ color: '#94A3B8' }}>•</span>
+              <span>•</span>
               <span>Collected: <strong style={{ color: '#059669' }}>₹{totalCollected.toLocaleString('en-IN')}</strong> ({collectionPercentage}%)</span>
             </div>
 
@@ -371,7 +327,7 @@ export const App: React.FC = () => {
             {isAdmin && (
               <button
                 onClick={() => setIsNewMonthModalOpen(true)}
-                className="app-btn app-btn-primary"
+                className="app-btn app-btn-primary month-new-btn"
                 style={{ padding: '7px 14px', fontSize: '0.82rem' }}
                 title="Create New Month Calculation Sheet"
               >

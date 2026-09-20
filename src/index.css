@@ -39,6 +39,18 @@
   box-sizing: border-box;
 }
 
+html, body {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+#root {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 body {
   background-color: var(--bg-main);
   background-image: 
@@ -294,6 +306,196 @@ h1, h2, h3, h4, h5, h6 {
   font-size: 0.78rem;
   color: var(--text-secondary);
   margin: 0;
+}
+
+/* Month Control Bar Layout & Mobile Optimization */
+.month-control-bar {
+  background: linear-gradient(135deg, #FFFFFF 0%, #F0F9FF 100%);
+  border: 1.5px solid #B2D8E5;
+  border-radius: 16px;
+  padding: 14px 18px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 16px rgba(14, 90, 115, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.month-pill-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  max-width: 100%;
+}
+
+.month-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #0E5A73 0%, #189AB4 100%);
+  color: #FFFFFF;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.88rem;
+  box-shadow: 0 2px 8px rgba(14, 90, 115, 0.25);
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.month-label {
+  white-space: nowrap;
+}
+
+.month-select {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 6px;
+  color: #FFFFFF;
+  font-weight: 800;
+  font-size: 0.88rem;
+  outline: none;
+  padding: 3px 8px;
+  cursor: pointer;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.month-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  max-width: 100%;
+}
+
+.month-kpi-pill {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.82rem;
+  color: #0F172A;
+  background: #E0F2FE;
+  border: 1px solid #BAE6FD;
+  padding: 6px 14px;
+  border-radius: 10px;
+  font-weight: 600;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Mobile Media Queries (Pixel 10 & Smartphone Screens) */
+@media (max-width: 640px) {
+  body {
+    padding-bottom: 40px;
+  }
+
+  main {
+    padding: 10px 8px 0 8px !important;
+  }
+
+  .app-card {
+    padding: 14px !important;
+    border-radius: 14px !important;
+  }
+
+  .navbar-container {
+    padding: 8px 10px !important;
+  }
+
+  .navbar-inner {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px !important;
+  }
+
+  .navbar-brand {
+    justify-content: flex-start;
+  }
+
+  .navbar-actions-group {
+    width: 100%;
+    display: flex;
+    gap: 6px !important;
+    justify-content: space-between;
+  }
+
+  .navbar-actions-group .app-btn {
+    padding: 6px 8px !important;
+    font-size: 0.74rem !important;
+    flex: 1;
+    justify-content: center;
+  }
+
+  /* Month Control Bar Responsive Stack */
+  .month-control-bar {
+    padding: 12px !important;
+    border-radius: 14px !important;
+    gap: 10px !important;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .month-pill-group {
+    width: 100%;
+  }
+
+  .month-pill {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 10px 12px !important;
+    gap: 6px !important;
+  }
+
+  .month-label {
+    font-size: 0.78rem;
+    color: #FFD166;
+  }
+
+  .month-select {
+    width: 100%;
+    max-width: 100%;
+    font-size: 0.82rem;
+    padding: 6px 8px !important;
+    background: rgba(255, 255, 255, 0.25);
+  }
+
+  .month-actions-group {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px !important;
+  }
+
+  .month-kpi-pill {
+    width: 100%;
+    justify-content: space-between;
+    font-size: 0.76rem !important;
+    padding: 8px 10px !important;
+  }
+
+  .month-new-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .chip-group {
+    padding-bottom: 8px;
+  }
+
+  .chip {
+    padding: 6px 12px;
+    font-size: 0.78rem;
+  }
 }
 
 /* Print Styles for PDF Export matching Excel layout */

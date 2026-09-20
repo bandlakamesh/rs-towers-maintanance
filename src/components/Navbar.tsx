@@ -64,17 +64,18 @@ export const Navbar: React.FC<NavbarProps> = ({
       top: 0,
       zIndex: 900,
     }}>
-      <div style={{ maxWidth: '1240px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+      <div className="navbar-inner">
         
         {/* Brand Logo & Title */}
         <div
+          className="navbar-brand"
           onClick={onGoHome}
           style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: onGoHome ? 'pointer' : 'default', userSelect: 'none' }}
           title="Go to Maintenance Dashboard"
         >
           <div style={{
-            width: '42px',
-            height: '42px',
+            width: '40px',
+            height: '40px',
             borderRadius: '50%',
             background: 'linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%)',
             border: '2px solid #FDBA74',
@@ -82,25 +83,25 @@ export const Navbar: React.FC<NavbarProps> = ({
             alignItems: 'center',
             justifyContent: 'center',
             boxShadow: '0 4px 12px rgba(245, 158, 11, 0.35)',
-            fontSize: '1.3rem',
+            fontSize: '1.2rem',
             flexShrink: 0,
           }}>
             🏢
           </div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <h1 style={{ fontSize: '1.2rem', margin: 0, letterSpacing: '-0.3px', fontWeight: 800, color: '#FFFFFF' }}>
+              <h1 className="navbar-brand-title" style={{ fontSize: '1.2rem', margin: 0, letterSpacing: '-0.3px', fontWeight: 800, color: '#FFFFFF' }}>
                 RS Towers <span style={{ color: '#FFD166' }}>Maintenance</span>
               </h1>
             </div>
-            <p style={{ margin: 0, fontSize: '0.72rem', color: '#E0F2FE' }}>
+            <p className="navbar-brand-sub" style={{ margin: 0, fontSize: '0.72rem', color: '#E0F2FE' }}>
               Monthly Water Reading & Building Expenses Calculator
             </p>
           </div>
         </div>
 
         {/* Navbar Action Buttons */}
-        <div className="no-print" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+        <div className="navbar-actions-group no-print" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
           
           {/* Share WhatsApp */}
           <button className="app-btn app-btn-whatsapp" onClick={handleShareSummaryWhatsApp} style={{ padding: '7px 12px', fontSize: '0.8rem' }}>
