@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
-import { Table, Wrench, Contact, Megaphone, Landmark, BarChart2, Calendar, Plus } from 'lucide-react';
+import { Table, Wrench, Contact, Megaphone, Landmark, BarChart2, Calendar, Plus, UserCheck } from 'lucide-react';
 import type { AppState, MonthMaintenanceRecord, FlatReading, WaterCalculationConfig, CommonExpenseItem, PaymentMode, PeriodicTask, ApartmentVendor, NoticeItem, CorpusFundConfig } from './types';
 import { loadAppState, fetchLatestCloudState, syncToCloudRemote } from './utils/storage';
 import { recalculateMonthRecord } from './utils/calculator';
@@ -8,6 +8,7 @@ import { recalculateMonthRecord } from './utils/calculator';
 import { Navbar } from './components/Navbar';
 import { MaintenanceTable } from './components/MaintenanceTable';
 import { ExpenseBreakdown } from './components/ExpenseBreakdown';
+import { FlatOccupantsDirectory } from './components/FlatOccupantsDirectory';
 import { PaymentModal } from './components/PaymentModal';
 import { AdminPinModal } from './components/AdminPinModal';
 import { MonthSelectorModal } from './components/MonthSelectorModal';
@@ -20,7 +21,7 @@ import { subscribeToFirebaseState } from './utils/firebaseStorage';
 
 export const App: React.FC = () => {
   const [appState, setAppState] = useState<AppState>(() => loadAppState());
-  const [activeTab, setActiveTab] = useState<'table' | 'analytics' | 'corpus' | 'amc' | 'vendors' | 'notices'>('table');
+  const [activeTab, setActiveTab] = useState<'table' | 'analytics' | 'occupants' | 'corpus' | 'amc' | 'vendors' | 'notices'>('table');
 
   // Role Security State
   const [isAdmin, setIsAdmin] = useState<boolean>(() => localStorage.getItem('rs_towers_maint_is_admin') === 'true');
@@ -354,6 +355,13 @@ export const App: React.FC = () => {
           </button>
 
           <button
+            className={`chip ${activeTab === 'occupants' ? 'active' : ''}`}
+            onClick={() => setActiveTab('occupants')}
+          >
+            <UserCheck size={15} /> 👥 Flat Owners & Tenants Directory
+          </button>
+
+          <button
             className={`chip ${activeTab === 'corpus' ? 'active' : ''}`}
             onClick={() => setActiveTab('corpus')}
           >
@@ -410,6 +418,15 @@ export const App: React.FC = () => {
           <AnalyticsDashboard
             appState={appState}
             activeRecord={activeRecord}
+          />
+        )}
+
+        {/* Tab 3: Flat Occupants & Directory */}
+        {activeTab === 'occupants' && (
+          <FlatOccupantsDirectory
+            record={activeRecord}
+            isAdmin={isAdmin}
+            onUpdateReadings={handleUpdateReadings}
           />
         )}
 
