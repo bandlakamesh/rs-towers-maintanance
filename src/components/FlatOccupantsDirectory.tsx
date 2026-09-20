@@ -7,6 +7,7 @@ interface FlatOccupantsDirectoryProps {
   isAdmin: boolean;
   userRole?: UserRole;
   onUpdateReadings: (updatedReadings: FlatReading[]) => void;
+  onUpdateDirectory?: (updatedReadings: FlatReading[]) => void;
   onOpenAdminModal?: () => void;
 }
 
@@ -52,6 +53,7 @@ export const FlatOccupantsDirectory: React.FC<FlatOccupantsDirectoryProps> = ({
   isAdmin,
   userRole = 'PublicResident',
   onUpdateReadings,
+  onUpdateDirectory,
   onOpenAdminModal,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -138,7 +140,11 @@ export const FlatOccupantsDirectory: React.FC<FlatOccupantsDirectoryProps> = ({
       return f;
     });
 
-    onUpdateReadings(updated);
+    if (onUpdateDirectory) {
+      onUpdateDirectory(updated);
+    } else {
+      onUpdateReadings(updated);
+    }
     setEditingFlat(null);
   };
 
@@ -605,121 +611,284 @@ export const FlatOccupantsDirectory: React.FC<FlatOccupantsDirectoryProps> = ({
 
       {/* Edit Resident & Owner Modal for Admin */}
       {editingFlat && (
-        <div className="modal-overlay" onClick={() => setEditingFlat(null)}>
-          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', borderBottom: '1px solid #E2E8F0', paddingBottom: '10px' }}>
-              <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: '#0096C7', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Shield size={18} /> Edit Flat #{editingFlat.flatNo} Owner & Occupant Details
-              </h3>
+        <div
+          className="modal-overlay"
+          onClick={() => setEditingFlat(null)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(15, 23, 42, 0.75)',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px',
+            zIndex: 9999,
+          }}
+        >
+          <div
+            className="modal-container"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: '520px',
+              width: '100%',
+              background: '#FFFFFF',
+              borderRadius: '24px',
+              boxShadow: '0 25px 50px -12px rgba(15, 23, 42, 0.4)',
+              border: '1px solid #CBD5E1',
+              maxHeight: '90vh',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+              position: 'relative',
+              zIndex: 10000,
+            }}
+          >
+            {/* Modal Header Banner */}
+            <div
+              style={{
+                background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
+                padding: '18px 22px',
+                color: '#FFFFFF',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div
+                  style={{
+                    width: '38px',
+                    height: '38px',
+                    borderRadius: '10px',
+                    background: 'rgba(56, 189, 248, 0.15)',
+                    border: '1px solid rgba(56, 189, 248, 0.3)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#38BDF8',
+                    flexShrink: 0,
+                  }}
+                >
+                  <Shield size={20} />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#F8FAFC' }}>
+                    Edit Flat #{editingFlat.flatNo} Details
+                  </h3>
+                  <span style={{ fontSize: '0.76rem', color: '#94A3B8' }}>
+                    Real Owner & Occupant Roster Info
+                  </span>
+                </div>
+              </div>
+
               <button
                 onClick={() => setEditingFlat(null)}
-                style={{ background: '#F1F5F9', border: 'none', borderRadius: '50%', width: '28px', height: '28px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.12)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  color: '#FFFFFF',
+                  borderRadius: '50%',
+                  width: '32px',
+                  height: '32px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+                title="Close"
               >
-                <X size={15} />
+                <X size={16} />
               </button>
             </div>
 
-            <form onSubmit={handleSaveEdit}>
-              {/* Real Owner Section */}
-              <div style={{ background: '#FEF3C7', border: '1px solid #FDE68A', padding: '12px', borderRadius: '10px', marginBottom: '14px' }}>
-                <h4 style={{ margin: '0 0 10px 0', fontSize: '0.86rem', color: '#92400E', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                  <Crown size={15} /> Real Flat Owner Information
-                </h4>
+            {/* Modal Body */}
+            <div style={{ padding: '22px', overflowY: 'auto', flex: 1 }}>
+              <form onSubmit={handleSaveEdit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                 
-                <div className="form-group" style={{ marginBottom: '8px' }}>
-                  <label style={{ fontSize: '0.8rem', color: '#78350F' }}>Flat Owner Name:</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={editOwnerName}
-                    onChange={(e) => setEditOwnerName(e.target.value)}
-                    placeholder="e.g. Ramesh"
-                    required
-                  />
-                </div>
-
-                <div className="form-group" style={{ margin: 0 }}>
-                  <label style={{ fontSize: '0.8rem', color: '#78350F' }}>Owner Mobile Number:</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={editOwnerPhone}
-                    onChange={(e) => setEditOwnerPhone(e.target.value)}
-                    placeholder="e.g. 9849040201"
-                    required
-                  />
-                </div>
-              </div>
-
-              {/* Occupant Settings */}
-              <div className="form-group">
-                <label>Occupancy Status:</label>
-                <select
-                  className="form-control"
-                  value={editType}
-                  onChange={(e: any) => setEditType(e.target.value)}
+                {/* Real Owner Section */}
+                <div
+                  style={{
+                    background: '#FEF3C7',
+                    border: '1.5px solid #FDE68A',
+                    padding: '14px',
+                    borderRadius: '14px',
+                  }}
                 >
-                  <option value="Owner">👑 Self-Occupied Owner</option>
-                  <option value="Tenant">🏠 Rented to Tenant</option>
-                </select>
-              </div>
-
-              {/* Tenant Section if Rented */}
-              {editType === 'Tenant' && (
-                <div style={{ background: '#F5F3FF', border: '1px solid #DDD6FE', padding: '12px', borderRadius: '10px', marginBottom: '14px' }}>
-                  <h4 style={{ margin: '0 0 10px 0', fontSize: '0.86rem', color: '#5B21B6', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <Home size={15} /> Current Tenant (Occupant) Details
+                  <h4
+                    style={{
+                      margin: '0 0 10px 0',
+                      fontSize: '0.88rem',
+                      fontWeight: 800,
+                      color: '#92400E',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                    }}
+                  >
+                    <Crown size={16} color="#D97706" /> Real Flat Owner Information
                   </h4>
-
-                  <div className="form-group" style={{ marginBottom: '8px' }}>
-                    <label style={{ fontSize: '0.8rem', color: '#6D28D9' }}>Tenant Name:</label>
+                  
+                  <div className="form-group" style={{ marginBottom: '10px' }}>
+                    <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#78350F', display: 'block', marginBottom: '4px' }}>
+                      Flat Owner Name *
+                    </label>
                     <input
                       type="text"
                       className="form-control"
-                      value={editResidentName}
-                      onChange={(e) => setEditResidentName(e.target.value)}
-                      placeholder="e.g. Ujwala"
+                      value={editOwnerName}
+                      onChange={(e) => setEditOwnerName(e.target.value)}
+                      placeholder="e.g. Ramesh"
                       required
+                      style={{ background: '#FFFFFF', border: '1.5px solid #FCD34D', padding: '9px 12px', fontSize: '0.9rem' }}
                     />
                   </div>
 
                   <div className="form-group" style={{ margin: 0 }}>
-                    <label style={{ fontSize: '0.8rem', color: '#6D28D9' }}>Tenant Mobile Number:</label>
+                    <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#78350F', display: 'block', marginBottom: '4px' }}>
+                      Owner Mobile Number *
+                    </label>
                     <input
                       type="text"
                       className="form-control"
-                      value={editTenantPhone}
-                      onChange={(e) => setEditTenantPhone(e.target.value)}
-                      placeholder="e.g. 9849040200"
+                      value={editOwnerPhone}
+                      onChange={(e) => setEditOwnerPhone(e.target.value)}
+                      placeholder="e.g. 9849040201"
                       required
+                      style={{ background: '#FFFFFF', border: '1.5px solid #FCD34D', padding: '9px 12px', fontSize: '0.9rem' }}
                     />
                   </div>
                 </div>
-              )}
 
-              <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
-                <input
-                  type="checkbox"
-                  id="chkOccupied"
-                  checked={editOccupied}
-                  onChange={(e) => setEditOccupied(e.target.checked)}
-                  style={{ width: '16px', height: '16px', cursor: 'pointer' }}
-                />
-                <label htmlFor="chkOccupied" style={{ margin: 0, cursor: 'pointer', fontWeight: 700, color: '#0F172A' }}>
-                  Flat is currently Occupied
-                </label>
-              </div>
+                {/* Occupant Settings */}
+                <div>
+                  <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1E293B', display: 'block', marginBottom: '4px' }}>
+                    Occupancy Status *
+                  </label>
+                  <select
+                    className="form-control"
+                    value={editType}
+                    onChange={(e: any) => setEditType(e.target.value)}
+                    style={{ padding: '9px 12px', fontSize: '0.88rem', background: '#F8FAFC', border: '1.5px solid #CBD5E1' }}
+                  >
+                    <option value="Owner">👑 Self-Occupied Owner</option>
+                    <option value="Tenant">🏠 Rented to Tenant</option>
+                  </select>
+                </div>
 
-              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '18px' }}>
-                <button type="button" className="app-btn app-btn-secondary" onClick={() => setEditingFlat(null)} style={{ padding: '7px 14px', fontSize: '0.82rem' }}>
-                  Cancel
-                </button>
-                <button type="submit" className="app-btn app-btn-primary" style={{ padding: '7px 16px', fontSize: '0.82rem' }}>
-                  <Check size={16} /> Save Details
-                </button>
-              </div>
-            </form>
+                {/* Tenant Section if Rented */}
+                {editType === 'Tenant' && (
+                  <div
+                    style={{
+                      background: '#F5F3FF',
+                      border: '1.5px solid #DDD6FE',
+                      padding: '14px',
+                      borderRadius: '14px',
+                    }}
+                  >
+                    <h4
+                      style={{
+                        margin: '0 0 10px 0',
+                        fontSize: '0.88rem',
+                        fontWeight: 800,
+                        color: '#5B21B6',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                      }}
+                    >
+                      <Home size={16} color="#7C3AED" /> Current Tenant (Occupant) Details
+                    </h4>
 
+                    <div className="form-group" style={{ marginBottom: '10px' }}>
+                      <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#6D28D9', display: 'block', marginBottom: '4px' }}>
+                        Tenant Name *
+                      </label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        value={editResidentName}
+                        onChange={(e) => setEditResidentName(e.target.value)}
+                        placeholder="e.g. Ujwala"
+                        required
+                        style={{ background: '#FFFFFF', border: '1.5px solid #C4B5FD', padding: '9px 12px', fontSize: '0.9rem' }}
+                      />
+                    </div>
+
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#6D28D9', display: 'block', marginBottom: '4px' }}>
+                        Tenant Mobile Number *
+                      </label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        value={editTenantPhone}
+                        onChange={(e) => setEditTenantPhone(e.target.value)}
+                        placeholder="e.g. 9849040200"
+                        required
+                        style={{ background: '#FFFFFF', border: '1.5px solid #C4B5FD', padding: '9px 12px', fontSize: '0.9rem' }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    background: '#F8FAFC',
+                    padding: '10px 14px',
+                    borderRadius: '10px',
+                    border: '1px solid #E2E8F0',
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    id="chkOccupied"
+                    checked={editOccupied}
+                    onChange={(e) => setEditOccupied(e.target.checked)}
+                    style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                  />
+                  <label htmlFor="chkOccupied" style={{ margin: 0, cursor: 'pointer', fontWeight: 700, color: '#0F172A', fontSize: '0.86rem' }}>
+                    Flat is currently Occupied
+                  </label>
+                </div>
+
+                <div
+                  style={{
+                    display: 'flex',
+                    gap: '10px',
+                    justifyContent: 'flex-end',
+                    marginTop: '8px',
+                    paddingTop: '14px',
+                    borderTop: '1px solid #E2E8F0',
+                  }}
+                >
+                  <button
+                    type="button"
+                    className="app-btn app-btn-secondary"
+                    onClick={() => setEditingFlat(null)}
+                    style={{ padding: '8px 18px', fontSize: '0.85rem' }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="app-btn app-btn-primary"
+                    style={{ padding: '8px 20px', fontSize: '0.85rem' }}
+                  >
+                    <Check size={16} /> Save Details
+                  </button>
+                </div>
+
+              </form>
+            </div>
           </div>
         </div>
       )}

@@ -5,12 +5,31 @@ import { maskPhoneNumber } from '../utils/whatsappFormatter';
 
 interface ApartmentCommitteeProps {
   committeeMembers: CommitteeMember[];
+  flatReadings?: any[];
   userRole: UserRole;
   isAdmin: boolean;
   onAddMember: (member: CommitteeMember) => void;
   onUpdateMember: (member: CommitteeMember) => void;
   onDeleteMember: (id: string) => void;
 }
+
+const RESIDENT_ROSTER: Record<string, { name: string; phone: string; email: string }> = {
+  '101': { name: 'Bobby', phone: '9963275455', email: 'bobby.flat101@rstowers.org' },
+  '102': { name: 'Suresh', phone: '9849010201', email: 'suresh.flat102@rstowers.org' },
+  '103': { name: 'Balaji', phone: '9849010300', email: 'balaji.flat103@rstowers.org' },
+  '201': { name: 'Naveen Varma', phone: '9849020100', email: 'naveen.varma@rstowers.org' },
+  '202': { name: 'Subba Rao', phone: '9849020201', email: 'subbarao.flat202@rstowers.org' },
+  '203': { name: 'Harshavardhan', phone: '9849020300', email: 'harsha.flat203@rstowers.org' },
+  '301': { name: 'Yugandhar', phone: '9849030100', email: 'yugandhar.flat301@rstowers.org' },
+  '302': { name: 'Kamesh Bandla', phone: '9849030200', email: 'kamesh.bandla@rstowers.org' },
+  '303': { name: 'Sharath Babu', phone: '9849030300', email: 'sharath.flat303@rstowers.org' },
+  '401': { name: 'Arun', phone: '9849040100', email: 'arun.flat401@rstowers.org' },
+  '402': { name: 'Ramesh', phone: '9849040201', email: 'ramesh.flat402@rstowers.org' },
+  '403': { name: 'Ravi Shankar', phone: '9849040300', email: 'ravishankar.flat403@rstowers.org' },
+  '501': { name: 'Srikanth', phone: '9849050100', email: 'srikanth.flat501@rstowers.org' },
+  '502': { name: 'Prasanna', phone: '9849050200', email: 'prasanna.flat502@rstowers.org' },
+  '503': { name: 'Venkateswara Rao', phone: '9849050300', email: 'venkatesh.flat503@rstowers.org' },
+};
 
 export const ApartmentCommittee: React.FC<ApartmentCommitteeProps> = ({
   committeeMembers,
@@ -32,17 +51,30 @@ export const ApartmentCommittee: React.FC<ApartmentCommitteeProps> = ({
   const [termPeriod, setTermPeriod] = useState('2025 - 2027');
   const [photoUrl, setPhotoUrl] = useState('');
   const [responsibilitiesText, setResponsibilitiesText] = useState('');
+  const [selectedRosterKey, setSelectedRosterKey] = useState<string>('101');
 
   const canEdit = userRole === 'RootAdmin' || userRole === 'MaintenanceLead';
   const isPublicViewer = !isAdmin;
 
+  const handleSelectRosterMember = (key: string) => {
+    setSelectedRosterKey(key);
+    if (key && RESIDENT_ROSTER[key]) {
+      const info = RESIDENT_ROSTER[key];
+      setName(info.name);
+      setFlatNo(key);
+      setPhone(info.phone);
+      setEmail(info.email);
+    }
+  };
+
   const handleOpenAdd = () => {
     setEditingMember(null);
-    setName('');
+    setSelectedRosterKey('101');
+    setName('Bobby');
     setDesignation('Executive Member');
     setFlatNo('101');
-    setPhone('9849000000');
-    setEmail('');
+    setPhone('9963275455');
+    setEmail('bobby.flat101@rstowers.org');
     setTermPeriod('2025 - 2027');
     setPhotoUrl('');
     setResponsibilitiesText('Building Operations & Resident Support');
@@ -59,6 +91,7 @@ export const ApartmentCommittee: React.FC<ApartmentCommitteeProps> = ({
     setTermPeriod(m.termPeriod || '2025 - 2027');
     setPhotoUrl(m.photoUrl || '');
     setResponsibilitiesText(m.responsibilities ? m.responsibilities.join('\n') : '');
+    setSelectedRosterKey(m.flatNo);
     setIsModalOpen(true);
   };
 
@@ -550,29 +583,56 @@ export const ApartmentCommittee: React.FC<ApartmentCommitteeProps> = ({
                     <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1E293B', display: 'block', marginBottom: '6px' }}>
                       Full Name *
                     </label>
-                    <input
-                      type="text"
+                    <select
                       className="form-control"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="e.g. Kamesh Bandla"
-                      required
-                      style={{ padding: '10px 14px', fontSize: '0.9rem', background: '#F8FAFC', border: '1.5px solid #CBD5E1' }}
-                    />
+                      value={selectedRosterKey}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === 'CUSTOM') {
+                          setSelectedRosterKey('CUSTOM');
+                        } else {
+                          handleSelectRosterMember(val);
+                        }
+                      }}
+                      style={{ padding: '10px 14px', fontSize: '0.88rem', background: '#F8FAFC', border: '1.5px solid #CBD5E1', marginBottom: selectedRosterKey === 'CUSTOM' ? '6px' : 0 }}
+                    >
+                      {Object.keys(RESIDENT_ROSTER).map((fNum) => (
+                        <option key={fNum} value={fNum}>
+                          {RESIDENT_ROSTER[fNum].name} (Flat #{fNum})
+                        </option>
+                      ))}
+                      <option value="CUSTOM">✏️ Custom / Other Name...</option>
+                    </select>
+
+                    {selectedRosterKey === 'CUSTOM' && (
+                      <input
+                        type="text"
+                        className="form-control"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="Enter full name"
+                        required
+                        style={{ padding: '8px 12px', fontSize: '0.86rem', marginTop: '6px' }}
+                      />
+                    )}
                   </div>
+
                   <div>
                     <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1E293B', display: 'block', marginBottom: '6px' }}>
                       Flat # *
                     </label>
-                    <input
-                      type="text"
+                    <select
                       className="form-control"
                       value={flatNo}
-                      onChange={(e) => setFlatNo(e.target.value)}
-                      placeholder="e.g. 302"
-                      required
-                      style={{ padding: '10px 14px', fontSize: '0.9rem', background: '#F8FAFC', border: '1.5px solid #CBD5E1' }}
-                    />
+                      onChange={(e) => handleSelectRosterMember(e.target.value)}
+                      style={{ padding: '10px 14px', fontSize: '0.88rem', background: '#F8FAFC', border: '1.5px solid #CBD5E1' }}
+                    >
+                      {Object.keys(RESIDENT_ROSTER).map((fNum) => (
+                        <option key={fNum} value={fNum}>
+                          Flat #{fNum}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
 

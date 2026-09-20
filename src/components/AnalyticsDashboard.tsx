@@ -324,23 +324,23 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
 
       {/* Row 3: Historical Month-over-Month Water Trend SVG Chart */}
       <div className="app-card">
-        <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F172A', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F172A', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <BarChart3 size={18} color="#0096C7" /> Month-over-Month Water Consumption Trend
         </h3>
 
-        <div style={{ display: 'flex', alignItems: 'flex-end', gap: '20px', height: '160px', padding: '10px 10px 0 10px', borderBottom: '2px solid #CBD5E1', overflowX: 'auto' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: '24px', height: '180px', paddingTop: '28px', paddingBottom: '10px', borderBottom: '2px solid #CBD5E1', overflowX: 'auto' }}>
           {historicalTrend.map((item) => {
-            const heightPct = Math.max(15, Math.round((item.totalUnits / maxUnits) * 120));
+            const heightPct = Math.max(20, Math.round((item.totalUnits / maxUnits) * 95));
 
             return (
-              <div key={item.monthId} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, minWidth: '70px' }}>
-                <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#0077B6', marginBottom: '4px' }}>
+              <div key={item.monthId} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, minWidth: '75px' }}>
+                <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#0077B6', marginBottom: '6px' }}>
                   {item.totalUnits} U
                 </span>
 
                 <div
                   style={{
-                    width: '38px',
+                    width: '42px',
                     height: `${heightPct}px`,
                     background: 'linear-gradient(180deg, #00B4D8 0%, #0077B6 100%)',
                     borderRadius: '8px 8px 0 0',
@@ -350,7 +350,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                   title={`${item.monthTitle}: ${item.totalUnits} Units (Rate ₹${item.unitRate}/u)`}
                 />
 
-                <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#475569', marginTop: '8px', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginTop: '8px', textAlign: 'center', whiteSpace: 'nowrap' }}>
                   {item.monthTitle}
                 </span>
               </div>

@@ -178,6 +178,47 @@ export const App: React.FC = () => {
     });
   };
 
+  const handleUpdateFlatDirectory = (updatedReadings: FlatReading[]) => {
+    if (!isAdmin) {
+      alert('🔒 Permission Denied: Only Maintenance Lead & Admins can update flat directory details.');
+      return;
+    }
+
+    const updatedMonths = { ...appState.months };
+    Object.keys(updatedMonths).forEach((mId) => {
+      const month = updatedMonths[mId];
+      const newReadings = month.flatReadings.map((reading) => {
+        const match = updatedReadings.find((u) => u.flatNo === reading.flatNo);
+        if (match) {
+          return {
+            ...reading,
+            ownerName: match.ownerName,
+            ownerPhone: match.ownerPhone,
+            residentName: match.residentName,
+            tenantPhone: match.tenantPhone,
+            residentType: match.residentType,
+            isOccupied: match.isOccupied,
+          };
+        }
+        return reading;
+      });
+
+      updatedMonths[mId] = recalculateMonthRecord({
+        ...month,
+        flatReadings: newReadings,
+      });
+    });
+
+    const newState: AppState = {
+      ...appState,
+      months: updatedMonths,
+      lastUpdated: Date.now(),
+    };
+
+    setAppState(newState);
+    syncToCloudRemote(newState);
+  };
+
   const handleUpdateWaterConfig = (config: WaterCalculationConfig) => {
     handleUpdateRecord({
       ...activeRecord,
@@ -602,6 +643,7 @@ export const App: React.FC = () => {
             isAdmin={isAdmin}
             userRole={userRole}
             onUpdateReadings={handleUpdateReadings}
+            onUpdateDirectory={handleUpdateFlatDirectory}
             onOpenAdminModal={() => setIsAdminModalOpen(true)}
           />
         )}
@@ -610,6 +652,7 @@ export const App: React.FC = () => {
         {activeTab === 'committee' && (
           <ApartmentCommittee
             committeeMembers={appState.committeeMembers || INITIAL_APP_STATE.committeeMembers || []}
+            flatReadings={activeRecord.flatReadings}
             userRole={userRole}
             isAdmin={isAdmin}
             onAddMember={handleAddCommitteeMember}
@@ -661,7 +704,7 @@ export const App: React.FC = () => {
       </main>
 
       {/* Footer */}
-      <footer style={{ marginTop: '40px', padding: '20px', textAlign: 'center', fontSize: '0.86rem', color: '#E0F2FE', borderTop: '2px solid #48CAE4', background: 'linear-gradient(135deg, #0E5A73 0%, #137A9A 100%)' }}>
+      <footer style={{ marginTop: 'auto', padding: '18px 20px', textAlign: 'center', fontSize: '0.86rem', color: '#E0F2FE', borderTop: '2px solid #48CAE4', background: 'linear-gradient(135deg, #0E5A73 0%, #137A9A 100%)' }}>
         <div style={{ maxWidth: '1240px', margin: '0 auto' }}>
           <strong style={{ color: '#FFFFFF' }}>R.S Towers <span style={{ color: '#FFD166' }}>Apartment Monthly Maintenance Tracker</span></strong>
         </div>
@@ -711,8 +754,41 @@ export const App: React.FC = () => {
 
       {/* Root Admin Historical Modification & Deletion Safeguard Modal */}
       {confirmModalData?.isOpen && (
-        <div className="modal-overlay">
-          <div className="modal-card" style={{ maxWidth: '480px', borderTop: confirmModalData.actionType === 'delete' ? '4px solid #EF4444' : '4px solid #3B82F6' }}>
+        <div
+          className="modal-overlay"
+          onClick={() => setConfirmModalData(null)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(15, 23, 42, 0.75)',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px',
+            zIndex: 9999,
+          }}
+        >
+          <div
+            className="modal-container"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: '480px',
+              width: '100%',
+              background: '#FFFFFF',
+              borderRadius: '20px',
+              padding: '24px',
+              boxShadow: '0 25px 50px -12px rgba(15, 23, 42, 0.4)',
+              border: '1px solid #CBD5E1',
+              borderTop: confirmModalData.actionType === 'delete' ? '4px solid #EF4444' : '4px solid #3B82F6',
+              zIndex: 10000,
+              position: 'relative',
+            }}
+          >
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
               <div style={{
                 width: '42px',
