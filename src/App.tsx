@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
-import { Table, Zap, Building, Wrench, Contact, Megaphone, Landmark, BarChart2 } from 'lucide-react';
+import { Table, Building, Wrench, Contact, Megaphone, Landmark, BarChart2 } from 'lucide-react';
 import type { AppState, MonthMaintenanceRecord, FlatReading, WaterCalculationConfig, CommonExpenseItem, PaymentMode, PeriodicTask, ApartmentVendor, NoticeItem, CorpusFundConfig } from './types';
 import { loadAppState, fetchLatestCloudState, syncToCloudRemote } from './utils/storage';
 import { recalculateMonthRecord } from './utils/calculator';
