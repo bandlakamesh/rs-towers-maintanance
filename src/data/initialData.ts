@@ -184,7 +184,56 @@ export const INITIAL_APP_STATE: AppState = {
         notes: 'Annual reserve set aside for major lift wire rope inspection and emergency repairs.'
       }
     ]
-  }
+  },
+  committeeMembers: [
+    {
+      id: 'cm-1',
+      name: 'Kamesh Bandla',
+      designation: 'President & Super Admin',
+      flatNo: '302',
+      phone: '9849030200',
+      email: 'kamesh.bandla@rstowers.org',
+      termPeriod: '2025 - 2027',
+      responsibilities: ['Association Master Governance', 'Financial & Account Audit', 'System Access & Root Admin Control']
+    },
+    {
+      id: 'cm-2',
+      name: 'Bobby',
+      designation: 'Maintenance Lead & Treasurer',
+      flatNo: '101',
+      phone: '9963275455',
+      email: 'bobby.flat101@rstowers.org',
+      termPeriod: '2025 - 2027',
+      responsibilities: ['Monthly Dues Collection (9963275455@upi)', 'Water Tanker Ordering & Bill Audit', 'Building Repairs & AMC Management']
+    },
+    {
+      id: 'cm-3',
+      name: 'Naveen Varma',
+      designation: 'Vice President',
+      flatNo: '201',
+      phone: '9849020100',
+      termPeriod: '2025 - 2027',
+      responsibilities: ['Resident Welfare & Grievance Resolution', 'Vendor Contract Agreements & Legal Oversight']
+    },
+    {
+      id: 'cm-4',
+      name: 'Balaji',
+      designation: 'General Secretary',
+      flatNo: '103',
+      phone: '9849010300',
+      termPeriod: '2025 - 2027',
+      responsibilities: ['GBM Meeting Minutes & Official Records', 'Notice Board & WhatsApp Group Broadcasts']
+    },
+    {
+      id: 'cm-5',
+      name: 'Yugandhar',
+      designation: 'Security & Facility Lead',
+      flatNo: '301',
+      phone: '9849030100',
+      termPeriod: '2025 - 2027',
+      responsibilities: ['Watchman Guard Supervision', 'CCTV Camera & Lift Safety Audits']
+    }
+  ]
 };
 
 

@@ -93,9 +93,19 @@ ${notice.content}
 Thank you! 🙏`;
 }
 
+export function maskPhoneNumber(phone?: string): string {
+  if (!phone) return 'N/A';
+  const clean = phone.replace(/\D/g, '');
+  if (clean.length >= 10) {
+    return `${clean.slice(0, 5)}*****${clean.slice(-2)}`;
+  }
+  return phone;
+}
+
 export function openWhatsAppShareLink(text: string): void {
   const encodedText = encodeURIComponent(text);
   const whatsappUrl = `https://api.whatsapp.com/send?text=${encodedText}`;
   window.open(whatsappUrl, '_blank');
 }
+
 

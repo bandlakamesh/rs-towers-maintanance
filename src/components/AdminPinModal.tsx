@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ShieldCheck, Lock, Unlock, X, KeyRound, Check, Crown, UserCheck, UserX, Smartphone, RefreshCw, Send } from 'lucide-react';
+import { ShieldCheck, Lock, Unlock, X, KeyRound, Check, Crown, Smartphone, RefreshCw, Send } from 'lucide-react';
 import type { FlatReading } from '../types';
 import { maskPhoneNumber, DEFAULT_FLAT_OWNERS } from './FlatOccupantsDirectory';
 
@@ -11,8 +11,10 @@ interface AdminPinModalProps {
   onAdminLogout: () => void;
   flatsList?: FlatReading[];
   adminFlats?: string[];
+  maintenanceLeadFlats?: string[];
   rootFlat?: string;
   onToggleFlatAdmin?: (flatNo: string) => void;
+  onSetFlatRole?: (flatNo: string, role: 'MaintenanceLead' | 'CoAdmin' | 'Resident') => void;
 }
 
 export const AdminPinModal: React.FC<AdminPinModalProps> = ({
@@ -23,8 +25,9 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
   onAdminLogout,
   flatsList = [],
   adminFlats = ['302'],
+  maintenanceLeadFlats = ['101'],
   rootFlat = '302',
-  onToggleFlatAdmin,
+  onSetFlatRole,
 }) => {
   const [authMode, setAuthMode] = useState<'otp' | 'pin'>('otp');
   const [selectedFlat, setSelectedFlat] = useState<string>('302');
@@ -559,13 +562,22 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
             {adminTab === 'manage_rights' && (
               <div>
                 <div style={{ padding: '10px 12px', borderRadius: '8px', background: '#FFFBEB', border: '1px solid #FDE68A', marginBottom: '12px', fontSize: '0.78rem', color: '#92400E', lineHeight: 1.4 }}>
-                  👑 <strong>Root Controls (Flat 302 - Kamesh):</strong> Grant or revoke Admin editing rights for each flat owner.
+                  👑 <strong>Root Role Management (Flat 302 - Kamesh):</strong> Assign roles for each flat (👑 Root Admin, 🛠️ Maintenance Lead, ⭐ Co-Admin, 👤 Normal Resident).
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '300px', overflowY: 'auto', paddingRight: '2px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '340px', overflowY: 'auto', paddingRight: '2px' }}>
                   {flatsList.filter((f) => f.flatNo !== 'WM').map((flat) => {
                     const isRoot = flat.flatNo === rootFlat;
-                    const hasAdmin = adminFlats.includes(flat.flatNo) || isRoot;
+                    const isMaintLead = maintenanceLeadFlats.includes(flat.flatNo);
+                    const isCoAdmin = adminFlats.includes(flat.flatNo) && !isMaintLead;
+
+                    const currentRole = isRoot
+                      ? 'RootAdmin'
+                      : isMaintLead
+                      ? 'MaintenanceLead'
+                      : isCoAdmin
+                      ? 'CoAdmin'
+                      : 'Resident';
 
                     return (
                       <div
@@ -576,12 +588,12 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
                           justifyContent: 'space-between',
                           padding: '8px 10px',
                           borderRadius: '8px',
-                          border: isRoot ? '1px solid #FCD34D' : hasAdmin ? '1px solid #A7F3D0' : '1px solid #E2E8F0',
-                          background: isRoot ? '#FEF3C7' : hasAdmin ? '#F0FDF4' : '#FFFFFF',
+                          border: isRoot ? '1px solid #FCD34D' : isMaintLead ? '1px solid #A7F3D0' : isCoAdmin ? '1px solid #BFDBFE' : '1px solid #E2E8F0',
+                          background: isRoot ? '#FEF3C7' : isMaintLead ? '#ECFDF5' : isCoAdmin ? '#EFF6FF' : '#FFFFFF',
                           gap: '6px',
                         }}
                       >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
                           <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#1D4ED8', background: '#EFF6FF', padding: '2px 6px', borderRadius: '5px', flexShrink: 0 }}>
                             #{flat.flatNo}
                           </span>
@@ -589,45 +601,34 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
                             <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                               {flat.residentName}
                             </div>
-                            <div style={{ fontSize: '0.7rem', color: '#64748B', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                              {isRoot ? '👑 Root Super Admin' : hasAdmin ? '⭐ Co-Admin' : '👤 Resident/Tenant'}
-                            </div>
                           </div>
                         </div>
 
                         <div style={{ flexShrink: 0 }}>
                           {isRoot ? (
-                            <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#B45309', background: '#FDE68A', padding: '3px 7px', borderRadius: '5px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-                              <Crown size={11} /> Root
+                            <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#B45309', background: '#FDE68A', border: '1px solid #F59E0B', padding: '4px 8px', borderRadius: '6px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                              <Crown size={12} /> Root Admin
                             </span>
                           ) : (
-                            <button
-                              type="button"
-                              onClick={() => onToggleFlatAdmin?.(flat.flatNo)}
+                            <select
+                              value={currentRole}
+                              onChange={(e) => onSetFlatRole?.(flat.flatNo, e.target.value as any)}
                               style={{
-                                padding: '4px 8px',
-                                borderRadius: '5px',
-                                fontSize: '0.72rem',
+                                fontSize: '0.76rem',
                                 fontWeight: 700,
-                                border: hasAdmin ? '1px solid #FECACA' : '1px solid #A7F3D0',
-                                background: hasAdmin ? '#FEF2F2' : '#ECFDF5',
-                                color: hasAdmin ? '#DC2626' : '#059669',
+                                padding: '4px 8px',
+                                borderRadius: '6px',
+                                border: '1px solid #CBD5E1',
+                                background: '#FFFFFF',
+                                color: currentRole === 'MaintenanceLead' ? '#065F46' : currentRole === 'CoAdmin' ? '#1E40AF' : '#475569',
                                 cursor: 'pointer',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '3px',
+                                outline: 'none',
                               }}
                             >
-                              {hasAdmin ? (
-                                <>
-                                  <UserX size={12} /> Revoke
-                                </>
-                              ) : (
-                                <>
-                                  <UserCheck size={12} /> Grant
-                                </>
-                              )}
-                            </button>
+                              <option value="MaintenanceLead">🛠️ Maintenance Lead</option>
+                              <option value="CoAdmin">⭐ Co-Admin</option>
+                              <option value="Resident">👤 Normal Resident</option>
+                            </select>
                           )}
                         </div>
                       </div>

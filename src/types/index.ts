@@ -114,6 +114,18 @@ export interface CorpusFundConfig {
   corpusExpenses: CorpusExpenseLog[];
 }
 
+export interface CommitteeMember {
+  id: string;
+  name: string;
+  designation: 'President & Super Admin' | 'Maintenance Lead & Treasurer' | 'Vice President' | 'General Secretary' | 'Joint Secretary' | 'Security & Facility Lead' | 'Executive Member';
+  flatNo: string;
+  phone: string;
+  email?: string;
+  termPeriod: string;
+  photoUrl?: string;
+  responsibilities: string[];
+}
+
 export type UserRole = 'RootAdmin' | 'MaintenanceLead' | 'CoAdmin' | 'VerifiedResident' | 'PublicResident';
 
 export interface AppState {
@@ -130,6 +142,8 @@ export interface AppState {
   dueDateDay: number; // default 10
   corpusConfig?: CorpusFundConfig;
   privacyMode?: boolean;
+  committeeMembers?: CommitteeMember[];
 }
+
 
 

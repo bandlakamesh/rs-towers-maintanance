@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
-import { Table, Wrench, Contact, Megaphone, Landmark, BarChart2, Calendar, Plus, UserCheck, Trash2, ShieldAlert } from 'lucide-react';
-import type { AppState, MonthMaintenanceRecord, FlatReading, WaterCalculationConfig, CommonExpenseItem, PaymentMode, PeriodicTask, ApartmentVendor, NoticeItem, CorpusFundConfig, UserRole } from './types';
+import { Table, Wrench, Contact, Megaphone, Landmark, BarChart2, Calendar, Plus, UserCheck, Trash2, ShieldAlert, Shield } from 'lucide-react';
+import type { AppState, MonthMaintenanceRecord, FlatReading, WaterCalculationConfig, CommonExpenseItem, PaymentMode, PeriodicTask, ApartmentVendor, NoticeItem, CorpusFundConfig, UserRole, CommitteeMember } from './types';
 import { loadAppState, fetchLatestCloudState, syncToCloudRemote } from './utils/storage';
 import { recalculateMonthRecord } from './utils/calculator';
 
@@ -17,11 +17,13 @@ import { VendorDirectory } from './components/VendorDirectory';
 import { NoticeBoard } from './components/NoticeBoard';
 import { CorpusFundTracker } from './components/CorpusFundTracker';
 import { AnalyticsDashboard } from './components/AnalyticsDashboard';
+import { ApartmentCommittee } from './components/ApartmentCommittee';
+import { INITIAL_APP_STATE } from './data/initialData';
 import { subscribeToFirebaseState } from './utils/firebaseStorage';
 
 export const App: React.FC = () => {
   const [appState, setAppState] = useState<AppState>(() => loadAppState());
-  const [activeTab, setActiveTab] = useState<'table' | 'analytics' | 'occupants' | 'corpus' | 'amc' | 'vendors' | 'notices'>('table');
+  const [activeTab, setActiveTab] = useState<'table' | 'analytics' | 'occupants' | 'committee' | 'corpus' | 'amc' | 'vendors' | 'notices'>('table');
 
   // Role Security State
   const [isAdmin, setIsAdmin] = useState<boolean>(() => localStorage.getItem('rs_towers_maint_is_admin') === 'true');
@@ -251,6 +253,39 @@ export const App: React.FC = () => {
     syncToCloudRemote(newState);
   };
 
+  const handleSetFlatRole = (flatNo: string, role: 'MaintenanceLead' | 'CoAdmin' | 'Resident') => {
+    if (flatNo === (appState.rootFlat || '302')) return;
+
+    let currentAdminFlats = appState.adminFlats || ['302'];
+    let currentMaintFlats = appState.maintenanceLeadFlats || ['101'];
+
+    if (role === 'MaintenanceLead') {
+      if (!currentMaintFlats.includes(flatNo)) {
+        currentMaintFlats = [...currentMaintFlats, flatNo];
+      }
+      if (!currentAdminFlats.includes(flatNo)) {
+        currentAdminFlats = [...currentAdminFlats, flatNo];
+      }
+    } else if (role === 'CoAdmin') {
+      currentMaintFlats = currentMaintFlats.filter((f) => f !== flatNo);
+      if (!currentAdminFlats.includes(flatNo)) {
+        currentAdminFlats = [...currentAdminFlats, flatNo];
+      }
+    } else {
+      currentMaintFlats = currentMaintFlats.filter((f) => f !== flatNo);
+      currentAdminFlats = currentAdminFlats.filter((f) => f !== flatNo);
+    }
+
+    const newState: AppState = {
+      ...appState,
+      adminFlats: currentAdminFlats,
+      maintenanceLeadFlats: currentMaintFlats,
+      lastUpdated: Date.now(),
+    };
+    setAppState(newState);
+    syncToCloudRemote(newState);
+  };
+
   // Handlers for Periodic AMC Tasks
   const handleUpdatePeriodicTask = (updatedTask: PeriodicTask) => {
     const updatedTasks = (appState.periodicTasks || []).map((t) => (t.id === updatedTask.id ? updatedTask : t));
@@ -314,6 +349,42 @@ export const App: React.FC = () => {
     const newState: AppState = {
       ...appState,
       notices: updatedNotices,
+      lastUpdated: Date.now(),
+    };
+    setAppState(newState);
+    syncToCloudRemote(newState);
+  };
+
+  // Handlers for Committee Members
+  const handleAddCommitteeMember = (newMember: CommitteeMember) => {
+    const currentMembers = appState.committeeMembers || INITIAL_APP_STATE.committeeMembers || [];
+    const newState: AppState = {
+      ...appState,
+      committeeMembers: [newMember, ...currentMembers],
+      lastUpdated: Date.now(),
+    };
+    setAppState(newState);
+    syncToCloudRemote(newState);
+  };
+
+  const handleUpdateCommitteeMember = (updatedMember: CommitteeMember) => {
+    const currentMembers = appState.committeeMembers || INITIAL_APP_STATE.committeeMembers || [];
+    const updated = currentMembers.map((m) => (m.id === updatedMember.id ? updatedMember : m));
+    const newState: AppState = {
+      ...appState,
+      committeeMembers: updated,
+      lastUpdated: Date.now(),
+    };
+    setAppState(newState);
+    syncToCloudRemote(newState);
+  };
+
+  const handleDeleteCommitteeMember = (memberId: string) => {
+    const currentMembers = appState.committeeMembers || INITIAL_APP_STATE.committeeMembers || [];
+    const updated = currentMembers.filter((m) => m.id !== memberId);
+    const newState: AppState = {
+      ...appState,
+      committeeMembers: updated,
       lastUpdated: Date.now(),
     };
     setAppState(newState);
@@ -454,7 +525,14 @@ export const App: React.FC = () => {
             className={`chip ${activeTab === 'occupants' ? 'active' : ''}`}
             onClick={() => setActiveTab('occupants')}
           >
-            <UserCheck size={15} /> 👥 Flat Owners & Tenants Directory
+            <UserCheck size={15} /> 👥 Flat Owners & Directory
+          </button>
+
+          <button
+            className={`chip ${activeTab === 'committee' ? 'active' : ''}`}
+            onClick={() => setActiveTab('committee')}
+          >
+            <Shield size={15} /> 🏛️ Executive Committee
           </button>
 
           <button
@@ -519,16 +597,39 @@ export const App: React.FC = () => {
 
         {/* Tab 3: Flat Occupants & Directory */}
         {activeTab === 'occupants' && (
-          <FlatOccupantsDirectory
-            record={activeRecord}
-            isAdmin={isAdmin}
+          <>
+            <ApartmentCommittee
+              committeeMembers={appState.committeeMembers || INITIAL_APP_STATE.committeeMembers || []}
+              userRole={userRole}
+              isAdmin={isAdmin}
+              onAddMember={handleAddCommitteeMember}
+              onUpdateMember={handleUpdateCommitteeMember}
+              onDeleteMember={handleDeleteCommitteeMember}
+            />
+
+            <FlatOccupantsDirectory
+              record={activeRecord}
+              isAdmin={isAdmin}
+              userRole={userRole}
+              onUpdateReadings={handleUpdateReadings}
+              onOpenAdminModal={() => setIsAdminModalOpen(true)}
+            />
+          </>
+        )}
+
+        {/* Tab 4: Executive Committee Dedicated Tab */}
+        {activeTab === 'committee' && (
+          <ApartmentCommittee
+            committeeMembers={appState.committeeMembers || INITIAL_APP_STATE.committeeMembers || []}
             userRole={userRole}
-            onUpdateReadings={handleUpdateReadings}
-            onOpenAdminModal={() => setIsAdminModalOpen(true)}
+            isAdmin={isAdmin}
+            onAddMember={handleAddCommitteeMember}
+            onUpdateMember={handleUpdateCommitteeMember}
+            onDeleteMember={handleDeleteCommitteeMember}
           />
         )}
 
-        {/* Tab 4: Dedicated Corpus Fund Tracker */}
+        {/* Tab 5: Dedicated Corpus Fund Tracker */}
         {activeTab === 'corpus' && (
           <CorpusFundTracker
             corpusConfig={defaultCorpusConfig}
@@ -538,7 +639,7 @@ export const App: React.FC = () => {
           />
         )}
 
-        {/* Tab 5: Building Asset AMC Hub */}
+        {/* Tab 6: Building Asset AMC Hub */}
         {activeTab === 'amc' && (
           <PeriodicMaintenanceHub
             tasks={appState.periodicTasks || []}
@@ -548,7 +649,7 @@ export const App: React.FC = () => {
           />
         )}
 
-        {/* Tab 6: Vendors Directory */}
+        {/* Tab 7: Vendors Directory */}
         {activeTab === 'vendors' && (
           <VendorDirectory
             vendors={appState.vendors || []}
@@ -558,7 +659,7 @@ export const App: React.FC = () => {
           />
         )}
 
-        {/* Tab 7: Notice Board */}
+        {/* Tab 8: Notice Board */}
         {activeTab === 'notices' && (
           <NoticeBoard
             notices={appState.notices || []}
@@ -604,8 +705,10 @@ export const App: React.FC = () => {
           }}
           flatsList={activeRecord.flatReadings}
           adminFlats={appState.adminFlats}
+          maintenanceLeadFlats={appState.maintenanceLeadFlats || ['101']}
           rootFlat={appState.rootFlat}
           onToggleFlatAdmin={handleToggleFlatAdmin}
+          onSetFlatRole={handleSetFlatRole}
         />
       )}
 
@@ -703,6 +806,14 @@ export const App: React.FC = () => {
         >
           <UserCheck size={18} />
           <span>Directory</span>
+        </button>
+
+        <button
+          className={`mobile-nav-item ${activeTab === 'committee' ? 'active' : ''}`}
+          onClick={() => setActiveTab('committee')}
+        >
+          <Shield size={18} />
+          <span>Committee</span>
         </button>
 
         <button
