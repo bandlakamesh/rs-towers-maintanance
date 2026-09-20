@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { ApartmentVendor } from '../types';
-import { Contact, Phone, MessageSquare, Plus, User, ShieldCheck, Copy, Check } from 'lucide-react';
+import { Contact, Phone, MessageSquare, Plus, User, Copy, Check } from 'lucide-react';
 
 interface VendorDirectoryProps {
   vendors: ApartmentVendor[];

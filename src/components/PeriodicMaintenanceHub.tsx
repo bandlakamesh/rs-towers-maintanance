@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { PeriodicTask, ServiceLogEntry } from '../types';
-import { Wrench, ShieldAlert, Calendar, CheckCircle2, AlertTriangle, Plus, History, Phone, MessageSquare, Clock } from 'lucide-react';
+import { Wrench, Calendar, CheckCircle2, AlertTriangle, Plus, History, Phone, MessageSquare, Clock } from 'lucide-react';
 
 interface PeriodicMaintenanceHubProps {
   tasks: PeriodicTask[];
