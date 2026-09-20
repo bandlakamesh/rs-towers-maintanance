@@ -57,6 +57,13 @@ export const App: React.FC = () => {
 
   const activeRecord: MonthMaintenanceRecord = appState.months[appState.activeMonthId] || Object.values(appState.months)[0];
 
+  // Auto-reset activeTab to 'table' for public residents if on an admin tab
+  useEffect(() => {
+    if (!isAdmin && ['analytics', 'corpus', 'amc', 'vendors'].includes(activeTab)) {
+      setActiveTab('table');
+    }
+  }, [isAdmin, activeTab]);
+
   // Live Firebase Realtime DB listener & polling fallback
   useEffect(() => {
     let isMounted = true;
@@ -555,12 +562,14 @@ export const App: React.FC = () => {
             <Table size={15} /> 📊 Monthly Maintenance Sheet
           </button>
 
-          <button
-            className={`chip ${activeTab === 'analytics' ? 'active' : ''}`}
-            onClick={() => setActiveTab('analytics')}
-          >
-            <BarChart2 size={15} /> 📈 Analytics & Leak Alerts
-          </button>
+          {isAdmin && (
+            <button
+              className={`chip ${activeTab === 'analytics' ? 'active' : ''}`}
+              onClick={() => setActiveTab('analytics')}
+            >
+              <BarChart2 size={15} /> 📈 Analytics & Leak Alerts
+            </button>
+          )}
 
           <button
             className={`chip ${activeTab === 'occupants' ? 'active' : ''}`}
@@ -576,26 +585,32 @@ export const App: React.FC = () => {
             <Shield size={15} /> 🏛️ Executive Committee
           </button>
 
-          <button
-            className={`chip ${activeTab === 'corpus' ? 'active' : ''}`}
-            onClick={() => setActiveTab('corpus')}
-          >
-            <Landmark size={15} /> 🏛️ Corpus Fund Tracker (₹200/mo)
-          </button>
+          {isAdmin && (
+            <button
+              className={`chip ${activeTab === 'corpus' ? 'active' : ''}`}
+              onClick={() => setActiveTab('corpus')}
+            >
+              <Landmark size={15} /> 🏛️ Corpus Fund Tracker (₹200/mo)
+            </button>
+          )}
 
-          <button
-            className={`chip ${activeTab === 'amc' ? 'active' : ''}`}
-            onClick={() => setActiveTab('amc')}
-          >
-            <Wrench size={15} /> 🛠️ Building Asset AMC (Lift 6m, CCTV, Tank)
-          </button>
+          {isAdmin && (
+            <button
+              className={`chip ${activeTab === 'amc' ? 'active' : ''}`}
+              onClick={() => setActiveTab('amc')}
+            >
+              <Wrench size={15} /> 🛠️ Building Asset AMC (Lift 6m, CCTV, Tank)
+            </button>
+          )}
 
-          <button
-            className={`chip ${activeTab === 'vendors' ? 'active' : ''}`}
-            onClick={() => setActiveTab('vendors')}
-          >
-            <Contact size={15} /> ☎️ Vendor Directory ({appState.vendors?.length || 0})
-          </button>
+          {isAdmin && (
+            <button
+              className={`chip ${activeTab === 'vendors' ? 'active' : ''}`}
+              onClick={() => setActiveTab('vendors')}
+            >
+              <Contact size={15} /> ☎️ Vendor Directory ({appState.vendors?.length || 0})
+            </button>
+          )}
 
           <button
             className={`chip ${activeTab === 'notices' ? 'active' : ''}`}
@@ -912,13 +927,15 @@ export const App: React.FC = () => {
           <span>Sheet</span>
         </button>
 
-        <button
-          className={`mobile-nav-item ${activeTab === 'analytics' ? 'active' : ''}`}
-          onClick={() => setActiveTab('analytics')}
-        >
-          <BarChart2 size={18} />
-          <span>Analytics</span>
-        </button>
+        {isAdmin && (
+          <button
+            className={`mobile-nav-item ${activeTab === 'analytics' ? 'active' : ''}`}
+            onClick={() => setActiveTab('analytics')}
+          >
+            <BarChart2 size={18} />
+            <span>Analytics</span>
+          </button>
+        )}
 
         <button
           className={`mobile-nav-item ${activeTab === 'occupants' ? 'active' : ''}`}
@@ -936,29 +953,35 @@ export const App: React.FC = () => {
           <span>Committee</span>
         </button>
 
-        <button
-          className={`mobile-nav-item ${activeTab === 'corpus' ? 'active' : ''}`}
-          onClick={() => setActiveTab('corpus')}
-        >
-          <Landmark size={18} />
-          <span>Corpus</span>
-        </button>
+        {isAdmin && (
+          <button
+            className={`mobile-nav-item ${activeTab === 'corpus' ? 'active' : ''}`}
+            onClick={() => setActiveTab('corpus')}
+          >
+            <Landmark size={18} />
+            <span>Corpus</span>
+          </button>
+        )}
 
-        <button
-          className={`mobile-nav-item ${activeTab === 'amc' ? 'active' : ''}`}
-          onClick={() => setActiveTab('amc')}
-        >
-          <Wrench size={18} />
-          <span>AMC</span>
-        </button>
+        {isAdmin && (
+          <button
+            className={`mobile-nav-item ${activeTab === 'amc' ? 'active' : ''}`}
+            onClick={() => setActiveTab('amc')}
+          >
+            <Wrench size={18} />
+            <span>AMC</span>
+          </button>
+        )}
 
-        <button
-          className={`mobile-nav-item ${activeTab === 'vendors' ? 'active' : ''}`}
-          onClick={() => setActiveTab('vendors')}
-        >
-          <Contact size={18} />
-          <span>Vendors</span>
-        </button>
+        {isAdmin && (
+          <button
+            className={`mobile-nav-item ${activeTab === 'vendors' ? 'active' : ''}`}
+            onClick={() => setActiveTab('vendors')}
+          >
+            <Contact size={18} />
+            <span>Vendors</span>
+          </button>
+        )}
 
         <button
           className={`mobile-nav-item ${activeTab === 'notices' ? 'active' : ''}`}
