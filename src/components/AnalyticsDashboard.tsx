@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { AppState, MonthMaintenanceRecord } from '../types';
-import { TrendingUp, Droplets, PieChart, AlertTriangle, ShieldCheck, DollarSign, Award, ChevronRight, BarChart3, Activity } from 'lucide-react';
+import { Droplets, PieChart, AlertTriangle, ShieldCheck, BarChart3, Activity } from 'lucide-react';
 
 interface AnalyticsDashboardProps {
   appState: AppState;
@@ -146,7 +146,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
           </div>
 
           <div style={{ fontSize: '0.76rem', color: '#64748B', marginTop: '2px' }}>
-            Target: <strong style={{ color: '#0077B6' }}>₹{collectionTarget.toLocaleString('en-IN')}</strong> ({paidCount}/{occupiedCount} Paid)
+            Target: <strong style={{ color: '#0077B6' }}>₹{collectionTarget.toLocaleString('en-IN')}</strong> ({paidCount}/{occupiedCount} Paid • <span style={{ color: '#DC2626' }}>{pendingCount} Pending</span>)
           </div>
 
           {/* Progress Bar */}
