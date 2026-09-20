@@ -21,7 +21,7 @@ import { subscribeToFirebaseState } from './utils/firebaseStorage';
 
 export const App: React.FC = () => {
   const [appState, setAppState] = useState<AppState>(() => loadAppState());
-  const [activeTab, setActiveTab] = useState<'table' | 'analytics' | 'corpus' | 'amc' | 'expenses' | 'directory' | 'vendors' | 'notices'>('table');
+  const [activeTab, setActiveTab] = useState<'table' | 'analytics' | 'corpus' | 'amc' | 'directory' | 'vendors' | 'notices'>('table');
 
   // Role Security State
   const [isAdmin, setIsAdmin] = useState<boolean>(() => localStorage.getItem('rs_towers_maint_is_admin') === 'true');
@@ -320,13 +320,6 @@ export const App: React.FC = () => {
           </button>
 
           <button
-            className={`chip ${activeTab === 'expenses' ? 'active' : ''}`}
-            onClick={() => setActiveTab('expenses')}
-          >
-            <Zap size={15} /> Building & Water Expenses
-          </button>
-
-          <button
             className={`chip ${activeTab === 'directory' ? 'active' : ''}`}
             onClick={() => setActiveTab('directory')}
           >
@@ -392,16 +385,6 @@ export const App: React.FC = () => {
             isAdmin={isAdmin}
             onUpdateTask={handleUpdatePeriodicTask}
             onAddTask={handleAddPeriodicTask}
-          />
-        )}
-
-        {/* Tab 3: Expenses Breakdown */}
-        {activeTab === 'expenses' && (
-          <ExpenseBreakdown
-            record={activeRecord}
-            isAdmin={isAdmin}
-            onUpdateWaterConfig={handleUpdateWaterConfig}
-            onUpdateCommonExpenses={handleUpdateCommonExpenses}
           />
         )}
 
