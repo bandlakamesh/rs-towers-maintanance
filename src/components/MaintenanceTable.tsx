@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Table, Send, CheckCircle2, AlertCircle, Edit2, AlertTriangle, Bell } from 'lucide-react';
+import { Table, Send, CheckCircle2, AlertCircle, Edit2, AlertTriangle, Bell, CreditCard } from 'lucide-react';
 import type { MonthMaintenanceRecord, FlatReading } from '../types';
 import { generateWhatsAppFlatBillText, generateWhatsAppOverdueReminderText, openWhatsAppShareLink } from '../utils/whatsappFormatter';
 
@@ -8,6 +8,7 @@ interface MaintenanceTableProps {
   isAdmin: boolean;
   dueDateDay?: number;
   onUpdateReadings: (updatedReadings: FlatReading[]) => void;
+  onSelectFlatPayment?: (flatNo: string) => void;
 }
 
 export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
@@ -15,6 +16,7 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
   isAdmin,
   dueDateDay = 10,
   onUpdateReadings,
+  onSelectFlatPayment,
 }) => {
   const [editingFlatNo, setEditingFlatNo] = useState<string | null>(null);
   const [tempPrev, setTempPrev] = useState<number>(0);
@@ -147,7 +149,7 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
               <th style={{ padding: '12px 14px', textAlign: 'right', whiteSpace: 'nowrap', minWidth: '110px' }}>Rounded Due</th>
               <th style={{ padding: '12px 14px', textAlign: 'center', whiteSpace: 'nowrap', minWidth: '110px' }}>Status</th>
               <th style={{ padding: '12px 14px', whiteSpace: 'nowrap', minWidth: '150px' }}>Resident Notes</th>
-              {isAdmin && <th style={{ padding: '12px 14px', textAlign: 'right', whiteSpace: 'nowrap', minWidth: '120px' }}>Actions</th>}
+              <th style={{ padding: '12px 14px', textAlign: 'right', whiteSpace: 'nowrap', minWidth: '130px' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -287,50 +289,75 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
                   </td>
 
                   {/* Action Buttons */}
-                  {isAdmin && (
-                    <td style={{ padding: '10px 14px', textAlign: 'right', whiteSpace: 'nowrap' }}>
-                      <div style={{ display: 'inline-flex', gap: '6px', alignItems: 'center' }}>
-                        {isEditing ? (
-                          <button
-                            onClick={() => handleSaveEdit(f.flatNo)}
-                            style={{ background: '#059669', color: '#FFF', border: 'none', borderRadius: '4px', padding: '3px 8px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
-                          >
-                            Save
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => handleStartEdit(f)}
-                            style={{ background: 'none', border: 'none', color: '#2563EB', cursor: 'pointer', padding: '4px' }}
-                            title="Edit Meter Readings"
-                          >
-                            <Edit2 size={14} />
-                          </button>
-                        )}
+                  <td style={{ padding: '10px 14px', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                    <div style={{ display: 'inline-flex', gap: '6px', alignItems: 'center' }}>
+                      {!isWM && f.isOccupied && (
+                        <button
+                          onClick={() => onSelectFlatPayment && onSelectFlatPayment(f.flatNo)}
+                          style={{
+                            background: isPaid ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)' : 'linear-gradient(135deg, #0284C7 0%, #0369A1 100%)',
+                            color: '#FFFFFF',
+                            border: 'none',
+                            borderRadius: '6px',
+                            padding: '4px 10px',
+                            fontSize: '0.76rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            boxShadow: '0 2px 6px rgba(2, 132, 199, 0.25)',
+                          }}
+                          title={`Pay maintenance dues via UPI / QR for Flat #${f.flatNo}`}
+                        >
+                          <CreditCard size={13} /> {isPaid ? 'Paid' : '💳 Pay'}
+                        </button>
+                      )}
 
-                        {!isWM && f.isOccupied && (
-                          <>
+                      {isAdmin && (
+                        <>
+                          {isEditing ? (
                             <button
-                              onClick={() => handleSendFlatWhatsApp(f)}
-                              style={{ background: 'none', border: 'none', color: '#25D366', cursor: 'pointer', padding: '4px' }}
-                              title="Send WhatsApp Bill"
+                              onClick={() => handleSaveEdit(f.flatNo)}
+                              style={{ background: '#059669', color: '#FFF', border: 'none', borderRadius: '4px', padding: '3px 8px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
                             >
-                              <Send size={14} />
+                              Save
                             </button>
+                          ) : (
+                            <button
+                              onClick={() => handleStartEdit(f)}
+                              style={{ background: 'none', border: 'none', color: '#2563EB', cursor: 'pointer', padding: '4px' }}
+                              title="Edit Meter Readings"
+                            >
+                              <Edit2 size={14} />
+                            </button>
+                          )}
 
-                            {!isPaid && (
+                          {!isWM && f.isOccupied && (
+                            <>
                               <button
-                                onClick={() => handleSendOverdueWhatsApp(f)}
-                                style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', padding: '4px' }}
-                                title="Send 10th Overdue WhatsApp Reminder"
+                                onClick={() => handleSendFlatWhatsApp(f)}
+                                style={{ background: 'none', border: 'none', color: '#25D366', cursor: 'pointer', padding: '4px' }}
+                                title="Send WhatsApp Bill"
                               >
-                                <Bell size={14} />
+                                <Send size={14} />
                               </button>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    </td>
-                  )}
+
+                              {!isPaid && (
+                                <button
+                                  onClick={() => handleSendOverdueWhatsApp(f)}
+                                  style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', padding: '4px' }}
+                                  title="Send 10th Overdue WhatsApp Reminder"
+                                >
+                                  <Bell size={14} />
+                                </button>
+                              )}
+                            </>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </td>
                 </tr>
               );
             })}
@@ -360,7 +387,7 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
               <td style={{ padding: '12px 14px', textAlign: 'right', color: '#1D4ED8', fontSize: '1.05rem' }}>
                 ₹{record.totalGrandCollectionTarget.toLocaleString('en-IN')}
               </td>
-              <td colSpan={isAdmin ? 3 : 2} style={{ padding: '12px 14px', textAlign: 'right', color: '#059669' }}>
+              <td colSpan={3} style={{ padding: '12px 14px', textAlign: 'right', color: '#059669' }}>
                 Rounded Target Total
               </td>
             </tr>

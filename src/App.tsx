@@ -488,6 +488,10 @@ export const App: React.FC = () => {
               isAdmin={isAdmin}
               dueDateDay={appState.dueDateDay || 10}
               onUpdateReadings={handleUpdateReadings}
+              onSelectFlatPayment={(flatNo) => {
+                setSelectedFlatForPayment(flatNo);
+                setIsPaymentModalOpen(true);
+              }}
             />
 
             <ExpenseBreakdown
