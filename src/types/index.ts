@@ -94,6 +94,23 @@ export interface NoticeItem {
   priority: 'Normal' | 'Urgent';
 }
 
+export interface CorpusExpenseLog {
+  id: string;
+  date: string;
+  title: string;
+  amount: number;
+  category: 'Lift Overhaul' | 'Building Painting' | 'Waterproof/Sump' | 'Motor/Electrical' | 'Festival/Event' | 'Others';
+  approvedBy: string;
+  notes: string;
+}
+
+export interface CorpusFundConfig {
+  monthlyRatePerFlat: number; // default 200
+  pastMonthsCollected: number; // default 12
+  baselineTotalCollected: number; // default 33600 (14 flats * 200 * 12)
+  corpusExpenses: CorpusExpenseLog[];
+}
+
 export interface AppState {
   activeMonthId: string;
   months: Record<string, MonthMaintenanceRecord>;
@@ -105,5 +122,7 @@ export interface AppState {
   vendors: ApartmentVendor[];
   notices: NoticeItem[];
   dueDateDay: number; // default 10
+  corpusConfig?: CorpusFundConfig;
 }
+
 

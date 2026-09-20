@@ -167,6 +167,23 @@ export const INITIAL_APP_STATE: AppState = {
       postedBy: 'Association Management',
       priority: 'Normal'
     }
-  ]
+  ],
+  corpusConfig: {
+    monthlyRatePerFlat: 200,
+    pastMonthsCollected: 12,
+    baselineTotalCollected: 33600, // 14 flats * 200 * 12 months
+    corpusExpenses: [
+      {
+        id: 'cexp-1',
+        date: '2026-08-15',
+        title: '13th Corpus Fund Reserve Allocation',
+        amount: 2800,
+        category: 'Lift Overhaul',
+        approvedBy: 'Bobby (Flat 101 - Maintenance Lead)',
+        notes: 'Annual reserve set aside for major lift wire rope inspection and emergency repairs.'
+      }
+    ]
+  }
 };
+
 

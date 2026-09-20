@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
-import { Table, Zap, Building, Wrench, Contact, Megaphone } from 'lucide-react';
-import type { AppState, MonthMaintenanceRecord, FlatReading, WaterCalculationConfig, CommonExpenseItem, PaymentMode, PeriodicTask, ApartmentVendor, NoticeItem } from './types';
+import { Table, Zap, Building, Wrench, Contact, Megaphone, Landmark } from 'lucide-react';
+import type { AppState, MonthMaintenanceRecord, FlatReading, WaterCalculationConfig, CommonExpenseItem, PaymentMode, PeriodicTask, ApartmentVendor, NoticeItem, CorpusFundConfig } from './types';
 import { loadAppState, fetchLatestCloudState, syncToCloudRemote } from './utils/storage';
 import { recalculateMonthRecord } from './utils/calculator';
 
@@ -15,11 +15,12 @@ import { MonthSelectorModal } from './components/MonthSelectorModal';
 import { PeriodicMaintenanceHub } from './components/PeriodicMaintenanceHub';
 import { VendorDirectory } from './components/VendorDirectory';
 import { NoticeBoard } from './components/NoticeBoard';
+import { CorpusFundTracker } from './components/CorpusFundTracker';
 import { subscribeToFirebaseState } from './utils/firebaseStorage';
 
 export const App: React.FC = () => {
   const [appState, setAppState] = useState<AppState>(() => loadAppState());
-  const [activeTab, setActiveTab] = useState<'table' | 'expenses' | 'directory' | 'amc' | 'vendors' | 'notices'>('table');
+  const [activeTab, setActiveTab] = useState<'table' | 'expenses' | 'directory' | 'amc' | 'vendors' | 'notices' | 'corpus'>('table');
 
   // Role Security State
   const [isAdmin, setIsAdmin] = useState<boolean>(() => localStorage.getItem('rs_towers_maint_is_admin') === 'true');
@@ -241,6 +242,34 @@ export const App: React.FC = () => {
     syncToCloudRemote(newState);
   };
 
+  // Handler for Corpus Config
+  const handleUpdateCorpusConfig = (updatedConfig: CorpusFundConfig) => {
+    const newState: AppState = {
+      ...appState,
+      corpusConfig: updatedConfig,
+      lastUpdated: Date.now(),
+    };
+    setAppState(newState);
+    syncToCloudRemote(newState);
+  };
+
+  const defaultCorpusConfig: CorpusFundConfig = appState.corpusConfig || {
+    monthlyRatePerFlat: 200,
+    pastMonthsCollected: 12,
+    baselineTotalCollected: 33600,
+    corpusExpenses: [
+      {
+        id: 'cexp-1',
+        date: '2026-08-15',
+        title: '13th Corpus Fund Reserve Allocation',
+        amount: 2800,
+        category: 'Lift Overhaul',
+        approvedBy: 'Bobby (Flat 101 - Maintenance Lead)',
+        notes: 'Annual reserve set aside for major lift wire rope inspection and emergency repairs.'
+      }
+    ]
+  };
+
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       
@@ -266,6 +295,13 @@ export const App: React.FC = () => {
             onClick={() => setActiveTab('table')}
           >
             <Table size={15} /> Calculations Sheet Table
+          </button>
+
+          <button
+            className={`chip ${activeTab === 'corpus' ? 'active' : ''}`}
+            onClick={() => setActiveTab('corpus')}
+          >
+            <Landmark size={15} /> 🏛️ Corpus Fund Tracker (₹200/mo)
           </button>
 
           <button
@@ -321,6 +357,16 @@ export const App: React.FC = () => {
               onUpdateCommonExpenses={handleUpdateCommonExpenses}
             />
           </>
+        )}
+
+        {/* Tab 2: Dedicated Corpus Fund Tracker */}
+        {activeTab === 'corpus' && (
+          <CorpusFundTracker
+            corpusConfig={defaultCorpusConfig}
+            activeRecord={activeRecord}
+            isAdmin={isAdmin}
+            onUpdateCorpusConfig={handleUpdateCorpusConfig}
+          />
         )}
 
         {/* Tab 2: Building Asset AMC Hub */}
