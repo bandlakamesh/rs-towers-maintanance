@@ -6,7 +6,7 @@ import type { AppState } from '../types';
 const DEFAULT_FIREBASE_CONFIG = {
   apiKey: "AIzaSyB_RSTowersMaint2026FreeKeySpec",
   authDomain: "rs-towers-ganesh.firebaseapp.com",
-  databaseURL: "https://rs-towers-ganesh-default-rtdb.firebaseio.com",
+  databaseURL: "https://rs-towers-ganesh-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "rs-towers-ganesh",
   storageBucket: "rs-towers-ganesh.appspot.com",
   messagingSenderId: "9963275455",
