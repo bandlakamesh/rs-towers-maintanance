@@ -338,8 +338,8 @@ export const App: React.FC = () => {
           </div>
         </div>
         
-        {/* Navigation Tabs */}
-        <nav className="chip-group" style={{ marginBottom: '20px' }}>
+        {/* Navigation Tabs (Desktop) */}
+        <nav className="chip-group desktop-chip-nav" style={{ marginBottom: '20px' }}>
           <button
             className={`chip ${activeTab === 'table' ? 'active' : ''}`}
             onClick={() => setActiveTab('table')}
@@ -517,6 +517,65 @@ export const App: React.FC = () => {
           onCreateMonth={handleCreateMonth}
         />
       )}
+
+      {/* Mobile Glassmorphic Fixed Bottom Navigation Bar */}
+      <nav className="mobile-bottom-nav no-print">
+        <button
+          className={`mobile-nav-item ${activeTab === 'table' ? 'active' : ''}`}
+          onClick={() => setActiveTab('table')}
+        >
+          <Table size={18} />
+          <span>Sheet</span>
+        </button>
+
+        <button
+          className={`mobile-nav-item ${activeTab === 'analytics' ? 'active' : ''}`}
+          onClick={() => setActiveTab('analytics')}
+        >
+          <BarChart2 size={18} />
+          <span>Analytics</span>
+        </button>
+
+        <button
+          className={`mobile-nav-item ${activeTab === 'occupants' ? 'active' : ''}`}
+          onClick={() => setActiveTab('occupants')}
+        >
+          <UserCheck size={18} />
+          <span>Directory</span>
+        </button>
+
+        <button
+          className={`mobile-nav-item ${activeTab === 'corpus' ? 'active' : ''}`}
+          onClick={() => setActiveTab('corpus')}
+        >
+          <Landmark size={18} />
+          <span>Corpus</span>
+        </button>
+
+        <button
+          className={`mobile-nav-item ${activeTab === 'amc' ? 'active' : ''}`}
+          onClick={() => setActiveTab('amc')}
+        >
+          <Wrench size={18} />
+          <span>AMC</span>
+        </button>
+
+        <button
+          className={`mobile-nav-item ${activeTab === 'vendors' ? 'active' : ''}`}
+          onClick={() => setActiveTab('vendors')}
+        >
+          <Contact size={18} />
+          <span>Vendors</span>
+        </button>
+
+        <button
+          className={`mobile-nav-item ${activeTab === 'notices' ? 'active' : ''}`}
+          onClick={() => setActiveTab('notices')}
+        >
+          <Megaphone size={18} />
+          <span>Notices</span>
+        </button>
+      </nav>
 
     </div>
   );
