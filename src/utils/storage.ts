@@ -1,6 +1,6 @@
 import type { AppState } from '../types';
 import { INITIAL_APP_STATE } from '../data/initialData';
-import { saveAppStateToFirebase, fetchInitialFirebaseState, subscribeToFirebaseState } from './firebaseStorage';
+import { saveAppStateToFirebase, fetchInitialFirebaseState } from './firebaseStorage';
 
 const LOCAL_STORAGE_KEY = 'rs_towers_maintenance_app_state_v1';
 const REMOTE_ENDPOINT = 'https://kvdb.io/4y7PZrNnE62L825e36fR6v/rs_towers_maintenance_state';
