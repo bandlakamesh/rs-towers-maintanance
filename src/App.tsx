@@ -59,7 +59,7 @@ export const App: React.FC = () => {
 
   // Auto-reset activeTab to 'table' for public residents if on an admin tab
   useEffect(() => {
-    if (!isAdmin && ['analytics', 'corpus', 'amc', 'vendors'].includes(activeTab)) {
+    if (!isAdmin && ['analytics', 'occupants', 'corpus', 'amc', 'vendors', 'notices'].includes(activeTab)) {
       setActiveTab('table');
     }
   }, [isAdmin, activeTab]);
@@ -571,12 +571,14 @@ export const App: React.FC = () => {
             </button>
           )}
 
-          <button
-            className={`chip ${activeTab === 'occupants' ? 'active' : ''}`}
-            onClick={() => setActiveTab('occupants')}
-          >
-            <UserCheck size={15} /> 👥 Flat Owners & Directory
-          </button>
+          {isAdmin && (
+            <button
+              className={`chip ${activeTab === 'occupants' ? 'active' : ''}`}
+              onClick={() => setActiveTab('occupants')}
+            >
+              <UserCheck size={15} /> 👥 Flat Owners & Directory
+            </button>
+          )}
 
           <button
             className={`chip ${activeTab === 'committee' ? 'active' : ''}`}
@@ -612,12 +614,14 @@ export const App: React.FC = () => {
             </button>
           )}
 
-          <button
-            className={`chip ${activeTab === 'notices' ? 'active' : ''}`}
-            onClick={() => setActiveTab('notices')}
-          >
-            <Megaphone size={15} /> 📢 Notice Board
-          </button>
+          {isAdmin && (
+            <button
+              className={`chip ${activeTab === 'notices' ? 'active' : ''}`}
+              onClick={() => setActiveTab('notices')}
+            >
+              <Megaphone size={15} /> 📢 Notice Board
+            </button>
+          )}
         </nav>
 
         {/* Tab 1: Maintenance Calculations Table */}
@@ -937,13 +941,15 @@ export const App: React.FC = () => {
           </button>
         )}
 
-        <button
-          className={`mobile-nav-item ${activeTab === 'occupants' ? 'active' : ''}`}
-          onClick={() => setActiveTab('occupants')}
-        >
-          <UserCheck size={18} />
-          <span>Directory</span>
-        </button>
+        {isAdmin && (
+          <button
+            className={`mobile-nav-item ${activeTab === 'occupants' ? 'active' : ''}`}
+            onClick={() => setActiveTab('occupants')}
+          >
+            <UserCheck size={18} />
+            <span>Directory</span>
+          </button>
+        )}
 
         <button
           className={`mobile-nav-item ${activeTab === 'committee' ? 'active' : ''}`}
@@ -983,13 +989,15 @@ export const App: React.FC = () => {
           </button>
         )}
 
-        <button
-          className={`mobile-nav-item ${activeTab === 'notices' ? 'active' : ''}`}
-          onClick={() => setActiveTab('notices')}
-        >
-          <Megaphone size={18} />
-          <span>Notices</span>
-        </button>
+        {isAdmin && (
+          <button
+            className={`mobile-nav-item ${activeTab === 'notices' ? 'active' : ''}`}
+            onClick={() => setActiveTab('notices')}
+          >
+            <Megaphone size={18} />
+            <span>Notices</span>
+          </button>
+        )}
       </nav>
 
     </div>

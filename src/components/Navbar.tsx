@@ -105,15 +105,19 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* Navbar Action Buttons */}
         <div className="navbar-actions-group no-print" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
           
-          {/* Share WhatsApp */}
-          <button className="app-btn app-btn-whatsapp" onClick={handleShareSummaryWhatsApp} style={{ padding: '7px 12px', fontSize: '0.8rem' }}>
-            <Share2 size={15} /> <span>Share</span>
-          </button>
+          {/* Share WhatsApp - ADMIN ONLY */}
+          {isAdmin && (
+            <button className="app-btn app-btn-whatsapp" onClick={handleShareSummaryWhatsApp} style={{ padding: '7px 12px', fontSize: '0.8rem' }}>
+              <Share2 size={15} /> <span>Share</span>
+            </button>
+          )}
 
-          {/* Print PDF */}
-          <button className="app-btn" onClick={handlePrintPDF} style={{ background: 'linear-gradient(135deg, #00B4D8 0%, #0096C7 100%)', color: '#FFF', padding: '7px 12px', fontSize: '0.8rem' }}>
-            <Printer size={15} /> <span>Print PDF</span>
-          </button>
+          {/* Print PDF - ADMIN ONLY */}
+          {isAdmin && (
+            <button className="app-btn" onClick={handlePrintPDF} style={{ background: 'linear-gradient(135deg, #00B4D8 0%, #0096C7 100%)', color: '#FFF', padding: '7px 12px', fontSize: '0.8rem' }}>
+              <Printer size={15} /> <span>Print PDF</span>
+            </button>
+          )}
 
           {/* Admin Unlock / Active Role Button */}
           <button

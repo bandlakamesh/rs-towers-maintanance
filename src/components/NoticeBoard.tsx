@@ -152,17 +152,17 @@ export const NoticeBoard: React.FC<NoticeBoardProps> = ({
                   </h3>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <button
-                    onClick={() => handleBroadcastWhatsApp(notice)}
-                    className="app-btn app-btn-whatsapp"
-                    style={{ padding: '6px 12px', fontSize: '0.78rem' }}
-                    title="Share to RS Towers WhatsApp Group"
-                  >
-                    <Share2 size={14} /> WhatsApp Group
-                  </button>
+                {isAdmin && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <button
+                      onClick={() => handleBroadcastWhatsApp(notice)}
+                      className="app-btn app-btn-whatsapp"
+                      style={{ padding: '6px 12px', fontSize: '0.78rem' }}
+                      title="Share to RS Towers WhatsApp Group"
+                    >
+                      <Share2 size={14} /> WhatsApp Group
+                    </button>
 
-                  {isAdmin && (
                     <button
                       onClick={() => onDeleteNotice(notice.id)}
                       style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer', padding: '6px' }}
@@ -170,8 +170,8 @@ export const NoticeBoard: React.FC<NoticeBoardProps> = ({
                     >
                       <Trash2 size={16} />
                     </button>
-                  )}
-                </div>
+                  </div>
+                )}
 
               </div>
 
