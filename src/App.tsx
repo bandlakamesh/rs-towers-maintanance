@@ -380,7 +380,7 @@ export const App: React.FC = () => {
       {/* Footer */}
       <footer style={{ marginTop: '40px', padding: '20px', textAlign: 'center', fontSize: '0.86rem', color: '#E0F2FE', borderTop: '2px solid #48CAE4', background: 'linear-gradient(135deg, #0E5A73 0%, #137A9A 100%)' }}>
         <div style={{ maxWidth: '1240px', margin: '0 auto' }}>
-          <strong style={{ color: '#FFFFFF' }}>R.S Towers <span style={{ color: '#FFD166' }}>Apartment Monthly Maintenance Tracker</span></strong> • 100% Free & Lifetime Working
+          <strong style={{ color: '#FFFFFF' }}>R.S Towers <span style={{ color: '#FFD166' }}>Apartment Monthly Maintenance Tracker</span></strong>
         </div>
       </footer>
 

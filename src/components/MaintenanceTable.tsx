@@ -67,38 +67,54 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
     <div style={{ marginBottom: '28px' }}>
       {/* 10th of Month Overdue Alert Banner */}
       {pendingFlats.length > 0 && (
-        <div className={`mb-4 p-4 rounded-2xl border backdrop-blur-md shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 ${
-          isPastDueDate
-            ? 'bg-gradient-to-r from-red-950/60 via-slate-900 to-amber-950/40 border-red-500/50 text-red-200'
-            : 'bg-gradient-to-r from-slate-900 via-amber-950/30 to-slate-900 border-amber-500/40 text-amber-200'
-        }`}>
-          <div className="flex items-center gap-3">
-            <div className={`p-2.5 rounded-xl border ${isPastDueDate ? 'bg-red-500/20 text-red-400 border-red-500/40' : 'bg-amber-500/20 text-amber-400 border-amber-500/40'}`}>
-              <AlertTriangle className="w-6 h-6" />
+        <div style={{
+          background: isPastDueDate ? 'linear-gradient(135deg, #FEF2F2 0%, #FFF5F5 100%)' : 'linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%)',
+          border: isPastDueDate ? '2px solid #FCA5A5' : '2px solid #FDE68A',
+          borderRadius: '16px',
+          padding: '16px 20px',
+          marginBottom: '20px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '12px',
+          boxShadow: isPastDueDate ? '0 4px 14px rgba(220, 38, 38, 0.12)' : '0 4px 14px rgba(217, 119, 6, 0.12)',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{
+              width: '42px',
+              height: '42px',
+              borderRadius: '12px',
+              background: isPastDueDate ? '#FEE2E2' : '#FEF3C7',
+              border: isPastDueDate ? '1px solid #FCA5A5' : '1px solid #FDE68A',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}>
+              <AlertTriangle size={22} color={isPastDueDate ? '#DC2626' : '#D97706'} />
             </div>
             <div>
-              <h4 className="font-bold text-white text-base flex items-center gap-2">
-                {isPastDueDate ? `🚨 OVERDUE NOTICE: Past ${dueDateDay}th Deadline!` : `⏳ Maintenance Payment Tracker (Due by ${dueDateDay}th)`}
+              <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: isPastDueDate ? '#991B1B' : '#92400E', margin: '0 0 2px 0' }}>
+                {isPastDueDate ? `🚨 OVERDUE NOTICE: Past ${dueDateDay}th Payment Deadline!` : `⏳ Maintenance Payment Tracker (Due by ${dueDateDay}th)`}
               </h4>
-              <p className="text-xs opacity-90 mt-0.5">
-                <strong>{pendingFlats.length} Flats Pending</strong> • Total Uncollected: <strong className="text-amber-300 font-bold">₹{totalPendingAmount.toLocaleString('en-IN')}</strong>
+              <p style={{ margin: 0, fontSize: '0.82rem', color: isPastDueDate ? '#7F1D1D' : '#78350F' }}>
+                <strong>{pendingFlats.length} Flats Pending</strong> • Total Uncollected: <strong style={{ fontSize: '0.92rem' }}>₹{totalPendingAmount.toLocaleString('en-IN')}</strong>
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => {
-                if (pendingFlats.length > 0) {
-                  handleSendOverdueWhatsApp(pendingFlats[0]);
-                }
-              }}
-              className="px-4 py-2 bg-gradient-to-r from-red-500 to-amber-600 hover:from-red-400 hover:to-amber-500 text-slate-950 font-bold text-xs rounded-xl transition-all duration-200 shadow-lg flex items-center gap-2"
-            >
-              <Bell className="w-4 h-4" />
-              Send Overdue WhatsApp Reminder
-            </button>
-          </div>
+          <button
+            onClick={() => {
+              if (pendingFlats.length > 0) {
+                handleSendOverdueWhatsApp(pendingFlats[0]);
+              }
+            }}
+            className="app-btn app-btn-whatsapp"
+            style={{ padding: '8px 14px', fontSize: '0.8rem' }}
+          >
+            <Bell size={15} /> Send Overdue WhatsApp Reminder
+          </button>
         </div>
       )}
       
