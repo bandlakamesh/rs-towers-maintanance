@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ShieldCheck, Lock, Unlock, X, KeyRound, Check, Crown, Smartphone, RefreshCw, Send } from 'lucide-react';
+import { ShieldCheck, Lock, Unlock, X, KeyRound, Check, Crown, Smartphone, RefreshCw, Send, Save, Home } from 'lucide-react';
 import type { FlatReading } from '../types';
-import { maskPhoneNumber, DEFAULT_FLAT_OWNERS } from './FlatOccupantsDirectory';
+import { maskPhoneNumber, DEFAULT_FLAT_OWNERS, DEFAULT_FLAT_TENANTS } from './FlatOccupantsDirectory';
+
+const RENTED_FLATS_SET = ['102', '202', '402'];
 
 interface AdminPinModalProps {
   onClose: () => void;
@@ -565,11 +567,21 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
                   👑 <strong>Root Role Management (Flat 302 - Kamesh):</strong> Assign roles for each flat (👑 Root Admin, 🛠️ Maintenance Lead, ⭐ Co-Admin, 👤 Normal Resident).
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '340px', overflowY: 'auto', paddingRight: '2px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '340px', overflowY: 'auto', paddingRight: '2px', marginBottom: '16px' }}>
                   {flatsList.filter((f) => f.flatNo !== 'WM').map((flat) => {
                     const isRoot = flat.flatNo === rootFlat;
                     const isMaintLead = maintenanceLeadFlats.includes(flat.flatNo);
                     const isCoAdmin = adminFlats.includes(flat.flatNo) && !isMaintLead;
+
+                    const defaultOwner = DEFAULT_FLAT_OWNERS[flat.flatNo] || { name: 'Flat Owner', phone: '' };
+                    const defaultTenant = DEFAULT_FLAT_TENANTS[flat.flatNo] || { name: flat.residentName, phone: '' };
+
+                    const isTenantOccupied = (RENTED_FLATS_SET.includes(flat.flatNo) || flat.residentType === 'Tenant') && flat.isOccupied;
+
+                    const ownerName = flat.ownerName || defaultOwner.name;
+                    const tenantName = isTenantOccupied
+                      ? (flat.residentName && flat.residentName !== 'Tenant' && flat.residentName !== ownerName ? flat.residentName : defaultTenant.name)
+                      : '';
 
                     const currentRole = isRoot
                       ? 'RootAdmin'
@@ -586,43 +598,59 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'space-between',
-                          padding: '8px 10px',
-                          borderRadius: '8px',
-                          border: isRoot ? '1px solid #FCD34D' : isMaintLead ? '1px solid #A7F3D0' : isCoAdmin ? '1px solid #BFDBFE' : '1px solid #E2E8F0',
+                          padding: '10px 12px',
+                          borderRadius: '10px',
+                          border: isRoot ? '1.5px solid #FCD34D' : isMaintLead ? '1.5px solid #A7F3D0' : isCoAdmin ? '1.5px solid #BFDBFE' : '1px solid #E2E8F0',
                           background: isRoot ? '#FEF3C7' : isMaintLead ? '#ECFDF5' : isCoAdmin ? '#EFF6FF' : '#FFFFFF',
-                          gap: '6px',
+                          gap: '8px',
+                          boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
                         }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
-                          <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#1D4ED8', background: '#EFF6FF', padding: '2px 6px', borderRadius: '5px', flexShrink: 0 }}>
+                          <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#1D4ED8', background: '#EFF6FF', border: '1px solid #BFDBFE', padding: '3px 7px', borderRadius: '6px', flexShrink: 0 }}>
                             #{flat.flatNo}
                           </span>
+
                           <div style={{ minWidth: 0, overflow: 'hidden' }}>
-                            <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                              {flat.residentName}
+                            <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#0F172A', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                              <span>{ownerName}</span>
+                              <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#475569', background: '#F1F5F9', padding: '1px 5px', borderRadius: '4px' }}>
+                                Owner
+                              </span>
                             </div>
+
+                            {isTenantOccupied && (
+                              <div style={{ fontSize: '0.74rem', color: '#6D28D9', fontWeight: 700, marginTop: '2px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <Home size={11} color="#7C3AED" /> Tenant: <strong>{tenantName}</strong>
+                              </div>
+                            )}
                           </div>
                         </div>
 
                         <div style={{ flexShrink: 0 }}>
                           {isRoot ? (
-                            <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#B45309', background: '#FDE68A', border: '1px solid #F59E0B', padding: '4px 8px', borderRadius: '6px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                              <Crown size={12} /> Root Admin
+                            <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#B45309', background: '#FDE68A', border: '1px solid #F59E0B', padding: '5px 10px', borderRadius: '8px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                              <Crown size={13} /> Root Admin
                             </span>
                           ) : (
                             <select
                               value={currentRole}
-                              onChange={(e) => onSetFlatRole?.(flat.flatNo, e.target.value as any)}
+                              onChange={(e) => {
+                                const newRole = e.target.value as any;
+                                onSetFlatRole?.(flat.flatNo, newRole);
+                                setSuccessMsg(`✅ Role for Flat #${flat.flatNo} updated to '${newRole === 'MaintenanceLead' ? '🛠️ Maintenance Lead' : newRole === 'CoAdmin' ? '⭐ Co-Admin' : '👤 Normal Resident'}'. Saved!`);
+                              }}
                               style={{
-                                fontSize: '0.76rem',
+                                fontSize: '0.78rem',
                                 fontWeight: 700,
-                                padding: '4px 8px',
-                                borderRadius: '6px',
-                                border: '1px solid #CBD5E1',
+                                padding: '6px 10px',
+                                borderRadius: '8px',
+                                border: '1.5px solid #CBD5E1',
                                 background: '#FFFFFF',
-                                color: currentRole === 'MaintenanceLead' ? '#065F46' : currentRole === 'CoAdmin' ? '#1E40AF' : '#475569',
+                                color: currentRole === 'MaintenanceLead' ? '#065F46' : currentRole === 'CoAdmin' ? '#1E40AF' : '#334155',
                                 cursor: 'pointer',
                                 outline: 'none',
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.04)',
                               }}
                             >
                               <option value="MaintenanceLead">🛠️ Maintenance Lead</option>
@@ -634,6 +662,21 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
                       </div>
                     );
                   })}
+                </div>
+
+                {/* Save & Finish Button */}
+                <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', paddingTop: '10px', borderTop: '1px solid #E2E8F0' }}>
+                  <button
+                    type="button"
+                    className="app-btn app-btn-primary"
+                    onClick={() => {
+                      setSuccessMsg('✅ All flat role assignments saved successfully!');
+                      setTimeout(() => onClose(), 400);
+                    }}
+                    style={{ padding: '8px 18px', fontSize: '0.84rem', gap: '6px' }}
+                  >
+                    <Save size={16} /> Save & Finish Role Setup
+                  </button>
                 </div>
               </div>
             )}
