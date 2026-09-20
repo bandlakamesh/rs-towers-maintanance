@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { Share2, Download, Upload, Printer, Lock, Unlock } from 'lucide-react';
-import type { AppState } from '../types';
+import type { AppState, UserRole } from '../types';
 import { exportAppStateJSON, importAppStateJSON } from '../utils/storage';
 import { generateWhatsAppMonthlySummary, openWhatsAppShareLink } from '../utils/whatsappFormatter';
 
@@ -9,6 +9,7 @@ interface NavbarProps {
   onStateUpdate: (newState: AppState) => void;
   onGoHome?: () => void;
   isAdmin: boolean;
+  userRole?: UserRole;
   currentAdminFlat?: string;
   onOpenAdminModal: () => void;
 }
@@ -18,6 +19,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onStateUpdate,
   onGoHome,
   isAdmin,
+  userRole = 'PublicResident',
   currentAdminFlat,
   onOpenAdminModal,
 }) => {
@@ -113,31 +115,37 @@ export const Navbar: React.FC<NavbarProps> = ({
             <Printer size={15} /> <span>Print PDF</span>
           </button>
 
-          {/* Admin Unlock / Active Button */}
+          {/* Admin Unlock / Active Role Button */}
           <button
             className="app-btn"
             onClick={onOpenAdminModal}
             style={{
-              background: isAdmin ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)' : 'rgba(255, 255, 255, 0.15)',
-              border: isAdmin ? '1px solid #34D399' : '1px solid rgba(255, 255, 255, 0.3)',
+              background: userRole === 'RootAdmin' ? 'linear-gradient(135deg, #D97706 0%, #B45309 100%)' : isAdmin ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)' : 'rgba(255, 255, 255, 0.15)',
+              border: userRole === 'RootAdmin' ? '1px solid #FDE68A' : isAdmin ? '1px solid #34D399' : '1px solid rgba(255, 255, 255, 0.3)',
               color: '#FFFFFF',
               padding: '7px 12px',
               fontSize: '0.8rem',
             }}
-            title={isAdmin ? "Admin Active (Click to Manage)" : "Unlock Admin Mode"}
+            title={isAdmin ? "Admin Mode Active (Click to Manage)" : "Unlock Admin Mode"}
           >
             {isAdmin ? <Unlock size={15} /> : <Lock size={15} />}
-            <span>{isAdmin ? (loggedInFlat === '302' ? '👑 Flat #302 (Kamesh)' : `⭐ Flat #${loggedInFlat}`) : 'Admin Unlock'}</span>
+            <span>
+              {userRole === 'RootAdmin'
+                ? '👑 Flat #302 (Kamesh)'
+                : userRole === 'CoAdmin'
+                ? `⭐ Flat #${loggedInFlat} (Co-Admin)`
+                : '🔑 Admin Unlock'}
+            </span>
           </button>
 
-          {/* Backup / Restore - Admin Only */}
-          {isAdmin && (
+          {/* Backup / Restore - ROOT SUPER ADMIN ONLY */}
+          {userRole === 'RootAdmin' && (
             <>
-              <button className="app-btn" onClick={handleExport} style={{ padding: '7px 10px', fontSize: '0.8rem', background: 'rgba(255, 255, 255, 0.15)', border: '1px solid rgba(255, 255, 255, 0.3)', color: '#FFFFFF' }} title="Download JSON Backup">
+              <button className="app-btn" onClick={handleExport} style={{ padding: '7px 10px', fontSize: '0.8rem', background: 'rgba(255, 255, 255, 0.18)', border: '1px solid rgba(255, 255, 255, 0.35)', color: '#FFFFFF' }} title="Download JSON Database Backup (Root Admin Only)">
                 <Download size={15} />
               </button>
 
-              <button className="app-btn" onClick={() => jsonInputRef.current?.click()} style={{ padding: '7px 10px', fontSize: '0.8rem', background: 'rgba(255, 255, 255, 0.15)', border: '1px solid rgba(255, 255, 255, 0.3)', color: '#FFFFFF' }} title="Restore Backup">
+              <button className="app-btn" onClick={() => jsonInputRef.current?.click()} style={{ padding: '7px 10px', fontSize: '0.8rem', background: 'rgba(255, 255, 255, 0.18)', border: '1px solid rgba(255, 255, 255, 0.35)', color: '#FFFFFF' }} title="Restore JSON Database Backup (Root Admin Only)">
                 <Upload size={15} />
               </button>
 

@@ -1,12 +1,23 @@
 import React, { useState } from 'react';
 import { Search, UserCheck, Phone, MessageSquare, Edit3, Check, X, Shield, Crown, Home } from 'lucide-react';
-import type { MonthMaintenanceRecord, FlatReading } from '../types';
+import type { MonthMaintenanceRecord, FlatReading, UserRole } from '../types';
 
 interface FlatOccupantsDirectoryProps {
   record: MonthMaintenanceRecord;
   isAdmin: boolean;
+  userRole?: UserRole;
   onUpdateReadings: (updatedReadings: FlatReading[]) => void;
+  onOpenAdminModal?: () => void;
 }
+
+export const maskPhoneNumber = (phone: string): string => {
+  if (!phone) return '98490****00';
+  const clean = phone.replace(/\D/g, '');
+  if (clean.length >= 10) {
+    return `${clean.substring(0, 5)}****${clean.substring(clean.length - 2)}`;
+  }
+  return `${phone.substring(0, 3)}****${phone.substring(phone.length - 2)}`;
+};
 
 // Known Rented Flats list in RS Towers
 const RENTED_FLATS = ['102', '202', '402'];
@@ -39,7 +50,9 @@ export const DEFAULT_FLAT_TENANTS: Record<string, { name: string; phone: string 
 export const FlatOccupantsDirectory: React.FC<FlatOccupantsDirectoryProps> = ({
   record,
   isAdmin,
+  userRole = 'PublicResident',
   onUpdateReadings,
+  onOpenAdminModal,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<'All' | 'Owner' | 'Tenant' | 'Vacant'>('All');
@@ -52,6 +65,8 @@ export const FlatOccupantsDirectory: React.FC<FlatOccupantsDirectoryProps> = ({
   const [editTenantPhone, setEditTenantPhone] = useState('');
   const [editType, setEditType] = useState<'Owner' | 'Tenant'>('Owner');
   const [editOccupied, setEditOccupied] = useState(true);
+
+  const isPublic = userRole === 'PublicResident';
 
   const allFlats = record.flatReadings.filter((f) => f.flatNo !== 'WM');
 
@@ -170,6 +185,56 @@ export const FlatOccupantsDirectory: React.FC<FlatOccupantsDirectoryProps> = ({
         </div>
       </div>
 
+      {/* PII Privacy Safeguard Banner for Public Readers */}
+      {isPublic && (
+        <div style={{
+          background: 'linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%)',
+          border: '1.5px solid #BFDBFE',
+          borderRadius: '14px',
+          padding: '12px 16px',
+          marginBottom: '16px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '10px',
+          boxShadow: '0 4px 12px rgba(29, 78, 216, 0.08)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
+              background: '#3B82F6',
+              color: '#FFF',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0
+            }}>
+              <Shield size={18} />
+            </div>
+            <div>
+              <strong style={{ fontSize: '0.86rem', color: '#1E40AF', display: 'block' }}>
+                🔒 PII Privacy Shield Active (Public Read-Only Mode)
+              </strong>
+              <span style={{ fontSize: '0.76rem', color: '#1E3A8A' }}>
+                Resident phone numbers are masked for public security when sharing in group chats. Unlock Admin mode to view full contacts.
+              </span>
+            </div>
+          </div>
+          {onOpenAdminModal && (
+            <button
+              onClick={onOpenAdminModal}
+              className="app-btn app-btn-primary"
+              style={{ padding: '6px 14px', fontSize: '0.78rem' }}
+            >
+              <Shield size={14} /> Unlock Contacts
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Roster KPI Summary Banner */}
       <div style={{
         display: 'grid',
@@ -229,12 +294,16 @@ export const FlatOccupantsDirectory: React.FC<FlatOccupantsDirectoryProps> = ({
           const defaultOwner = DEFAULT_FLAT_OWNERS[flat.flatNo] || { name: 'Flat Owner', phone: '9963275455' };
           const defaultTenant = DEFAULT_FLAT_TENANTS[flat.flatNo] || { name: flat.residentName, phone: '9849010200' };
 
+          const rawOwnerPhone = flat.ownerPhone || defaultOwner.phone;
+          const rawTenantPhone = flat.tenantPhone || defaultTenant.phone;
+
           const ownerName = flat.ownerName || defaultOwner.name;
-          const ownerPhone = flat.ownerPhone || defaultOwner.phone;
+          const ownerPhone = isPublic ? maskPhoneNumber(rawOwnerPhone) : rawOwnerPhone;
+
           const tenantName = isTenantOccupied
             ? (flat.residentName && flat.residentName !== 'Tenant' && flat.residentName !== ownerName ? flat.residentName : defaultTenant.name)
             : defaultTenant.name;
-          const tenantPhone = flat.tenantPhone || defaultTenant.phone;
+          const tenantPhone = isPublic ? maskPhoneNumber(rawTenantPhone) : rawTenantPhone;
 
           return (
             <div
@@ -304,10 +373,32 @@ export const FlatOccupantsDirectory: React.FC<FlatOccupantsDirectoryProps> = ({
                         <span>Owner Mobile: <strong>{ownerPhone}</strong></span>
                       </div>
                       <div style={{ display: 'flex', gap: '6px' }}>
-                        <a href={`tel:${ownerPhone}`} className="app-btn app-btn-secondary" style={{ padding: '4px 8px', fontSize: '0.72rem', flex: 1, justifyContent: 'center' }}>
-                          <Phone size={11} /> Call Owner
+                        <a
+                          href={isPublic ? '#' : `tel:${rawOwnerPhone}`}
+                          onClick={(e) => {
+                            if (isPublic) {
+                              e.preventDefault();
+                              onOpenAdminModal?.();
+                            }
+                          }}
+                          className="app-btn app-btn-secondary"
+                          style={{ padding: '4px 8px', fontSize: '0.72rem', flex: 1, justifyContent: 'center' }}
+                        >
+                          <Phone size={11} /> {isPublic ? 'Unlock Contact' : 'Call Owner'}
                         </a>
-                        <a href={`https://wa.me/91${ownerPhone}`} target="_blank" rel="noreferrer" className="app-btn app-btn-whatsapp" style={{ padding: '4px 8px', fontSize: '0.72rem', flex: 1, justifyContent: 'center' }}>
+                        <a
+                          href={isPublic ? '#' : `https://wa.me/91${rawOwnerPhone}`}
+                          target={isPublic ? '_self' : '_blank'}
+                          rel="noreferrer"
+                          onClick={(e) => {
+                            if (isPublic) {
+                              e.preventDefault();
+                              onOpenAdminModal?.();
+                            }
+                          }}
+                          className="app-btn app-btn-whatsapp"
+                          style={{ padding: '4px 8px', fontSize: '0.72rem', flex: 1, justifyContent: 'center' }}
+                        >
                           <MessageSquare size={11} /> WhatsApp
                         </a>
                       </div>
@@ -332,10 +423,32 @@ export const FlatOccupantsDirectory: React.FC<FlatOccupantsDirectoryProps> = ({
                         <span>Tenant Mobile: <strong>{tenantPhone}</strong></span>
                       </div>
                       <div style={{ display: 'flex', gap: '6px' }}>
-                        <a href={`tel:${tenantPhone}`} className="app-btn app-btn-secondary" style={{ padding: '4px 8px', fontSize: '0.72rem', flex: 1, justifyContent: 'center' }}>
-                          <Phone size={11} /> Call Tenant
+                        <a
+                          href={isPublic ? '#' : `tel:${rawTenantPhone}`}
+                          onClick={(e) => {
+                            if (isPublic) {
+                              e.preventDefault();
+                              onOpenAdminModal?.();
+                            }
+                          }}
+                          className="app-btn app-btn-secondary"
+                          style={{ padding: '4px 8px', fontSize: '0.72rem', flex: 1, justifyContent: 'center' }}
+                        >
+                          <Phone size={11} /> {isPublic ? 'Unlock Contact' : 'Call Tenant'}
                         </a>
-                        <a href={`https://wa.me/91${tenantPhone}`} target="_blank" rel="noreferrer" className="app-btn app-btn-whatsapp" style={{ padding: '4px 8px', fontSize: '0.72rem', flex: 1, justifyContent: 'center' }}>
+                        <a
+                          href={isPublic ? '#' : `https://wa.me/91${rawTenantPhone}`}
+                          target={isPublic ? '_self' : '_blank'}
+                          rel="noreferrer"
+                          onClick={(e) => {
+                            if (isPublic) {
+                              e.preventDefault();
+                              onOpenAdminModal?.();
+                            }
+                          }}
+                          className="app-btn app-btn-whatsapp"
+                          style={{ padding: '4px 8px', fontSize: '0.72rem', flex: 1, justifyContent: 'center' }}
+                        >
                           <MessageSquare size={11} /> WhatsApp
                         </a>
                       </div>
@@ -364,10 +477,32 @@ export const FlatOccupantsDirectory: React.FC<FlatOccupantsDirectoryProps> = ({
                         <span>Mobile: <strong>{ownerPhone}</strong></span>
                       </div>
                       <div style={{ display: 'flex', gap: '6px' }}>
-                        <a href={`tel:${ownerPhone}`} className="app-btn app-btn-secondary" style={{ padding: '5px 10px', fontSize: '0.76rem', flex: 1, justifyContent: 'center' }}>
-                          <Phone size={12} /> Call Owner
+                        <a
+                          href={isPublic ? '#' : `tel:${rawOwnerPhone}`}
+                          onClick={(e) => {
+                            if (isPublic) {
+                              e.preventDefault();
+                              onOpenAdminModal?.();
+                            }
+                          }}
+                          className="app-btn app-btn-secondary"
+                          style={{ padding: '5px 10px', fontSize: '0.76rem', flex: 1, justifyContent: 'center' }}
+                        >
+                          <Phone size={12} /> {isPublic ? 'Unlock Contact' : 'Call Owner'}
                         </a>
-                        <a href={`https://wa.me/91${ownerPhone}`} target="_blank" rel="noreferrer" className="app-btn app-btn-whatsapp" style={{ padding: '5px 10px', fontSize: '0.76rem', flex: 1, justifyContent: 'center' }}>
+                        <a
+                          href={isPublic ? '#' : `https://wa.me/91${rawOwnerPhone}`}
+                          target={isPublic ? '_self' : '_blank'}
+                          rel="noreferrer"
+                          onClick={(e) => {
+                            if (isPublic) {
+                              e.preventDefault();
+                              onOpenAdminModal?.();
+                            }
+                          }}
+                          className="app-btn app-btn-whatsapp"
+                          style={{ padding: '5px 10px', fontSize: '0.76rem', flex: 1, justifyContent: 'center' }}
+                        >
                           <MessageSquare size={12} /> WhatsApp
                         </a>
                       </div>

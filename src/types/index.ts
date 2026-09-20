@@ -114,6 +114,8 @@ export interface CorpusFundConfig {
   corpusExpenses: CorpusExpenseLog[];
 }
 
+export type UserRole = 'RootAdmin' | 'CoAdmin' | 'VerifiedResident' | 'PublicResident';
+
 export interface AppState {
   activeMonthId: string;
   months: Record<string, MonthMaintenanceRecord>;
@@ -126,6 +128,7 @@ export interface AppState {
   notices: NoticeItem[];
   dueDateDay: number; // default 10
   corpusConfig?: CorpusFundConfig;
+  privacyMode?: boolean;
 }
 
 

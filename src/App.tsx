@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
 import { Table, Wrench, Contact, Megaphone, Landmark, BarChart2, Calendar, Plus, UserCheck } from 'lucide-react';
-import type { AppState, MonthMaintenanceRecord, FlatReading, WaterCalculationConfig, CommonExpenseItem, PaymentMode, PeriodicTask, ApartmentVendor, NoticeItem, CorpusFundConfig } from './types';
+import type { AppState, MonthMaintenanceRecord, FlatReading, WaterCalculationConfig, CommonExpenseItem, PaymentMode, PeriodicTask, ApartmentVendor, NoticeItem, CorpusFundConfig, UserRole } from './types';
 import { loadAppState, fetchLatestCloudState, syncToCloudRemote } from './utils/storage';
 import { recalculateMonthRecord } from './utils/calculator';
 
@@ -27,6 +27,12 @@ export const App: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState<boolean>(() => localStorage.getItem('rs_towers_maint_is_admin') === 'true');
   const [currentAdminFlat, setCurrentAdminFlat] = useState<string>(() => localStorage.getItem('rs_towers_maint_admin_flat') || '302');
   const [isAdminModalOpen, setIsAdminModalOpen] = useState<boolean>(false);
+
+  const userRole: UserRole = !isAdmin
+    ? 'PublicResident'
+    : currentAdminFlat === (appState.rootFlat || '302')
+    ? 'RootAdmin'
+    : 'CoAdmin';
 
   // Payment & Month Modals State
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState<boolean>(false);
@@ -289,6 +295,7 @@ export const App: React.FC = () => {
         onStateUpdate={handleStateUpdate}
         onGoHome={() => setActiveTab('table')}
         isAdmin={isAdmin}
+        userRole={userRole}
         currentAdminFlat={currentAdminFlat}
         onOpenAdminModal={() => setIsAdminModalOpen(true)}
       />
@@ -324,13 +331,13 @@ export const App: React.FC = () => {
               <span>Collected: <strong style={{ color: '#059669' }}>₹{totalCollected.toLocaleString('en-IN')}</strong> ({collectionPercentage}%)</span>
             </div>
 
-            {/* Admin Action for New Month */}
-            {isAdmin && (
+            {/* Admin Action for New Month - ROOT ADMIN ONLY */}
+            {userRole === 'RootAdmin' && (
               <button
                 onClick={() => setIsNewMonthModalOpen(true)}
                 className="app-btn app-btn-primary month-new-btn"
                 style={{ padding: '7px 14px', fontSize: '0.82rem' }}
-                title="Create New Month Calculation Sheet"
+                title="Create New Month Calculation Sheet (Root Admin Kamesh Only)"
               >
                 <Plus size={15} /> Create New Month
               </button>
@@ -406,7 +413,7 @@ export const App: React.FC = () => {
 
             <ExpenseBreakdown
               record={activeRecord}
-              isAdmin={isAdmin}
+              isAdmin={userRole === 'RootAdmin'}
               onUpdateWaterConfig={handleUpdateWaterConfig}
               onUpdateCommonExpenses={handleUpdateCommonExpenses}
             />
@@ -426,41 +433,43 @@ export const App: React.FC = () => {
           <FlatOccupantsDirectory
             record={activeRecord}
             isAdmin={isAdmin}
+            userRole={userRole}
             onUpdateReadings={handleUpdateReadings}
+            onOpenAdminModal={() => setIsAdminModalOpen(true)}
           />
         )}
 
-        {/* Tab 2: Dedicated Corpus Fund Tracker */}
+        {/* Tab 4: Dedicated Corpus Fund Tracker */}
         {activeTab === 'corpus' && (
           <CorpusFundTracker
             corpusConfig={defaultCorpusConfig}
             activeRecord={activeRecord}
-            isAdmin={isAdmin}
+            isAdmin={userRole === 'RootAdmin'}
             onUpdateCorpusConfig={handleUpdateCorpusConfig}
           />
         )}
 
-        {/* Tab 2: Building Asset AMC Hub */}
+        {/* Tab 5: Building Asset AMC Hub */}
         {activeTab === 'amc' && (
           <PeriodicMaintenanceHub
             tasks={appState.periodicTasks || []}
-            isAdmin={isAdmin}
+            isAdmin={userRole === 'RootAdmin'}
             onUpdateTask={handleUpdatePeriodicTask}
             onAddTask={handleAddPeriodicTask}
           />
         )}
 
-        {/* Tab 5: Vendors Directory */}
+        {/* Tab 6: Vendors Directory */}
         {activeTab === 'vendors' && (
           <VendorDirectory
             vendors={appState.vendors || []}
-            isAdmin={isAdmin}
+            isAdmin={userRole === 'RootAdmin'}
             onAddVendor={handleAddVendor}
             onDeleteVendor={handleDeleteVendor}
           />
         )}
 
-        {/* Tab 6: Notice Board */}
+        {/* Tab 7: Notice Board */}
         {activeTab === 'notices' && (
           <NoticeBoard
             notices={appState.notices || []}
@@ -493,6 +502,7 @@ export const App: React.FC = () => {
         <AdminPinModal
           onClose={() => setIsAdminModalOpen(false)}
           isAdmin={isAdmin}
+          currentAdminFlat={currentAdminFlat}
           onAdminLoginSuccess={(flatNo) => {
             setIsAdmin(true);
             setCurrentAdminFlat(flatNo);
