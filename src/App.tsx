@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
-import { Table, Wrench, Contact, Megaphone, Landmark, BarChart2, Calendar, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { Table, Wrench, Contact, Megaphone, Landmark, BarChart2, Calendar, Plus } from 'lucide-react';
 import type { AppState, MonthMaintenanceRecord, FlatReading, WaterCalculationConfig, CommonExpenseItem, PaymentMode, PeriodicTask, ApartmentVendor, NoticeItem, CorpusFundConfig } from './types';
 import { loadAppState, fetchLatestCloudState, syncToCloudRemote } from './utils/storage';
 import { recalculateMonthRecord } from './utils/calculator';
@@ -271,9 +271,6 @@ export const App: React.FC = () => {
   };
 
   const monthIds = Object.keys(appState.months);
-  const activeMonthIndex = monthIds.indexOf(appState.activeMonthId);
-  const hasPrevMonth = activeMonthIndex > 0;
-  const hasNextMonth = activeMonthIndex >= 0 && activeMonthIndex < monthIds.length - 1;
 
   const totalCollected = activeRecord.flatReadings
     .filter((f) => f.flatNo !== 'WM' && f.isOccupied)
@@ -298,7 +295,7 @@ export const App: React.FC = () => {
       {/* Main Container */}
       <main style={{ maxWidth: '1240px', width: '100%', margin: '0 auto', padding: '16px 16px 0 16px', flex: 1 }}>
         
-        {/* Dedicated Month Filter & Navigation Control Bar */}
+        {/* Dedicated Month Filter & Control Bar */}
         <div className="no-print" style={{
           background: 'linear-gradient(135deg, #FFFFFF 0%, #F0F9FF 100%)',
           border: '1.5px solid #B2D8E5',
@@ -348,49 +345,6 @@ export const App: React.FC = () => {
                   </option>
                 ))}
               </select>
-            </div>
-
-            {/* Quick Prev / Next Month Nav Buttons */}
-            <div style={{ display: 'flex', gap: '6px' }}>
-              <button
-                disabled={!hasPrevMonth}
-                onClick={() => hasPrevMonth && handleSelectMonth(monthIds[activeMonthIndex - 1])}
-                style={{
-                  background: hasPrevMonth ? '#FFFFFF' : '#F1F5F9',
-                  border: '1px solid #CBD5E1',
-                  color: hasPrevMonth ? '#0077B6' : '#94A3B8',
-                  borderRadius: '8px',
-                  padding: '7px 12px',
-                  fontSize: '0.8rem',
-                  fontWeight: 700,
-                  cursor: hasPrevMonth ? 'pointer' : 'not-allowed',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                }}
-              >
-                <ChevronLeft size={15} /> Prev Month
-              </button>
-
-              <button
-                disabled={!hasNextMonth}
-                onClick={() => hasNextMonth && handleSelectMonth(monthIds[activeMonthIndex + 1])}
-                style={{
-                  background: hasNextMonth ? '#FFFFFF' : '#F1F5F9',
-                  border: '1px solid #CBD5E1',
-                  color: hasNextMonth ? '#0077B6' : '#94A3B8',
-                  borderRadius: '8px',
-                  padding: '7px 12px',
-                  fontSize: '0.8rem',
-                  fontWeight: 700,
-                  cursor: hasNextMonth ? 'pointer' : 'not-allowed',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                }}
-              >
-                Next Month <ChevronRight size={15} />
-              </button>
             </div>
           </div>
 
