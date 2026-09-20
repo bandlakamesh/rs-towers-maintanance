@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Shield, Plus, Edit2, Trash2, Camera, Phone, Mail, User, ExternalLink } from 'lucide-react';
+import { Shield, Plus, Edit2, Trash2, Camera, Phone, Mail, User, ExternalLink, X } from 'lucide-react';
 import type { CommitteeMember, UserRole } from '../types';
 import { maskPhoneNumber } from '../utils/whatsappFormatter';
 
@@ -378,150 +378,316 @@ export const ApartmentCommittee: React.FC<ApartmentCommitteeProps> = ({
 
       {/* Modal for Add / Edit Committee Member */}
       {isModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-card" style={{ maxWidth: '520px' }}>
-            <div className="modal-header">
-              <h3>{editingMember ? '✏️ Edit Committee Member' : '➕ Add Committee Member'}</h3>
-              <button onClick={() => setIsModalOpen(false)} className="modal-close-btn">&times;</button>
-            </div>
-
-            <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginTop: '14px' }}>
-              
-              {/* Photo Upload Section */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', background: '#F8FAFC', padding: '12px', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
-                {photoUrl ? (
-                  <img src={photoUrl} alt="Preview" style={{ width: '60px', height: '60px', borderRadius: '50%', objectFit: 'cover' }} />
-                ) : (
-                  <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: '#E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748B' }}>
-                    <User size={28} />
-                  </div>
-                )}
+        <div
+          className="modal-overlay"
+          onClick={() => setIsModalOpen(false)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(15, 23, 42, 0.75)',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px',
+            zIndex: 9999,
+          }}
+        >
+          <div
+            className="modal-container"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: '560px',
+              width: '100%',
+              background: '#FFFFFF',
+              borderRadius: '24px',
+              boxShadow: '0 25px 50px -12px rgba(15, 23, 42, 0.4)',
+              border: '1px solid #CBD5E1',
+              maxHeight: '90vh',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+              position: 'relative',
+              zIndex: 10000,
+            }}
+          >
+            {/* Modal Header Banner */}
+            <div
+              style={{
+                background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
+                padding: '20px 24px',
+                color: '#FFFFFF',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div
+                  style={{
+                    width: '42px',
+                    height: '42px',
+                    borderRadius: '12px',
+                    background: 'rgba(56, 189, 248, 0.15)',
+                    border: '1px solid rgba(56, 189, 248, 0.3)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#38BDF8',
+                    flexShrink: 0,
+                  }}
+                >
+                  <Shield size={22} />
+                </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 700, color: '#0F172A', marginBottom: '4px' }}>
-                    Profile Photo / Avatar
-                  </label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handlePhotoUpload}
-                    style={{ fontSize: '0.8rem' }}
-                  />
-                  <span style={{ fontSize: '0.72rem', color: '#64748B', display: 'block', marginTop: '2px' }}>
-                    Max size: 2MB (JPG, PNG, WebP)
+                  <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: '#F8FAFC' }}>
+                    {editingMember ? '✏️ Edit Committee Member' : '➕ Add Committee Member'}
+                  </h3>
+                  <span style={{ fontSize: '0.8rem', color: '#94A3B8' }}>
+                    R.S. Towers Management Roster
                   </span>
                 </div>
               </div>
 
-              {/* Name & Flat No */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div>
-                  <label className="form-label">Full Name *</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="e.g. Kamesh Bandla"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="form-label">Flat # *</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={flatNo}
-                    onChange={(e) => setFlatNo(e.target.value)}
-                    placeholder="e.g. 302"
-                    required
-                  />
-                </div>
-              </div>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.12)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  color: '#FFFFFF',
+                  borderRadius: '50%',
+                  width: '34px',
+                  height: '34px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.2s ease',
+                }}
+                title="Close"
+              >
+                <X size={18} />
+              </button>
+            </div>
 
-              {/* Designation & Term */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            {/* Modal Body */}
+            <div style={{ padding: '24px', overflowY: 'auto', flex: 1 }}>
+              <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                
+                {/* Photo Upload Section */}
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '16px',
+                    background: '#F8FAFC',
+                    padding: '14px 16px',
+                    borderRadius: '16px',
+                    border: '1.5px dashed #CBD5E1',
+                  }}
+                >
+                  {photoUrl ? (
+                    <img
+                      src={photoUrl}
+                      alt="Preview"
+                      style={{
+                        width: '64px',
+                        height: '64px',
+                        borderRadius: '50%',
+                        objectFit: 'cover',
+                        border: '3px solid #0284C7',
+                        boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
+                      }}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        width: '64px',
+                        height: '64px',
+                        borderRadius: '50%',
+                        background: '#E2E8F0',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#64748B',
+                      }}
+                    >
+                      <User size={32} />
+                    </div>
+                  )}
+                  <div style={{ flex: 1 }}>
+                    <label
+                      style={{
+                        display: 'block',
+                        fontSize: '0.86rem',
+                        fontWeight: 800,
+                        color: '#0F172A',
+                        marginBottom: '4px',
+                      }}
+                    >
+                      Profile Photo / Avatar
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePhotoUpload}
+                      style={{ fontSize: '0.8rem', color: '#334155', width: '100%' }}
+                    />
+                    <span style={{ fontSize: '0.74rem', color: '#64748B', display: 'block', marginTop: '4px' }}>
+                      Max size: 2MB (JPG, PNG, WebP)
+                    </span>
+                  </div>
+                </div>
+
+                {/* Name & Flat No */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                  <div>
+                    <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1E293B', display: 'block', marginBottom: '6px' }}>
+                      Full Name *
+                    </label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="e.g. Kamesh Bandla"
+                      required
+                      style={{ padding: '10px 14px', fontSize: '0.9rem', background: '#F8FAFC', border: '1.5px solid #CBD5E1' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1E293B', display: 'block', marginBottom: '6px' }}>
+                      Flat # *
+                    </label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={flatNo}
+                      onChange={(e) => setFlatNo(e.target.value)}
+                      placeholder="e.g. 302"
+                      required
+                      style={{ padding: '10px 14px', fontSize: '0.9rem', background: '#F8FAFC', border: '1.5px solid #CBD5E1' }}
+                    />
+                  </div>
+                </div>
+
+                {/* Designation & Term */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                  <div>
+                    <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1E293B', display: 'block', marginBottom: '6px' }}>
+                      Designation / Role *
+                    </label>
+                    <select
+                      className="form-control"
+                      value={designation}
+                      onChange={(e) => setDesignation(e.target.value as any)}
+                      style={{ padding: '10px 14px', fontSize: '0.88rem', background: '#F8FAFC', border: '1.5px solid #CBD5E1' }}
+                    >
+                      <option value="President & Super Admin">👑 President & Super Admin</option>
+                      <option value="Maintenance Lead & Treasurer">🛠️ Maintenance Lead & Treasurer</option>
+                      <option value="Vice President">⭐ Vice President</option>
+                      <option value="General Secretary">📜 General Secretary</option>
+                      <option value="Joint Secretary">✍️ Joint Secretary</option>
+                      <option value="Security & Facility Lead">🛡️ Security & Facility Lead</option>
+                      <option value="Executive Member">🏅 Executive Member</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1E293B', display: 'block', marginBottom: '6px' }}>
+                      Term Period
+                    </label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={termPeriod}
+                      onChange={(e) => setTermPeriod(e.target.value)}
+                      placeholder="e.g. 2025 - 2027"
+                      style={{ padding: '10px 14px', fontSize: '0.9rem', background: '#F8FAFC', border: '1.5px solid #CBD5E1' }}
+                    />
+                  </div>
+                </div>
+
+                {/* Phone & Email */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                  <div>
+                    <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1E293B', display: 'block', marginBottom: '6px' }}>
+                      Phone Number *
+                    </label>
+                    <input
+                      type="tel"
+                      className="form-control"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="e.g. 9849030200"
+                      required
+                      style={{ padding: '10px 14px', fontSize: '0.9rem', background: '#F8FAFC', border: '1.5px solid #CBD5E1' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1E293B', display: 'block', marginBottom: '6px' }}>
+                      Email (Optional)
+                    </label>
+                    <input
+                      type="email"
+                      className="form-control"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="e.g. name@rstowers.org"
+                      style={{ padding: '10px 14px', fontSize: '0.9rem', background: '#F8FAFC', border: '1.5px solid #CBD5E1' }}
+                    />
+                  </div>
+                </div>
+
+                {/* Responsibilities */}
                 <div>
-                  <label className="form-label">Designation / Role *</label>
-                  <select
+                  <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1E293B', display: 'block', marginBottom: '6px' }}>
+                    Key Responsibilities (One per line)
+                  </label>
+                  <textarea
                     className="form-control"
-                    value={designation}
-                    onChange={(e) => setDesignation(e.target.value as any)}
+                    rows={3}
+                    value={responsibilitiesText}
+                    onChange={(e) => setResponsibilitiesText(e.target.value)}
+                    placeholder="e.g. Monthly Dues Collection&#10;Water Tanker Management"
+                    style={{ padding: '10px 14px', fontSize: '0.88rem', background: '#F8FAFC', border: '1.5px solid #CBD5E1' }}
+                  />
+                </div>
+
+                {/* Actions */}
+                <div
+                  style={{
+                    display: 'flex',
+                    gap: '12px',
+                    justifyContent: 'flex-end',
+                    marginTop: '10px',
+                    paddingTop: '16px',
+                    borderTop: '1px solid #E2E8F0',
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setIsModalOpen(false)}
+                    className="app-btn app-btn-secondary"
+                    style={{ padding: '10px 20px', fontSize: '0.88rem' }}
                   >
-                    <option value="President & Super Admin">👑 President & Super Admin</option>
-                    <option value="Maintenance Lead & Treasurer">🛠️ Maintenance Lead & Treasurer</option>
-                    <option value="Vice President">⭐ Vice President</option>
-                    <option value="General Secretary">📜 General Secretary</option>
-                    <option value="Joint Secretary">✍️ Joint Secretary</option>
-                    <option value="Security & Facility Lead">🛡️ Security & Facility Lead</option>
-                    <option value="Executive Member">🏅 Executive Member</option>
-                  </select>
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="app-btn app-btn-primary"
+                    style={{ padding: '10px 22px', fontSize: '0.88rem' }}
+                  >
+                    Save Committee Member
+                  </button>
                 </div>
-                <div>
-                  <label className="form-label">Term Period</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={termPeriod}
-                    onChange={(e) => setTermPeriod(e.target.value)}
-                    placeholder="e.g. 2025 - 2027"
-                  />
-                </div>
-              </div>
 
-              {/* Phone & Email */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div>
-                  <label className="form-label">Phone Number *</label>
-                  <input
-                    type="tel"
-                    className="form-control"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="e.g. 9849030200"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="form-label">Email (Optional)</label>
-                  <input
-                    type="email"
-                    className="form-control"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="e.g. name@rstowers.org"
-                  />
-                </div>
-              </div>
-
-              {/* Responsibilities */}
-              <div>
-                <label className="form-label">Key Responsibilities (One per line)</label>
-                <textarea
-                  className="form-control"
-                  rows={3}
-                  value={responsibilitiesText}
-                  onChange={(e) => setResponsibilitiesText(e.target.value)}
-                  placeholder="e.g. Monthly Dues Collection&#10;Water Tanker Management"
-                />
-              </div>
-
-              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '10px' }}>
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="app-btn app-btn-secondary"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="app-btn app-btn-primary"
-                >
-                  Save Committee Member
-                </button>
-              </div>
-
-            </form>
+              </form>
+            </div>
           </div>
         </div>
       )}
