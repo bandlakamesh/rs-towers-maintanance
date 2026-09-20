@@ -5,6 +5,7 @@ import type { MonthMaintenanceRecord, PaymentMode } from '../types';
 interface PaymentModalProps {
   record: MonthMaintenanceRecord;
   initialFlatNo?: string;
+  isAdmin?: boolean;
   onClose: () => void;
   onSavePayment: (flatNo: string, amount: number, paymentMode: PaymentMode, notes: string) => void;
 }
@@ -12,6 +13,7 @@ interface PaymentModalProps {
 export const PaymentModal: React.FC<PaymentModalProps> = ({
   record,
   initialFlatNo = '101',
+  isAdmin = false,
   onClose,
   onSavePayment,
 }) => {
@@ -230,9 +232,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               <label style={{ fontSize: '0.76rem' }}>Flat Number:</label>
               <select
                 className="form-control"
-                style={{ padding: '6px 8px', fontSize: '0.82rem' }}
+                style={{ padding: '6px 8px', fontSize: '0.82rem', background: !isAdmin ? '#F1F5F9' : '#FFFFFF' }}
                 value={selectedFlatNo}
                 onChange={(e) => setSelectedFlatNo(e.target.value)}
+                disabled={!isAdmin}
               >
                 {record.flatReadings.filter((f) => f.flatNo !== 'WM' && f.isOccupied).map((f) => (
                   <option key={f.flatNo} value={f.flatNo}>

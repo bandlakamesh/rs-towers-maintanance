@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Table, Send, CheckCircle2, AlertCircle, Edit2, AlertTriangle, Bell, CreditCard } from 'lucide-react';
+import { Table, Send, CheckCircle2, AlertCircle, Edit2, AlertTriangle, Bell, CreditCard, Home } from 'lucide-react';
 import type { MonthMaintenanceRecord, FlatReading } from '../types';
 import { generateWhatsAppFlatBillText, generateWhatsAppOverdueReminderText, openWhatsAppShareLink } from '../utils/whatsappFormatter';
 
@@ -18,6 +18,7 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
   onUpdateReadings,
   onSelectFlatPayment,
 }) => {
+  const [selectedFlatFilter, setSelectedFlatFilter] = useState<string>('ALL');
   const [editingFlatNo, setEditingFlatNo] = useState<string | null>(null);
   const [tempPrev, setTempPrev] = useState<number>(0);
   const [tempCurr, setTempCurr] = useState<number>(0);
@@ -65,8 +66,126 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
   const wmReading = record.flatReadings.find((f) => f.flatNo === 'WM');
   const wmUnits = wmReading ? wmReading.consumedUnits : 8;
 
+  const selectedFlatObj = selectedFlatFilter !== 'ALL'
+    ? record.flatReadings.find((f) => f.flatNo === selectedFlatFilter)
+    : null;
+
   return (
     <div style={{ marginBottom: '28px' }}>
+      
+      {/* Interactive Flat Selector & Quick Pay Bar */}
+      <div style={{
+        background: '#FFFFFF',
+        border: '2px solid #0096C7',
+        borderRadius: '16px',
+        padding: '16px 20px',
+        marginBottom: '20px',
+        boxShadow: '0 4px 14px rgba(0, 150, 199, 0.12)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: '14px',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: '280px' }}>
+          <div style={{
+            width: '42px',
+            height: '42px',
+            borderRadius: '12px',
+            background: 'linear-gradient(135deg, #0284C7 0%, #0369A1 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#FFFFFF',
+            flexShrink: 0,
+            boxShadow: '0 4px 10px rgba(2, 132, 199, 0.3)',
+          }}>
+            <Home size={22} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <label style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0369A1', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '4px' }}>
+              🏠 Select Your Flat Number to Pay & View Dues:
+            </label>
+            <select
+              value={selectedFlatFilter}
+              onChange={(e) => setSelectedFlatFilter(e.target.value)}
+              style={{
+                width: '100%',
+                maxWidth: '420px',
+                padding: '9px 14px',
+                fontSize: '0.94rem',
+                fontWeight: 700,
+                borderRadius: '10px',
+                border: '1.5px solid #0284C7',
+                background: '#F0F9FF',
+                color: '#0F172A',
+                cursor: 'pointer',
+                outline: 'none',
+              }}
+            >
+              <option value="ALL">🏢 Show All 14 Flats (Full Building Table)</option>
+              {record.flatReadings.filter((f) => f.flatNo !== 'WM' && f.isOccupied).map((f) => (
+                <option key={f.flatNo} value={f.flatNo}>
+                  Flat #{f.flatNo} ({f.residentName}) — {f.status === 'Received' ? '✅ Paid' : `⏳ Due ₹${f.roundedValue.toLocaleString('en-IN')}`}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Selected Flat Direct Payment Banner */}
+        {selectedFlatObj && (() => {
+          const isPaid = selectedFlatObj.status === 'Received';
+
+          return (
+            <div style={{
+              background: isPaid ? '#ECFDF5' : '#FEF3C7',
+              border: isPaid ? '1.5px solid #A7F3D0' : '1.5px solid #FDE68A',
+              borderRadius: '14px',
+              padding: '12px 18px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '16px',
+              flexWrap: 'wrap',
+            }}>
+              <div>
+                <div style={{ fontSize: '0.78rem', color: isPaid ? '#065F46' : '#92400E', fontWeight: 700 }}>
+                  Flat #{selectedFlatObj.flatNo} ({selectedFlatObj.residentName}) Payment Status:
+                </div>
+                <div style={{ fontSize: '1.1rem', fontWeight: 800, color: isPaid ? '#047857' : '#B45309', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  {isPaid ? (
+                    <>
+                      <CheckCircle2 size={18} color="#059669" />
+                      <span>PAID (₹{selectedFlatObj.paidAmount.toLocaleString('en-IN')} Received)</span>
+                    </>
+                  ) : (
+                    <>
+                      <AlertCircle size={18} color="#D97706" />
+                      <span>PENDING DUE: ₹{selectedFlatObj.roundedValue.toLocaleString('en-IN')}</span>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              <button
+                onClick={() => onSelectFlatPayment && onSelectFlatPayment(selectedFlatObj.flatNo)}
+                className="app-btn"
+                style={{
+                  background: isPaid ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)' : 'linear-gradient(135deg, #0284C7 0%, #0369A1 100%)',
+                  color: '#FFFFFF',
+                  padding: '9px 18px',
+                  fontSize: '0.86rem',
+                  fontWeight: 800,
+                  boxShadow: isPaid ? '0 4px 12px rgba(16, 185, 129, 0.3)' : '0 4px 12px rgba(2, 132, 199, 0.35)',
+                }}
+              >
+                <CreditCard size={17} /> {isPaid ? 'View Receipt Details' : `💳 Pay Dues via UPI for Flat #${selectedFlatObj.flatNo}`}
+              </button>
+            </div>
+          );
+        })()}
+      </div>
+
       {/* 10th of Month Overdue Alert Banner */}
       {pendingFlats.length > 0 && (
         <div style={{
@@ -157,14 +276,16 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
               const isEditing = editingFlatNo === f.flatNo;
               const isPaid = f.status === 'Received';
               const isVacant = !f.isOccupied && !isWM;
+              const isSelectedFlat = selectedFlatFilter === f.flatNo;
+              const isPaymentAllowed = isAdmin || selectedFlatFilter === 'ALL' || isSelectedFlat;
 
               return (
                 <tr
                   key={f.flatNo}
                   style={{
-                    borderBottom: '1px solid #F1F5F9',
-                    background: isWM ? '#FFFBEB' : isVacant ? '#F8FAFC' : isPaid ? '#F0FDF4' : isPastDueDate ? '#FEF2F2' : '#FFFFFF',
-                    transition: 'background 0.15s ease',
+                    borderBottom: isSelectedFlat ? '2px solid #0284C7' : '1px solid #F1F5F9',
+                    background: isSelectedFlat ? '#E0F2FE' : isWM ? '#FFFBEB' : isVacant ? '#F8FAFC' : isPaid ? '#F0FDF4' : isPastDueDate ? '#FEF2F2' : '#FFFFFF',
+                    transition: 'all 0.15s ease',
                   }}
                 >
                   {/* Flat Number */}
@@ -175,9 +296,9 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
                       padding: '3px 8px',
                       borderRadius: '6px',
                       fontSize: '0.82rem',
-                      color: isWM ? '#B45309' : '#1D4ED8',
-                      background: isWM ? '#FEF3C7' : '#EFF6FF',
-                      border: isWM ? '1px solid #FDE68A' : '1px solid #BFDBFE',
+                      color: isSelectedFlat ? '#0369A1' : isWM ? '#B45309' : '#1D4ED8',
+                      background: isSelectedFlat ? '#BAE6FD' : isWM ? '#FEF3C7' : '#EFF6FF',
+                      border: isSelectedFlat ? '1.5px solid #0284C7' : isWM ? '1px solid #FDE68A' : '1px solid #BFDBFE',
                     }}>
                       {isWM ? '⚙️ Watchman' : `Flat #${f.flatNo}`}
                     </span>
@@ -293,26 +414,45 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
                   <td style={{ padding: '10px 14px', textAlign: 'right', whiteSpace: 'nowrap' }}>
                     <div style={{ display: 'inline-flex', gap: '6px', alignItems: 'center' }}>
                       {!isWM && f.isOccupied && (
-                        <button
-                          onClick={() => onSelectFlatPayment && onSelectFlatPayment(f.flatNo)}
-                          style={{
-                            background: isPaid ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)' : 'linear-gradient(135deg, #0284C7 0%, #0369A1 100%)',
-                            color: '#FFFFFF',
-                            border: 'none',
-                            borderRadius: '6px',
-                            padding: '4px 10px',
-                            fontSize: '0.76rem',
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            boxShadow: '0 2px 6px rgba(2, 132, 199, 0.25)',
-                          }}
-                          title={`Pay maintenance dues via UPI / QR for Flat #${f.flatNo}`}
-                        >
-                          <CreditCard size={13} /> {isPaid ? 'Paid' : '💳 Pay'}
-                        </button>
+                        isPaymentAllowed ? (
+                          <button
+                            onClick={() => onSelectFlatPayment && onSelectFlatPayment(f.flatNo)}
+                            style={{
+                              background: isPaid ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)' : 'linear-gradient(135deg, #0284C7 0%, #0369A1 100%)',
+                              color: '#FFFFFF',
+                              border: 'none',
+                              borderRadius: '6px',
+                              padding: '4px 10px',
+                              fontSize: '0.76rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              boxShadow: '0 2px 6px rgba(2, 132, 199, 0.25)',
+                            }}
+                            title={`Pay maintenance dues via UPI / QR for Flat #${f.flatNo}`}
+                          >
+                            <CreditCard size={13} /> {isPaid ? 'Paid' : '💳 Pay'}
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => setSelectedFlatFilter(f.flatNo)}
+                            style={{
+                              background: '#F1F5F9',
+                              color: '#475569',
+                              border: '1px solid #CBD5E1',
+                              borderRadius: '6px',
+                              padding: '4px 8px',
+                              fontSize: '0.74rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                            }}
+                            title={`Click to select Flat #${f.flatNo} to enable payment`}
+                          >
+                            Select Flat to Pay
+                          </button>
+                        )
                       )}
 
                       {isAdmin && (

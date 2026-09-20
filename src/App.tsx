@@ -734,6 +734,7 @@ export const App: React.FC = () => {
         <PaymentModal
           record={activeRecord}
           initialFlatNo={selectedFlatForPayment}
+          isAdmin={isAdmin}
           onClose={() => setIsPaymentModalOpen(false)}
           onSavePayment={handleSavePayment}
         />
