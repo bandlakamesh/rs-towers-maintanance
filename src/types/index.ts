@@ -6,6 +6,9 @@ export interface FlatReading {
   residentName: string;
   residentType: 'Owner' | 'Tenant';
   isOccupied: boolean;
+  ownerName?: string;
+  ownerPhone?: string;
+  tenantPhone?: string;
   previousReading: number;
   currentReading: number;
   consumedUnits: number;
