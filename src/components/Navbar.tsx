@@ -138,7 +138,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 ? '👑 Flat #302 (Kamesh)'
                 : userRole === 'CoAdmin'
                 ? `⭐ Flat #${loggedInFlat} (Co-Admin)`
-                : '🔑 Admin Unlock'}
+                : '🔒 Admin Login'}
             </span>
           </button>
 

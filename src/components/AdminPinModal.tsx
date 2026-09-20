@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ShieldCheck, Lock, Unlock, X, KeyRound, Check, Crown, Smartphone, RefreshCw, Send, Save, Home } from 'lucide-react';
 import type { FlatReading } from '../types';
-import { maskPhoneNumber, DEFAULT_FLAT_OWNERS, DEFAULT_FLAT_TENANTS } from './FlatOccupantsDirectory';
+import { DEFAULT_FLAT_OWNERS, DEFAULT_FLAT_TENANTS } from './FlatOccupantsDirectory';
 
 const RENTED_FLATS_SET = ['102', '202', '402'];
 
@@ -74,11 +74,6 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
     return localStorage.getItem('rs_towers_maint_pin') || '2026';
   };
 
-  const selectedFlatObj = flatsList.find((f) => f.flatNo === selectedFlat);
-  const defaultOwner = DEFAULT_FLAT_OWNERS[selectedFlat] || { name: 'Flat Resident', phone: '9963275455' };
-  const ownerName = selectedFlatObj?.ownerName || selectedFlatObj?.residentName || defaultOwner.name;
-  const ownerPhone = selectedFlatObj?.ownerPhone || defaultOwner.phone;
-
   // Handle Send OTP Action
   const handleSendOtp = () => {
     const randomCode = Math.floor(1000 + Math.random() * 9000).toString();
@@ -88,8 +83,8 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
     setTimerSeconds(30);
     setIsTimerActive(true);
     setErrorMsg('');
-    setSuccessMsg(`📲 OTP code sent to registered mobile (${maskPhoneNumber(ownerPhone)}). Demo OTP: ${randomCode}`);
-    
+    setSuccessMsg(`📲 OTP code sent to registered mobile for Flat #${selectedFlat}.`);
+
     setTimeout(() => {
       digitInputRefs[0].current?.focus();
     }, 150);
@@ -122,7 +117,7 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
     const entered = otpDigits.join('');
 
     if (entered !== generatedOtp && entered !== '1234') {
-      setErrorMsg('❌ Incorrect OTP code. Please check your SMS/WhatsApp and try again.');
+      setErrorMsg('❌ Incorrect OTP code. Please try again.');
       return;
     }
 
@@ -146,7 +141,7 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
     const hasAdminRights = adminFlats.includes(selectedFlat) || isRoot;
 
     if (!hasAdminRights) {
-      setErrorMsg(`❌ Flat #${selectedFlat} has not been granted Admin access by Root User (Flat 302 - Kamesh).`);
+      setErrorMsg(`❌ Flat #${selectedFlat} does not have Admin access privileges.`);
       return;
     }
 
@@ -303,38 +298,15 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
                         onChange={(e) => setSelectedFlat(e.target.value)}
                         style={{ fontSize: '0.94rem', padding: '10px 12px' }}
                       >
-                        {flatsList.filter((f) => f.flatNo !== 'WM').map((f) => {
-                          const isRoot = f.flatNo === rootFlat;
-                          const hasAdmin = adminFlats.includes(f.flatNo) || isRoot;
-
-                          return (
-                            <option key={f.flatNo} value={f.flatNo}>
-                              Flat #{f.flatNo} - {f.residentName} {isRoot ? '👑 (Root Admin)' : hasAdmin ? '⭐ (Admin)' : '👤 (Resident)'}
-                            </option>
-                          );
-                        })}
+                        {flatsList.filter((f) => f.flatNo !== 'WM').map((f) => (
+                          <option key={f.flatNo} value={f.flatNo}>
+                            Flat #{f.flatNo}
+                          </option>
+                        ))}
                       </select>
                     </div>
 
-                    <div style={{
-                      background: '#F0F9FF',
-                      border: '1px solid #BAE6FD',
-                      borderRadius: '12px',
-                      padding: '12px',
-                      marginBottom: '18px'
-                    }}>
-                      <div style={{ fontSize: '0.78rem', color: '#0369A1', fontWeight: 700, marginBottom: '2px' }}>
-                        Registered Flat Resident & Mobile:
-                      </div>
-                      <div style={{ fontSize: '0.96rem', fontWeight: 800, color: '#0F172A' }}>
-                        {ownerName}
-                      </div>
-                      <div style={{ fontSize: '0.82rem', color: '#334155', marginTop: '2px' }}>
-                        Mobile: <strong>{maskPhoneNumber(ownerPhone)}</strong>
-                      </div>
-                    </div>
-
-                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '16px' }}>
                       <button type="button" className="app-btn app-btn-secondary" onClick={onClose} style={{ padding: '8px 14px', fontSize: '0.82rem' }}>
                         Cancel
                       </button>
@@ -358,7 +330,7 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
                         Enter 4-Digit OTP Code
                       </div>
                       <div style={{ fontSize: '0.78rem', color: '#64748B' }}>
-                        Sent to <strong>{maskPhoneNumber(ownerPhone)}</strong> (Flat #{selectedFlat})
+                        Sent to registered mobile for Flat #{selectedFlat}
                       </div>
                     </div>
 
@@ -443,36 +415,28 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
                     onChange={(e) => setSelectedFlat(e.target.value)}
                     style={{ fontSize: '0.94rem', padding: '10px 12px' }}
                   >
-                    {flatsList.filter((f) => f.flatNo !== 'WM').map((f) => {
-                      const isRoot = f.flatNo === rootFlat;
-                      const hasAdmin = adminFlats.includes(f.flatNo) || isRoot;
-
-                      return (
-                        <option key={f.flatNo} value={f.flatNo}>
-                          Flat #{f.flatNo} - {f.residentName} {isRoot ? '👑 (Root Admin)' : hasAdmin ? '⭐ (Admin)' : '👤 (Resident)'}
-                        </option>
-                      );
-                    })}
+                    {flatsList.filter((f) => f.flatNo !== 'WM').map((f) => (
+                      <option key={f.flatNo} value={f.flatNo}>
+                        Flat #{f.flatNo}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
                 <div className="form-group" style={{ marginBottom: '14px' }}>
                   <label style={{ fontWeight: 700, fontSize: '0.84rem', color: '#334155', marginBottom: '6px', display: 'block' }}>
-                    Enter Master Security PIN:
+                    Enter Admin Security PIN:
                   </label>
                   <input
                     type="password"
                     className="form-control"
                     value={pinInput}
                     onChange={(e) => setPinInput(e.target.value)}
-                    placeholder="Enter Security PIN (Default: 2026)"
+                    placeholder="Enter Security PIN"
                     autoFocus
                     required
                     style={{ fontSize: '1.05rem', letterSpacing: '4px', textAlign: 'center', padding: '10px' }}
                   />
-                  <p style={{ fontSize: '0.74rem', color: '#64748B', marginTop: '6px', lineHeight: 1.4 }}>
-                    🔐 <strong>Security Policy:</strong> Default Security PIN is <code>2026</code>.
-                  </p>
                 </div>
 
                 <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '18px' }}>
