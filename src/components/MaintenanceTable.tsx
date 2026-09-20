@@ -138,7 +138,7 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
           <thead>
             <tr style={{ background: '#F0F9FF', borderBottom: '2px solid #B2D8E5', color: '#0077B6', fontFamily: 'var(--font-title)', userSelect: 'none' }}>
               <th style={{ padding: '12px 14px', whiteSpace: 'nowrap', minWidth: '90px' }}>Flat #</th>
-              <th style={{ padding: '12px 14px', whiteSpace: 'nowrap', minWidth: '120px' }}>Resident</th>
+              <th style={{ padding: '12px 14px', whiteSpace: 'nowrap', minWidth: '150px' }}>Resident</th>
               <th style={{ padding: '12px 14px', textAlign: 'center', whiteSpace: 'nowrap', minWidth: '95px' }}>Prev Read</th>
               <th style={{ padding: '12px 14px', textAlign: 'center', whiteSpace: 'nowrap', minWidth: '95px' }}>Curr Read</th>
               <th style={{ padding: '12px 14px', textAlign: 'center', whiteSpace: 'nowrap', minWidth: '90px' }}>Units</th>
@@ -147,7 +147,6 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
               <th style={{ padding: '12px 14px', textAlign: 'right', whiteSpace: 'nowrap', minWidth: '120px' }}>Common Maint</th>
               <th style={{ padding: '12px 14px', textAlign: 'right', whiteSpace: 'nowrap', minWidth: '105px' }}>Total Value</th>
               <th style={{ padding: '12px 14px', textAlign: 'right', whiteSpace: 'nowrap', minWidth: '110px' }}>Rounded Due</th>
-              <th style={{ padding: '12px 14px', textAlign: 'center', whiteSpace: 'nowrap', minWidth: '110px' }}>Status</th>
               <th style={{ padding: '12px 14px', whiteSpace: 'nowrap', minWidth: '150px' }}>Resident Notes</th>
               <th style={{ padding: '12px 14px', textAlign: 'right', whiteSpace: 'nowrap', minWidth: '130px' }}>Actions</th>
             </tr>
@@ -184,9 +183,32 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
                     </span>
                   </td>
 
-                  {/* Resident Name */}
+                  {/* Resident Name with Inline Status Badge */}
                   <td style={{ padding: '10px 14px', fontWeight: 600, color: '#0F172A', whiteSpace: 'nowrap' }}>
-                    {f.residentName} {f.residentType === 'Tenant' && <span style={{ fontSize: '0.7rem', color: '#64748B', background: '#F1F5F9', padding: '1px 5px', borderRadius: '4px' }}>Tenant</span>}
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', flexWrap: 'nowrap' }}>
+                      <span>{f.residentName}</span>
+                      {f.residentType === 'Tenant' && (
+                        <span style={{ fontSize: '0.68rem', color: '#64748B', background: '#F1F5F9', padding: '1px 5px', borderRadius: '4px' }}>
+                          Tenant
+                        </span>
+                      )}
+                      
+                      {!isWM && f.isOccupied && (
+                        isPaid ? (
+                          <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#059669', background: '#ECFDF5', border: '1px solid #A7F3D0', padding: '2px 7px', borderRadius: '10px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                            <CheckCircle2 size={11} /> Paid
+                          </span>
+                        ) : isPastDueDate ? (
+                          <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#B91C1C', background: '#FEE2E2', border: '1px solid #FCA5A5', padding: '2px 7px', borderRadius: '10px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                            <AlertTriangle size={11} /> OVERDUE (10th)
+                          </span>
+                        ) : (
+                          <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#D97706', background: '#FEF3C7', border: '1px solid #FDE68A', padding: '2px 7px', borderRadius: '10px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                            <AlertCircle size={11} /> Pending
+                          </span>
+                        )
+                      )}
+                    </div>
                   </td>
 
                   {/* Previous Reading */}
@@ -249,27 +271,6 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
                   {/* Rounded Due Value */}
                   <td style={{ padding: '10px 14px', textAlign: 'right', whiteSpace: 'nowrap', fontWeight: 800, color: isWM ? '#64748B' : '#0F172A', fontSize: '0.94rem' }}>
                     ₹{f.roundedValue.toLocaleString('en-IN')}
-                  </td>
-
-                  {/* Status Badge */}
-                  <td style={{ padding: '10px 14px', textAlign: 'center', whiteSpace: 'nowrap' }}>
-                    {isWM || isVacant ? (
-                      <span style={{ fontSize: '0.72rem', color: '#64748B', background: '#F1F5F9', padding: '2px 8px', borderRadius: '10px' }}>
-                        N/A
-                      </span>
-                    ) : isPaid ? (
-                      <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#059669', background: '#ECFDF5', border: '1px solid #A7F3D0', padding: '2px 8px', borderRadius: '10px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-                        <CheckCircle2 size={11} /> Paid
-                      </span>
-                    ) : isPastDueDate ? (
-                      <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#B91C1C', background: '#FEE2E2', border: '1px solid #FCA5A5', padding: '2px 8px', borderRadius: '10px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-                        <AlertTriangle size={11} /> OVERDUE (10th)
-                      </span>
-                    ) : (
-                      <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#D97706', background: '#FEF3C7', border: '1px solid #FDE68A', padding: '2px 8px', borderRadius: '10px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-                        <AlertCircle size={11} /> Pending
-                      </span>
-                    )}
                   </td>
 
                   {/* Resident Notes */}
@@ -387,7 +388,7 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
               <td style={{ padding: '12px 14px', textAlign: 'right', color: '#1D4ED8', fontSize: '1.05rem' }}>
                 ₹{record.totalGrandCollectionTarget.toLocaleString('en-IN')}
               </td>
-              <td colSpan={3} style={{ padding: '12px 14px', textAlign: 'right', color: '#059669' }}>
+              <td colSpan={2} style={{ padding: '12px 14px', textAlign: 'right', color: '#059669' }}>
                 Rounded Target Total
               </td>
             </tr>
