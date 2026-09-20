@@ -8,6 +8,9 @@ interface FlatOccupantsDirectoryProps {
   onUpdateReadings: (updatedReadings: FlatReading[]) => void;
 }
 
+// Known Rented Flats list in RS Towers
+const RENTED_FLATS = ['102', '202', '402'];
+
 // Default fallback data for RS Towers flat owners & tenants
 export const DEFAULT_FLAT_OWNERS: Record<string, { name: string; phone: string }> = {
   '101': { name: 'Bobby', phone: '9963275455' },
@@ -53,17 +56,18 @@ export const FlatOccupantsDirectory: React.FC<FlatOccupantsDirectoryProps> = ({
   const allFlats = record.flatReadings.filter((f) => f.flatNo !== 'WM');
 
   const occupiedFlats = allFlats.filter((f) => f.isOccupied);
-  const ownerFlats = occupiedFlats.filter((f) => f.residentType === 'Owner');
-  const tenantFlats = occupiedFlats.filter((f) => f.residentType === 'Tenant');
+  const ownerFlats = occupiedFlats.filter((f) => f.residentType === 'Owner' && !RENTED_FLATS.includes(f.flatNo));
+  const tenantFlats = occupiedFlats.filter((f) => f.residentType === 'Tenant' || RENTED_FLATS.includes(f.flatNo));
   const vacantFlats = allFlats.filter((f) => !f.isOccupied);
 
   const filteredFlats = allFlats.filter((f) => {
+    const isTenant = RENTED_FLATS.includes(f.flatNo) || f.residentType === 'Tenant';
     const ownerData = DEFAULT_FLAT_OWNERS[f.flatNo] || { name: 'Flat Owner', phone: '9963275455' };
     const tenantData = DEFAULT_FLAT_TENANTS[f.flatNo] || { name: f.residentName, phone: '9849010200' };
 
     const ownerName = f.ownerName || ownerData.name;
     const ownerPhone = f.ownerPhone || ownerData.phone;
-    const residentName = f.residentName || tenantData.name;
+    const residentName = isTenant ? (f.residentName !== 'Tenant' && f.residentName !== ownerName ? f.residentName : tenantData.name) : ownerName;
     const tenantPhone = f.tenantPhone || tenantData.phone;
 
     const term = searchTerm.toLowerCase();
@@ -76,8 +80,8 @@ export const FlatOccupantsDirectory: React.FC<FlatOccupantsDirectoryProps> = ({
 
     if (!matchesSearch) return false;
 
-    if (filterType === 'Owner') return f.isOccupied && f.residentType === 'Owner';
-    if (filterType === 'Tenant') return f.isOccupied && f.residentType === 'Tenant';
+    if (filterType === 'Owner') return f.isOccupied && !isTenant;
+    if (filterType === 'Tenant') return f.isOccupied && isTenant;
     if (filterType === 'Vacant') return !f.isOccupied;
     return true;
   }).sort((a, b) => {
@@ -87,15 +91,16 @@ export const FlatOccupantsDirectory: React.FC<FlatOccupantsDirectoryProps> = ({
   });
 
   const handleOpenEdit = (flat: FlatReading) => {
+    const isTenant = RENTED_FLATS.includes(flat.flatNo) || flat.residentType === 'Tenant';
     const ownerData = DEFAULT_FLAT_OWNERS[flat.flatNo] || { name: 'Flat Owner', phone: '9963275455' };
     const tenantData = DEFAULT_FLAT_TENANTS[flat.flatNo] || { name: flat.residentName, phone: '9849010200' };
 
     setEditingFlat(flat);
     setEditOwnerName(flat.ownerName || ownerData.name);
     setEditOwnerPhone(flat.ownerPhone || ownerData.phone);
-    setEditResidentName(flat.residentName || tenantData.name);
+    setEditResidentName(isTenant ? (flat.residentName !== 'Tenant' ? flat.residentName : tenantData.name) : ownerData.name);
     setEditTenantPhone(flat.tenantPhone || tenantData.phone);
-    setEditType(flat.residentType);
+    setEditType(isTenant ? 'Tenant' : 'Owner');
     setEditOccupied(flat.isOccupied);
   };
 
@@ -215,18 +220,20 @@ export const FlatOccupantsDirectory: React.FC<FlatOccupantsDirectoryProps> = ({
       </div>
 
       {/* Grid of Resident Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))', gap: '16px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px', alignItems: 'stretch' }}>
         {filteredFlats.map((flat) => {
-          const isOwnerOccupied = flat.residentType === 'Owner' && flat.isOccupied;
-          const isTenantOccupied = flat.residentType === 'Tenant' && flat.isOccupied;
+          const isTenantOccupied = (RENTED_FLATS.includes(flat.flatNo) || flat.residentType === 'Tenant') && flat.isOccupied;
+          const isOwnerOccupied = !isTenantOccupied && flat.isOccupied;
           const isVacant = !flat.isOccupied;
 
           const defaultOwner = DEFAULT_FLAT_OWNERS[flat.flatNo] || { name: 'Flat Owner', phone: '9963275455' };
           const defaultTenant = DEFAULT_FLAT_TENANTS[flat.flatNo] || { name: flat.residentName, phone: '9849010200' };
 
-          const ownerName = flat.ownerName || (isOwnerOccupied ? flat.residentName : defaultOwner.name);
+          const ownerName = flat.ownerName || defaultOwner.name;
           const ownerPhone = flat.ownerPhone || defaultOwner.phone;
-          const tenantName = flat.residentName !== 'Tenant' ? flat.residentName : defaultTenant.name;
+          const tenantName = isTenantOccupied
+            ? (flat.residentName && flat.residentName !== 'Tenant' && flat.residentName !== ownerName ? flat.residentName : defaultTenant.name)
+            : defaultTenant.name;
           const tenantPhone = flat.tenantPhone || defaultTenant.phone;
 
           return (
@@ -240,33 +247,36 @@ export const FlatOccupantsDirectory: React.FC<FlatOccupantsDirectoryProps> = ({
                 justifyContent: 'space-between',
                 border: isVacant ? '1.5px solid #E2E8F0' : isTenantOccupied ? '1.5px solid #C4B5FD' : '1.5px solid #A7F3D0',
                 background: isVacant ? '#F8FAFC' : isTenantOccupied ? '#F5F3FF' : '#F0FDF4',
+                height: '100%',
               }}
             >
               <div>
-                {/* Card Header: Flat Number & Badge */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                {/* Card Header: Flat Number & Badge (No text wrap!) */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', gap: '6px', flexWrap: 'nowrap' }}>
                   <span style={{
-                    fontSize: '0.92rem',
+                    fontSize: '0.88rem',
                     fontWeight: 800,
                     color: '#1D4ED8',
                     background: '#EFF6FF',
                     border: '1px solid #BFDBFE',
-                    padding: '3px 10px',
-                    borderRadius: '8px'
+                    padding: '3px 9px',
+                    borderRadius: '8px',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0
                   }}>
                     Flat #{flat.flatNo}
                   </span>
 
                   {isVacant ? (
-                    <span style={{ fontSize: '0.74rem', color: '#64748B', background: '#E2E8F0', padding: '2px 8px', borderRadius: '10px', fontWeight: 700 }}>
+                    <span style={{ fontSize: '0.74rem', color: '#64748B', background: '#E2E8F0', padding: '2px 8px', borderRadius: '10px', fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0 }}>
                       ⚪ Vacant
                     </span>
                   ) : isOwnerOccupied ? (
-                    <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#047857', background: '#D1FAE5', border: '1px solid #A7F3D0', padding: '2px 8px', borderRadius: '10px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-                      👑 Self-Occupied Owner
+                    <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#047857', background: '#D1FAE5', border: '1px solid #A7F3D0', padding: '2px 8px', borderRadius: '10px', display: 'inline-flex', alignItems: 'center', gap: '3px', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                      👑 Owner Occupied
                     </span>
                   ) : (
-                    <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#6D28D9', background: '#EDE9FE', border: '1px solid #DDD6FE', padding: '2px 8px', borderRadius: '10px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                    <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#6D28D9', background: '#EDE9FE', border: '1px solid #DDD6FE', padding: '2px 8px', borderRadius: '10px', display: 'inline-flex', alignItems: 'center', gap: '3px', whiteSpace: 'nowrap', flexShrink: 0 }}>
                       🏠 Rented to Tenant
                     </span>
                   )}
@@ -335,60 +345,94 @@ export const FlatOccupantsDirectory: React.FC<FlatOccupantsDirectoryProps> = ({
 
                 {/* --- SELF-OCCUPIED OWNER VIEW --- */}
                 {isOwnerOccupied && (
-                  <div style={{
-                    background: '#FFFFFF',
-                    border: '1.5px solid #A7F3D0',
-                    borderRadius: '12px',
-                    padding: '12px',
-                    boxShadow: '0 2px 8px rgba(5, 150, 105, 0.08)'
-                  }}>
-                    <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#047857', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <Crown size={13} color="#059669" /> Flat Owner & Resident
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div style={{
+                      background: '#FFFFFF',
+                      border: '1.5px solid #A7F3D0',
+                      borderRadius: '12px',
+                      padding: '12px',
+                      boxShadow: '0 2px 8px rgba(5, 150, 105, 0.08)'
+                    }}>
+                      <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#047857', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <Crown size={13} color="#059669" /> Flat Owner & Resident
+                      </div>
+                      <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F172A', marginBottom: '4px' }}>
+                        {ownerName}
+                      </div>
+                      <div style={{ fontSize: '0.78rem', color: '#475569', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '10px' }}>
+                        <Phone size={12} color="#0284C7" />
+                        <span>Mobile: <strong>{ownerPhone}</strong></span>
+                      </div>
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        <a href={`tel:${ownerPhone}`} className="app-btn app-btn-secondary" style={{ padding: '5px 10px', fontSize: '0.76rem', flex: 1, justifyContent: 'center' }}>
+                          <Phone size={12} /> Call Owner
+                        </a>
+                        <a href={`https://wa.me/91${ownerPhone}`} target="_blank" rel="noreferrer" className="app-btn app-btn-whatsapp" style={{ padding: '5px 10px', fontSize: '0.76rem', flex: 1, justifyContent: 'center' }}>
+                          <MessageSquare size={12} /> WhatsApp
+                        </a>
+                      </div>
                     </div>
-                    <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F172A', marginBottom: '4px' }}>
-                      {ownerName}
-                    </div>
-                    <div style={{ fontSize: '0.78rem', color: '#475569', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '10px' }}>
-                      <Phone size={12} color="#0284C7" />
-                      <span>Mobile: <strong>{ownerPhone}</strong></span>
-                    </div>
-                    <div style={{ display: 'flex', gap: '6px' }}>
-                      <a href={`tel:${ownerPhone}`} className="app-btn app-btn-secondary" style={{ padding: '5px 10px', fontSize: '0.76rem', flex: 1, justifyContent: 'center' }}>
-                        <Phone size={12} /> Call Owner
-                      </a>
-                      <a href={`https://wa.me/91${ownerPhone}`} target="_blank" rel="noreferrer" className="app-btn app-btn-whatsapp" style={{ padding: '5px 10px', fontSize: '0.76rem', flex: 1, justifyContent: 'center' }}>
-                        <MessageSquare size={12} /> WhatsApp
-                      </a>
+
+                    <div style={{
+                      background: 'rgba(255, 255, 255, 0.7)',
+                      border: '1px solid #A7F3D0',
+                      borderRadius: '10px',
+                      padding: '8px 10px',
+                      fontSize: '0.76rem',
+                      color: '#065F46',
+                      fontWeight: 600,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}>
+                      <Home size={12} color="#059669" /> Occupancy: <strong>Self-Occupied Owner</strong>
                     </div>
                   </div>
                 )}
 
                 {/* --- VACANT FLAT VIEW --- */}
                 {isVacant && (
-                  <div style={{
-                    background: '#FFFFFF',
-                    border: '1.5px solid #CBD5E1',
-                    borderRadius: '12px',
-                    padding: '12px',
-                    boxShadow: '0 2px 6px rgba(100, 116, 139, 0.08)'
-                  }}>
-                    <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <Crown size={13} color="#64748B" /> Flat Owner
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div style={{
+                      background: '#FFFFFF',
+                      border: '1.5px solid #CBD5E1',
+                      borderRadius: '12px',
+                      padding: '12px',
+                      boxShadow: '0 2px 6px rgba(100, 116, 139, 0.08)'
+                    }}>
+                      <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <Crown size={13} color="#64748B" /> Flat Owner
+                      </div>
+                      <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F172A', marginBottom: '4px' }}>
+                        {ownerName}
+                      </div>
+                      <div style={{ fontSize: '0.78rem', color: '#64748B', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '10px' }}>
+                        <Phone size={12} color="#0284C7" />
+                        <span>Mobile: <strong>{ownerPhone}</strong></span>
+                      </div>
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        <a href={`tel:${ownerPhone}`} className="app-btn app-btn-secondary" style={{ padding: '5px 10px', fontSize: '0.76rem', flex: 1, justifyContent: 'center' }}>
+                          <Phone size={12} /> Call Owner
+                        </a>
+                        <a href={`https://wa.me/91${ownerPhone}`} target="_blank" rel="noreferrer" className="app-btn app-btn-whatsapp" style={{ padding: '5px 10px', fontSize: '0.76rem', flex: 1, justifyContent: 'center' }}>
+                          <MessageSquare size={12} /> WhatsApp
+                        </a>
+                      </div>
                     </div>
-                    <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F172A', marginBottom: '4px' }}>
-                      {ownerName}
-                    </div>
-                    <div style={{ fontSize: '0.78rem', color: '#64748B', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '10px' }}>
-                      <Phone size={12} color="#0284C7" />
-                      <span>Mobile: <strong>{ownerPhone}</strong></span>
-                    </div>
-                    <div style={{ display: 'flex', gap: '6px' }}>
-                      <a href={`tel:${ownerPhone}`} className="app-btn app-btn-secondary" style={{ padding: '5px 10px', fontSize: '0.76rem', flex: 1, justifyContent: 'center' }}>
-                        <Phone size={12} /> Call Owner
-                      </a>
-                      <a href={`https://wa.me/91${ownerPhone}`} target="_blank" rel="noreferrer" className="app-btn app-btn-whatsapp" style={{ padding: '5px 10px', fontSize: '0.76rem', flex: 1, justifyContent: 'center' }}>
-                        <MessageSquare size={12} /> WhatsApp
-                      </a>
+
+                    <div style={{
+                      background: '#F1F5F9',
+                      border: '1px solid #CBD5E1',
+                      borderRadius: '10px',
+                      padding: '8px 10px',
+                      fontSize: '0.76rem',
+                      color: '#475569',
+                      fontWeight: 600,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}>
+                      ⚪ Flat Status: <strong>Currently Vacant</strong>
                     </div>
                   </div>
                 )}
@@ -396,7 +440,7 @@ export const FlatOccupantsDirectory: React.FC<FlatOccupantsDirectoryProps> = ({
 
               {/* Admin Edit Button Footer */}
               {isAdmin && (
-                <div style={{ borderTop: '1px solid rgba(0,0,0,0.08)', paddingTop: '10px', marginTop: '10px', display: 'flex', justifyContent: 'flex-end' }}>
+                <div style={{ borderTop: '1px solid rgba(0,0,0,0.08)', paddingTop: '10px', marginTop: '12px', display: 'flex', justifyContent: 'flex-end' }}>
                   <button
                     onClick={() => handleOpenEdit(flat)}
                     style={{
@@ -454,7 +498,7 @@ export const FlatOccupantsDirectory: React.FC<FlatOccupantsDirectoryProps> = ({
                     className="form-control"
                     value={editOwnerName}
                     onChange={(e) => setEditOwnerName(e.target.value)}
-                    placeholder="e.g. Suresh"
+                    placeholder="e.g. Ramesh"
                     required
                   />
                 </div>
@@ -466,7 +510,7 @@ export const FlatOccupantsDirectory: React.FC<FlatOccupantsDirectoryProps> = ({
                     className="form-control"
                     value={editOwnerPhone}
                     onChange={(e) => setEditOwnerPhone(e.target.value)}
-                    placeholder="e.g. 9849010201"
+                    placeholder="e.g. 9849040201"
                     required
                   />
                 </div>
@@ -499,7 +543,7 @@ export const FlatOccupantsDirectory: React.FC<FlatOccupantsDirectoryProps> = ({
                       className="form-control"
                       value={editResidentName}
                       onChange={(e) => setEditResidentName(e.target.value)}
-                      placeholder="e.g. Satya Nimmakayala"
+                      placeholder="e.g. Ujwala"
                       required
                     />
                   </div>
@@ -511,7 +555,7 @@ export const FlatOccupantsDirectory: React.FC<FlatOccupantsDirectoryProps> = ({
                       className="form-control"
                       value={editTenantPhone}
                       onChange={(e) => setEditTenantPhone(e.target.value)}
-                      placeholder="e.g. 9849020200"
+                      placeholder="e.g. 9849040200"
                       required
                     />
                   </div>
