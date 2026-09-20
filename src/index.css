@@ -1,0 +1,345 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+:root {
+  /* Oceanic & Gold Theme Tokens */
+  --ocean-dark: #0E5A73;
+  --ocean-deep: #137A9A;
+  --ocean-medium: #189AB4;
+  --ocean-cyan: #00B4D8;
+  --ocean-light: #90E0EF;
+  
+  --bg-main: #97CADB;
+  --bg-card: rgba(255, 255, 255, 0.96);
+  --border-color: #B2D8E5;
+  
+  --gold-accent: #FFD166;
+  --gold-primary: #D97706;
+  
+  --green-success: #059669;
+  --green-bg: #ECFDF5;
+  
+  --red-expense: #DC2626;
+  --red-bg: #FEF2F2;
+  
+  --text-primary: #0F172A;
+  --text-secondary: #334155;
+  
+  --font-title: 'Outfit', sans-serif;
+  --font-body: 'Plus Jakarta Sans', sans-serif;
+  
+  --radius-card: 20px;
+  --radius-btn: 12px;
+  
+  --shadow-app: 0 10px 30px -5px rgba(14, 90, 115, 0.18), 0 4px 10px -2px rgba(15, 23, 42, 0.04);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--bg-main);
+  background-image: 
+    radial-gradient(circle at 15% 15%, rgba(255, 255, 255, 0.3) 0%, transparent 45%),
+    radial-gradient(circle at 85% 20%, rgba(19, 122, 154, 0.2) 0%, transparent 45%),
+    radial-gradient(circle at 50% 85%, rgba(255, 255, 255, 0.25) 0%, transparent 55%);
+  background-attachment: fixed;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  line-height: 1.5;
+  min-height: 100vh;
+  padding-bottom: 80px;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-title);
+  color: var(--text-primary);
+}
+
+/* Custom Sleek Scrollbar */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+::-webkit-scrollbar-track {
+  background: #F1F5F9;
+}
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+/* Modern App Card */
+.app-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-app);
+  padding: 22px;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.app-card:hover {
+  border-color: #93C5FD;
+  box-shadow: 0 14px 32px -5px rgba(14, 90, 115, 0.22);
+}
+
+/* Modern Buttons */
+.app-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 18px;
+  font-family: var(--font-title);
+  font-weight: 700;
+  font-size: 0.88rem;
+  border-radius: var(--radius-btn);
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  text-decoration: none;
+}
+
+.app-btn-primary {
+  background: linear-gradient(135deg, #0E5A73 0%, #137A9A 50%, #189AB4 100%);
+  color: #FFFFFF;
+  box-shadow: 0 4px 14px rgba(14, 90, 115, 0.3);
+}
+
+.app-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(14, 90, 115, 0.45);
+}
+
+.app-btn-whatsapp {
+  background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+  color: #FFF;
+  box-shadow: 0 4px 14px rgba(37, 211, 102, 0.3);
+}
+
+.app-btn-whatsapp:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(37, 211, 102, 0.45);
+}
+
+.app-btn-secondary {
+  background: #F1F5F9;
+  color: var(--text-primary);
+  border: 1px solid #CBD5E1;
+}
+
+.app-btn-secondary:hover {
+  background: #FFFFFF;
+  color: #0077B6;
+  border-color: #93C5FD;
+  transform: translateY(-1px);
+}
+
+/* Pill Filter Chips */
+.chip-group {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.chip {
+  padding: 8px 16px;
+  border-radius: 9999px;
+  font-family: var(--font-title);
+  font-weight: 700;
+  font-size: 0.84rem;
+  background: #FFFFFF;
+  color: var(--text-secondary);
+  border: 1px solid #E2E8F0;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.chip:hover {
+  color: var(--text-primary);
+  background: #F8FAFC;
+}
+
+.chip.active {
+  background: linear-gradient(135deg, #E0F7FA 0%, #CAF0F8 100%);
+  color: #0077B6;
+  border-color: #48CAE4;
+  box-shadow: 0 4px 12px rgba(0, 150, 199, 0.2);
+}
+
+/* Modal Overlay */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  z-index: 1000;
+  overflow-x: hidden;
+  overflow-y: auto;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modal-container {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 88vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 22px;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
+  animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+}
+
+@media (max-width: 640px) {
+  .modal-overlay {
+    padding: 8px;
+  }
+  .modal-container {
+    padding: 16px;
+    border-radius: 16px;
+    max-height: 92vh;
+    width: 100%;
+  }
+}
+
+/* Form inputs */
+.form-group {
+  margin-bottom: 14px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.form-control {
+  width: 100%;
+  padding: 10px 14px;
+  background: #F8FAFC;
+  border: 1px solid #CBD5E1;
+  border-radius: 10px;
+  color: #0F172A;
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  transition: all 0.2s ease;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #0096C7;
+  box-shadow: 0 0 12px rgba(0, 150, 199, 0.25);
+  background: #FFFFFF;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Responsive Table Header Bar */
+.table-header-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+@media (min-width: 768px) {
+  .table-header-bar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.section-header-title h2 {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #0F172A;
+  margin: 0 0 4px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-header-title p {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* Print Styles for PDF Export matching Excel layout */
+@media print {
+  .no-print,
+  .bottom-nav,
+  .chip-group,
+  .modal-overlay,
+  button,
+  input,
+  select {
+    display: none !important;
+  }
+
+  body {
+    background: #FFFFFF !important;
+    color: #000000 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  main {
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .app-card {
+    box-shadow: none !important;
+    border: 1px solid #000000 !important;
+    background: #FFFFFF !important;
+    backdrop-filter: none !important;
+    padding: 10px !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    font-size: 10pt !important;
+  }
+
+  th, td {
+    border: 1px solid #000000 !important;
+    padding: 4px 6px !important;
+    color: #000000 !important;
+  }
+}
