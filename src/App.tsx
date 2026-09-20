@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
-import { Table, Wrench, Contact, Megaphone, Landmark, BarChart2, Calendar, Plus, UserCheck } from 'lucide-react';
+import { Table, Wrench, Contact, Megaphone, Landmark, BarChart2, Calendar, Plus, UserCheck, Trash2, ShieldAlert } from 'lucide-react';
 import type { AppState, MonthMaintenanceRecord, FlatReading, WaterCalculationConfig, CommonExpenseItem, PaymentMode, PeriodicTask, ApartmentVendor, NoticeItem, CorpusFundConfig, UserRole } from './types';
 import { loadAppState, fetchLatestCloudState, syncToCloudRemote } from './utils/storage';
 import { recalculateMonthRecord } from './utils/calculator';
@@ -28,16 +28,30 @@ export const App: React.FC = () => {
   const [currentAdminFlat, setCurrentAdminFlat] = useState<string>(() => localStorage.getItem('rs_towers_maint_admin_flat') || '302');
   const [isAdminModalOpen, setIsAdminModalOpen] = useState<boolean>(false);
 
+  const maintenanceLeadFlats = appState.maintenanceLeadFlats || ['101'];
   const userRole: UserRole = !isAdmin
     ? 'PublicResident'
     : currentAdminFlat === (appState.rootFlat || '302')
     ? 'RootAdmin'
+    : maintenanceLeadFlats.includes(currentAdminFlat)
+    ? 'MaintenanceLead'
     : 'CoAdmin';
+
+  const canEditMaintenance = userRole === 'RootAdmin' || userRole === 'MaintenanceLead';
 
   // Payment & Month Modals State
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState<boolean>(false);
   const [selectedFlatForPayment, setSelectedFlatForPayment] = useState<string>('101');
   const [isNewMonthModalOpen, setIsNewMonthModalOpen] = useState<boolean>(false);
+
+  // Past Month Confirmation Safeguard Modal State
+  const [confirmModalData, setConfirmModalData] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    actionType: 'delete' | 'modify';
+    onConfirm: () => void;
+  } | null>(null);
 
   const activeRecord: MonthMaintenanceRecord = appState.months[appState.activeMonthId] || Object.values(appState.months)[0];
 
@@ -85,17 +99,74 @@ export const App: React.FC = () => {
   };
 
   const handleUpdateRecord = (updatedRecord: MonthMaintenanceRecord) => {
-    const recalculated = recalculateMonthRecord(updatedRecord);
-    const newState: AppState = {
-      ...appState,
-      months: {
-        ...appState.months,
-        [recalculated.monthId]: recalculated,
-      },
-      lastUpdated: Date.now(),
+    const allMonthIds = Object.keys(appState.months);
+    const isLatest = updatedRecord.monthId === allMonthIds[allMonthIds.length - 1];
+
+    // If modifying past month sheet, enforce Root Admin restriction & Confirmation Safeguard Modal
+    if (!isLatest && userRole !== 'RootAdmin') {
+      alert(`🔒 Permission Denied: Past month calculation sheets (${updatedRecord.monthId}) can only be modified by Root Super Admin (Flat #302 - Kamesh).`);
+      return;
+    }
+
+    const applyMutation = () => {
+      const recalculated = recalculateMonthRecord(updatedRecord);
+      const newState: AppState = {
+        ...appState,
+        months: {
+          ...appState.months,
+          [recalculated.monthId]: recalculated,
+        },
+        lastUpdated: Date.now(),
+      };
+      setAppState(newState);
+      syncToCloudRemote(newState);
     };
-    setAppState(newState);
-    syncToCloudRemote(newState);
+
+    if (!isLatest && userRole === 'RootAdmin') {
+      setConfirmModalData({
+        isOpen: true,
+        title: `⚠️ Modify Historical Month (${updatedRecord.monthId})`,
+        message: `Root Admin Safeguard: You are attempting to modify a historical month maintenance record (${updatedRecord.monthId}). Are you sure you want to save these past changes?`,
+        actionType: 'modify',
+        onConfirm: applyMutation,
+      });
+    } else {
+      applyMutation();
+    }
+  };
+
+  const handleDeleteMonthSheet = (monthId: string) => {
+    if (userRole !== 'RootAdmin') {
+      alert('🔒 Permission Denied: Only Root Super Admin (Flat #302 - Kamesh) can delete historical calculation sheets.');
+      return;
+    }
+
+    const allMonthIds = Object.keys(appState.months);
+    if (allMonthIds.length <= 1) {
+      alert('⚠️ Cannot delete the only remaining maintenance sheet.');
+      return;
+    }
+
+    setConfirmModalData({
+      isOpen: true,
+      title: `🚨 Delete Calculation Sheet (${monthId})`,
+      message: `Root Admin Safeguard: Are you sure you want to PERMANENTLY DELETE calculation sheet '${monthId}'? All readings and calculation data for this month will be removed.`,
+      actionType: 'delete',
+      onConfirm: () => {
+        const remainingMonths = { ...appState.months };
+        delete remainingMonths[monthId];
+        const newActiveId = Object.keys(remainingMonths)[0];
+
+        const newState: AppState = {
+          ...appState,
+          activeMonthId: newActiveId,
+          months: remainingMonths,
+          lastUpdated: Date.now(),
+        };
+        setAppState(newState);
+        syncToCloudRemote(newState);
+      },
+    });
   };
 
   const handleUpdateReadings = (updatedReadings: FlatReading[]) => {
@@ -331,15 +402,33 @@ export const App: React.FC = () => {
               <span>Collected: <strong style={{ color: '#059669' }}>₹{totalCollected.toLocaleString('en-IN')}</strong> ({collectionPercentage}%)</span>
             </div>
 
-            {/* Admin Action for New Month - ROOT ADMIN ONLY */}
-            {userRole === 'RootAdmin' && (
+            {/* Admin Action for New Month - Root Admin & Maintenance Lead */}
+            {canEditMaintenance && (
               <button
                 onClick={() => setIsNewMonthModalOpen(true)}
                 className="app-btn app-btn-primary month-new-btn"
                 style={{ padding: '7px 14px', fontSize: '0.82rem' }}
-                title="Create New Month Calculation Sheet (Root Admin Kamesh Only)"
+                title="Create New Month Calculation Sheet"
               >
                 <Plus size={15} /> Create New Month
+              </button>
+            )}
+
+            {/* Root Admin Only Delete Month Sheet Button */}
+            {userRole === 'RootAdmin' && monthIds.length > 1 && (
+              <button
+                onClick={() => handleDeleteMonthSheet(appState.activeMonthId)}
+                className="app-btn"
+                style={{
+                  background: '#FEF2F2',
+                  color: '#DC2626',
+                  border: '1px solid #FCA5A5',
+                  padding: '7px 12px',
+                  fontSize: '0.82rem',
+                }}
+                title="Delete Active Historical Calculation Sheet (Root Admin Kamesh Only)"
+              >
+                <Trash2 size={15} /> Delete Sheet
               </button>
             )}
           </div>
@@ -402,7 +491,7 @@ export const App: React.FC = () => {
           <>
             <MaintenanceTable
               record={activeRecord}
-              isAdmin={isAdmin}
+              isAdmin={canEditMaintenance || userRole === 'CoAdmin'}
               dueDateDay={appState.dueDateDay || 10}
               onUpdateReadings={handleUpdateReadings}
               onSelectFlatPayment={(flatNo) => {
@@ -413,7 +502,7 @@ export const App: React.FC = () => {
 
             <ExpenseBreakdown
               record={activeRecord}
-              isAdmin={userRole === 'RootAdmin'}
+              isAdmin={canEditMaintenance}
               onUpdateWaterConfig={handleUpdateWaterConfig}
               onUpdateCommonExpenses={handleUpdateCommonExpenses}
             />
@@ -444,7 +533,7 @@ export const App: React.FC = () => {
           <CorpusFundTracker
             corpusConfig={defaultCorpusConfig}
             activeRecord={activeRecord}
-            isAdmin={userRole === 'RootAdmin'}
+            isAdmin={canEditMaintenance}
             onUpdateCorpusConfig={handleUpdateCorpusConfig}
           />
         )}
@@ -453,7 +542,7 @@ export const App: React.FC = () => {
         {activeTab === 'amc' && (
           <PeriodicMaintenanceHub
             tasks={appState.periodicTasks || []}
-            isAdmin={userRole === 'RootAdmin'}
+            isAdmin={canEditMaintenance}
             onUpdateTask={handleUpdatePeriodicTask}
             onAddTask={handleAddPeriodicTask}
           />
@@ -463,7 +552,7 @@ export const App: React.FC = () => {
         {activeTab === 'vendors' && (
           <VendorDirectory
             vendors={appState.vendors || []}
-            isAdmin={userRole === 'RootAdmin'}
+            isAdmin={canEditMaintenance}
             onAddVendor={handleAddVendor}
             onDeleteVendor={handleDeleteVendor}
           />
@@ -526,6 +615,68 @@ export const App: React.FC = () => {
           onClose={() => setIsNewMonthModalOpen(false)}
           onCreateMonth={handleCreateMonth}
         />
+      )}
+
+      {/* Root Admin Historical Modification & Deletion Safeguard Modal */}
+      {confirmModalData?.isOpen && (
+        <div className="modal-overlay">
+          <div className="modal-card" style={{ maxWidth: '480px', borderTop: confirmModalData.actionType === 'delete' ? '4px solid #EF4444' : '4px solid #3B82F6' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+              <div style={{
+                width: '42px',
+                height: '42px',
+                borderRadius: '50%',
+                background: confirmModalData.actionType === 'delete' ? '#FEF2F2' : '#EFF6FF',
+                border: confirmModalData.actionType === 'delete' ? '1px solid #FCA5A5' : '1px solid #BFDBFE',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0
+              }}>
+                <ShieldAlert size={24} color={confirmModalData.actionType === 'delete' ? '#DC2626' : '#2563EB'} />
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: confirmModalData.actionType === 'delete' ? '#991B1B' : '#1E40AF' }}>
+                  {confirmModalData.title}
+                </h3>
+                <span style={{ fontSize: '0.74rem', fontWeight: 700, color: confirmModalData.actionType === 'delete' ? '#DC2626' : '#2563EB', background: confirmModalData.actionType === 'delete' ? '#FEE2E2' : '#DBEAFE', padding: '2px 8px', borderRadius: '12px', display: 'inline-block', marginTop: '3px' }}>
+                  👑 Root Super Admin Final Verification
+                </span>
+              </div>
+            </div>
+
+            <p style={{ fontSize: '0.9rem', color: '#334155', lineHeight: 1.5, marginBottom: '22px' }}>
+              {confirmModalData.message}
+            </p>
+
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setConfirmModalData(null)}
+                className="app-btn app-btn-secondary"
+                style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  confirmModalData.onConfirm();
+                  setConfirmModalData(null);
+                }}
+                className="app-btn"
+                style={{
+                  background: confirmModalData.actionType === 'delete' ? 'linear-gradient(135deg, #DC2626 0%, #991B1B 100%)' : 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)',
+                  color: '#FFFFFF',
+                  fontWeight: 700,
+                  padding: '8px 18px',
+                  fontSize: '0.85rem',
+                  boxShadow: confirmModalData.actionType === 'delete' ? '0 4px 12px rgba(220, 38, 38, 0.3)' : '0 4px 12px rgba(37, 99, 235, 0.3)',
+                }}
+              >
+                {confirmModalData.actionType === 'delete' ? '🚨 Yes, Permanently Delete' : '✅ Yes, Save Past Modifications'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Mobile Glassmorphic Fixed Bottom Navigation Bar */}

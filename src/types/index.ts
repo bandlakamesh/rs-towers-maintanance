@@ -114,12 +114,13 @@ export interface CorpusFundConfig {
   corpusExpenses: CorpusExpenseLog[];
 }
 
-export type UserRole = 'RootAdmin' | 'CoAdmin' | 'VerifiedResident' | 'PublicResident';
+export type UserRole = 'RootAdmin' | 'MaintenanceLead' | 'CoAdmin' | 'VerifiedResident' | 'PublicResident';
 
 export interface AppState {
   activeMonthId: string;
   months: Record<string, MonthMaintenanceRecord>;
   adminFlats: string[];
+  maintenanceLeadFlats?: string[]; // default ['101'] (Bobby)
   rootFlat: string;
   lastUpdated: number;
   cloudSyncKey: string;

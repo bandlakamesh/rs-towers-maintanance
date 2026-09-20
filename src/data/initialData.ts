@@ -60,6 +60,7 @@ export const INITIAL_APP_STATE: AppState = {
     'AUG-2026': BASELINE_RECALCULATED,
   },
   adminFlats: ['302'],
+  maintenanceLeadFlats: ['101'],
   rootFlat: '302',
   lastUpdated: Date.now(),
   cloudSyncKey: 'rs-towers-maintenance-2026-key',
