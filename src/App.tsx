@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
-import { Table, Wrench, Contact, Megaphone, Landmark, BarChart2, Calendar, Plus, UserCheck, Trash2, ShieldAlert, Shield } from 'lucide-react';
+import { Table, Wrench, Contact, Megaphone, Landmark, BarChart2, Calendar, Plus, UserCheck, Trash2, ShieldAlert, Shield, X } from 'lucide-react';
 import type { AppState, MonthMaintenanceRecord, FlatReading, WaterCalculationConfig, CommonExpenseItem, PaymentMode, PeriodicTask, ApartmentVendor, NoticeItem, CorpusFundConfig, UserRole, CommitteeMember } from './types';
 import { loadAppState, fetchLatestCloudState, syncToCloudRemote } from './utils/storage';
 import { recalculateMonthRecord } from './utils/calculator';
@@ -777,72 +777,127 @@ export const App: React.FC = () => {
             className="modal-container"
             onClick={(e) => e.stopPropagation()}
             style={{
-              maxWidth: '480px',
+              maxWidth: '520px',
               width: '100%',
               background: '#FFFFFF',
-              borderRadius: '20px',
-              padding: '24px',
+              borderRadius: '24px',
               boxShadow: '0 25px 50px -12px rgba(15, 23, 42, 0.4)',
               border: '1px solid #CBD5E1',
-              borderTop: confirmModalData.actionType === 'delete' ? '4px solid #EF4444' : '4px solid #3B82F6',
-              zIndex: 10000,
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
               position: 'relative',
+              zIndex: 10000,
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-              <div style={{
-                width: '42px',
-                height: '42px',
-                borderRadius: '50%',
-                background: confirmModalData.actionType === 'delete' ? '#FEF2F2' : '#EFF6FF',
-                border: confirmModalData.actionType === 'delete' ? '1px solid #FCA5A5' : '1px solid #BFDBFE',
+            {/* Header Banner */}
+            <div
+              style={{
+                background: confirmModalData.actionType === 'delete'
+                  ? 'linear-gradient(135deg, #7F1D1D 0%, #991B1B 50%, #B91C1C 100%)'
+                  : 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
+                padding: '20px 24px',
+                color: '#FFFFFF',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0
-              }}>
-                <ShieldAlert size={24} color={confirmModalData.actionType === 'delete' ? '#DC2626' : '#2563EB'} />
+                justifyContent: 'space-between',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div
+                  style={{
+                    width: '42px',
+                    height: '42px',
+                    borderRadius: '12px',
+                    background: 'rgba(255, 255, 255, 0.15)',
+                    border: '1px solid rgba(255, 255, 255, 0.25)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#FFFFFF',
+                    flexShrink: 0,
+                  }}
+                >
+                  <ShieldAlert size={24} />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: '#FFFFFF' }}>
+                    {confirmModalData.actionType === 'delete' ? '🚨 Delete Calculation Sheet' : confirmModalData.title}
+                  </h3>
+                  <span style={{ fontSize: '0.76rem', color: confirmModalData.actionType === 'delete' ? '#FCA5A5' : '#94A3B8', fontWeight: 700 }}>
+                    👑 Root Super Admin Safeguard
+                  </span>
+                </div>
               </div>
-              <div>
-                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: confirmModalData.actionType === 'delete' ? '#991B1B' : '#1E40AF' }}>
-                  {confirmModalData.title}
-                </h3>
-                <span style={{ fontSize: '0.74rem', fontWeight: 700, color: confirmModalData.actionType === 'delete' ? '#DC2626' : '#2563EB', background: confirmModalData.actionType === 'delete' ? '#FEE2E2' : '#DBEAFE', padding: '2px 8px', borderRadius: '12px', display: 'inline-block', marginTop: '3px' }}>
-                  👑 Root Super Admin Final Verification
-                </span>
-              </div>
-            </div>
 
-            <p style={{ fontSize: '0.9rem', color: '#334155', lineHeight: 1.5, marginBottom: '22px' }}>
-              {confirmModalData.message}
-            </p>
-
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
               <button
                 onClick={() => setConfirmModalData(null)}
-                className="app-btn app-btn-secondary"
-                style={{ padding: '8px 16px', fontSize: '0.85rem' }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  confirmModalData.onConfirm();
-                  setConfirmModalData(null);
-                }}
-                className="app-btn"
                 style={{
-                  background: confirmModalData.actionType === 'delete' ? 'linear-gradient(135deg, #DC2626 0%, #991B1B 100%)' : 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)',
+                  background: 'rgba(255, 255, 255, 0.15)',
+                  border: '1px solid rgba(255, 255, 255, 0.3)',
                   color: '#FFFFFF',
-                  fontWeight: 700,
-                  padding: '8px 18px',
-                  fontSize: '0.85rem',
-                  boxShadow: confirmModalData.actionType === 'delete' ? '0 4px 12px rgba(220, 38, 38, 0.3)' : '0 4px 12px rgba(37, 99, 235, 0.3)',
+                  borderRadius: '50%',
+                  width: '34px',
+                  height: '34px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
+                title="Close"
               >
-                {confirmModalData.actionType === 'delete' ? '🚨 Yes, Permanently Delete' : '✅ Yes, Save Past Modifications'}
+                <X size={18} />
               </button>
             </div>
+
+            {/* Body */}
+            <div style={{ padding: '24px', background: '#FFFFFF' }}>
+              <div
+                style={{
+                  background: confirmModalData.actionType === 'delete' ? '#FEF2F2' : '#EFF6FF',
+                  border: confirmModalData.actionType === 'delete' ? '1.5px solid #FCA5A5' : '1.5px solid #BFDBFE',
+                  padding: '16px',
+                  borderRadius: '16px',
+                  marginBottom: '20px',
+                }}
+              >
+                <p style={{ margin: 0, fontSize: '0.92rem', color: confirmModalData.actionType === 'delete' ? '#991B1B' : '#1E40AF', lineHeight: 1.5, fontWeight: 600 }}>
+                  {confirmModalData.message}
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                <button
+                  onClick={() => setConfirmModalData(null)}
+                  className="app-btn app-btn-secondary"
+                  style={{ padding: '10px 20px', fontSize: '0.88rem' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    confirmModalData.onConfirm();
+                    setConfirmModalData(null);
+                  }}
+                  className="app-btn"
+                  style={{
+                    background: confirmModalData.actionType === 'delete'
+                      ? 'linear-gradient(135deg, #DC2626 0%, #991B1B 100%)'
+                      : 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)',
+                    color: '#FFFFFF',
+                    fontWeight: 800,
+                    padding: '10px 22px',
+                    fontSize: '0.88rem',
+                    boxShadow: confirmModalData.actionType === 'delete'
+                      ? '0 4px 14px rgba(220, 38, 38, 0.4)'
+                      : '0 4px 14px rgba(37, 99, 235, 0.4)',
+                  }}
+                >
+                  {confirmModalData.actionType === 'delete' ? '🚨 Yes, Permanently Delete' : '✅ Yes, Save Past Modifications'}
+                </button>
+              </div>
+            </div>
+
           </div>
         </div>
       )}
