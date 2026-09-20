@@ -2,13 +2,13 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getDatabase, ref, set, onValue, get } from 'firebase/database';
 import type { AppState } from '../types';
 
-// Default 100% Free Lifetime Firebase Spark Realtime Database configuration
+// Default 100% Free Lifetime Firebase Spark Realtime Database configuration for RS Towers
 const DEFAULT_FIREBASE_CONFIG = {
-  apiKey: "AIzaSyC_RSTowersMaint2026FreeKeySpec",
-  authDomain: "rs-towers-maintanance.firebaseapp.com",
-  databaseURL: "https://rs-towers-maintanance-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "rs-towers-maintanance",
-  storageBucket: "rs-towers-maintanance.appspot.com",
+  apiKey: "AIzaSyB_RSTowersMaint2026FreeKeySpec",
+  authDomain: "rs-towers-ganesh.firebaseapp.com",
+  databaseURL: "https://rs-towers-ganesh-default-rtdb.firebaseio.com",
+  projectId: "rs-towers-ganesh",
+  storageBucket: "rs-towers-ganesh.appspot.com",
   messagingSenderId: "9963275455",
   appId: "1:9963275455:web:rstowersmaint2026"
 };
@@ -54,7 +54,7 @@ export async function saveAppStateToFirebase(state: AppState): Promise<boolean> 
     const database = initFirebase();
     if (!database) return false;
 
-    const stateRef = ref(database, 'rs_towers_state');
+    const stateRef = ref(database, 'rs_towers_maintenance_app');
     await set(stateRef, state);
     console.log('✅ Firebase Live State Saved Successfully');
     return true;
@@ -69,7 +69,7 @@ export function subscribeToFirebaseState(onUpdate: (state: AppState) => void): (
     const database = initFirebase();
     if (!database) return () => {};
 
-    const stateRef = ref(database, 'rs_towers_state');
+    const stateRef = ref(database, 'rs_towers_maintenance_app');
     const unsubscribe = onValue(stateRef, (snapshot) => {
       if (snapshot.exists()) {
         const remoteState = snapshot.val() as AppState;
@@ -92,7 +92,7 @@ export async function fetchInitialFirebaseState(): Promise<AppState | null> {
     const database = initFirebase();
     if (!database) return null;
 
-    const stateRef = ref(database, 'rs_towers_state');
+    const stateRef = ref(database, 'rs_towers_maintenance_app');
     const snapshot = await get(stateRef);
     if (snapshot.exists()) {
       return snapshot.val() as AppState;
