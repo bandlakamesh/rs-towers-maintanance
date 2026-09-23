@@ -191,7 +191,8 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
                   key={f.flatNo}
                   style={{
                     borderBottom: '1px solid #F1F5F9',
-                    background: isWM ? '#FFFBEB' : isVacant ? '#F8FAFC' : isPaid ? '#F0FDF4' : isPastDueDate ? '#FEF2F2' : '#FFFFFF',
+                    borderLeft: isUserFlat && isAdmin ? '4px solid #0284C7' : 'none',
+                    background: isWM ? '#FFFBEB' : isUserFlat && isAdmin ? '#F0F9FF' : isVacant ? '#F8FAFC' : isPaid ? '#F0FDF4' : isPastDueDate ? '#FEF2F2' : '#FFFFFF',
                     transition: 'background 0.15s ease',
                   }}
                 >
@@ -203,11 +204,12 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
                       padding: '3px 8px',
                       borderRadius: '6px',
                       fontSize: '0.82rem',
-                      color: isWM ? '#B45309' : '#1D4ED8',
-                      background: isWM ? '#FEF3C7' : '#EFF6FF',
-                      border: isWM ? '1px solid #FDE68A' : '1px solid #BFDBFE',
+                      color: isWM ? '#B45309' : isUserFlat && isAdmin ? '#0284C7' : '#1D4ED8',
+                      background: isWM ? '#FEF3C7' : isUserFlat && isAdmin ? '#E0F2FE' : '#EFF6FF',
+                      border: isWM ? '1px solid #FDE68A' : isUserFlat && isAdmin ? '1.5px solid #7DD3FC' : '1px solid #BFDBFE',
+                      fontWeight: isUserFlat && isAdmin ? 900 : 800,
                     }}>
-                      {isWM ? '⚙️ Watchman' : `Flat #${f.flatNo}`}
+                      {isWM ? '⚙️ Watchman' : isUserFlat && isAdmin ? `⭐ Flat #${f.flatNo} (YOU)` : `Flat #${f.flatNo}`}
                     </span>
                   </td>
 

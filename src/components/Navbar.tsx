@@ -54,6 +54,32 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   const loggedInFlat = currentAdminFlat || '302';
+  const residentName = state.flatDirectory?.[loggedInFlat]?.residentName || state.flatDirectory?.[loggedInFlat]?.ownerName;
+  const flatDisplay = residentName ? `#${loggedInFlat} (${residentName})` : `#${loggedInFlat}`;
+
+  let roleBtnLabel = '🔑 Member Login';
+  let roleBtnBg = 'rgba(255, 255, 255, 0.15)';
+  let roleBtnBorder = '1px solid rgba(255, 255, 255, 0.3)';
+
+  if (isAdmin) {
+    if (userRole === 'RootAdmin') {
+      roleBtnLabel = `👑 Flat ${flatDisplay} • Root`;
+      roleBtnBg = 'linear-gradient(135deg, #D97706 0%, #B45309 100%)';
+      roleBtnBorder = '1px solid #FDE68A';
+    } else if (userRole === 'MaintenanceLead') {
+      roleBtnLabel = `🛠️ Flat ${flatDisplay} • Lead`;
+      roleBtnBg = 'linear-gradient(135deg, #059669 0%, #047857 100%)';
+      roleBtnBorder = '1px solid #A7F3D0';
+    } else if (userRole === 'CoAdmin') {
+      roleBtnLabel = `⭐ Flat ${flatDisplay} • Co-Admin`;
+      roleBtnBg = 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)';
+      roleBtnBorder = '1px solid #BFDBFE';
+    } else {
+      roleBtnLabel = `👤 Flat ${flatDisplay}`;
+      roleBtnBg = 'linear-gradient(135deg, #0284C7 0%, #0369A1 100%)';
+      roleBtnBorder = '1px solid #BAE6FD';
+    }
+  }
 
   return (
     <header className="navbar-container" style={{
@@ -119,27 +145,22 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           )}
 
-          {/* Admin Unlock / Active Role Button */}
+          {/* Member Login / Active Role Button */}
           <button
             className="app-btn"
             onClick={onOpenAdminModal}
             style={{
-              background: userRole === 'RootAdmin' ? 'linear-gradient(135deg, #D97706 0%, #B45309 100%)' : isAdmin ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)' : 'rgba(255, 255, 255, 0.15)',
-              border: userRole === 'RootAdmin' ? '1px solid #FDE68A' : isAdmin ? '1px solid #34D399' : '1px solid rgba(255, 255, 255, 0.3)',
+              background: roleBtnBg,
+              border: roleBtnBorder,
               color: '#FFFFFF',
               padding: '7px 12px',
               fontSize: '0.8rem',
+              fontWeight: 700,
             }}
-            title={isAdmin ? "Admin Mode Active (Click to Manage)" : "Unlock Admin Mode"}
+            title={isAdmin ? `Logged in as ${roleBtnLabel} (Click to manage or switch)` : "Member & Admin Login"}
           >
             {isAdmin ? <Unlock size={15} /> : <Lock size={15} />}
-            <span>
-              {userRole === 'RootAdmin'
-                ? '👑 Flat #302 (Kamesh)'
-                : userRole === 'CoAdmin'
-                ? `⭐ Flat #${loggedInFlat} (Co-Admin)`
-                : '🔒 Admin Login'}
-            </span>
+            <span>{roleBtnLabel}</span>
           </button>
 
           {/* Backup / Restore - ROOT SUPER ADMIN ONLY */}

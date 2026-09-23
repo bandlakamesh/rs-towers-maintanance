@@ -149,14 +149,6 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
       return;
     }
 
-    const isRoot = selectedFlat === rootFlat;
-    const hasAdminRights = adminFlats.includes(selectedFlat) || isRoot;
-
-    if (!hasAdminRights) {
-      setErrorMsg(`❌ Flat #${selectedFlat} does not have Admin access privileges.`);
-      return;
-    }
-
     onAdminLoginSuccess(selectedFlat);
     setPinInput('');
     setErrorMsg('');
@@ -555,11 +547,43 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
 
             {adminTab === 'overview' && (
               <div>
-                <div style={{ padding: '12px', borderRadius: '10px', background: currentAdminFlat === rootFlat ? '#FEF3C7' : '#F0F9FF', border: currentAdminFlat === rootFlat ? '1px solid #FDE68A' : '1px solid #B2D8E5', marginBottom: '16px', fontSize: '0.82rem', color: currentAdminFlat === rootFlat ? '#B45309' : '#0077B6', lineHeight: 1.4 }}>
+                <div style={{
+                  padding: '12px 14px',
+                  borderRadius: '12px',
+                  background: currentAdminFlat === rootFlat
+                    ? '#FEF3C7'
+                    : maintenanceLeadFlats.includes(currentAdminFlat)
+                    ? '#ECFDF5'
+                    : adminFlats.includes(currentAdminFlat)
+                    ? '#EFF6FF'
+                    : '#F0F9FF',
+                  border: currentAdminFlat === rootFlat
+                    ? '1.5px solid #FDE68A'
+                    : maintenanceLeadFlats.includes(currentAdminFlat)
+                    ? '1.5px solid #A7F3D0'
+                    : adminFlats.includes(currentAdminFlat)
+                    ? '1.5px solid #BFDBFE'
+                    : '1.5px solid #BAE6FD',
+                  marginBottom: '16px',
+                  fontSize: '0.84rem',
+                  lineHeight: 1.45,
+                }}>
                   {currentAdminFlat === rootFlat ? (
-                    <>👑 <strong>Root Super Admin Session Active (Flat #302 - Kamesh):</strong> Full system rights unlocked. You can manage co-admin access, change Security PIN, edit water rates, and restore backups.</>
+                    <div style={{ color: '#92400E' }}>
+                      👑 <strong>Root Super Admin Session Active (Flat #302 - Kamesh):</strong> Full system control unlocked. You can manage member access, edit building water rates, and restore database backups.
+                    </div>
+                  ) : maintenanceLeadFlats.includes(currentAdminFlat) ? (
+                    <div style={{ color: '#065F46' }}>
+                      🛠️ <strong>Maintenance Lead & Treasurer Active (Flat #101 - Bobby):</strong> You have control over monthly dues collection, water tank audits, and common building expenses.
+                    </div>
+                  ) : adminFlats.includes(currentAdminFlat) ? (
+                    <div style={{ color: '#1E40AF' }}>
+                      ⭐ <strong>Co-Admin Session Active (Flat #{currentAdminFlat}):</strong> Privileged access to update payment statuses, record receipts, and post building notices.
+                    </div>
                   ) : (
-                    <>⭐ <strong>Co-Admin Session Active (Flat #{currentAdminFlat}):</strong> You can record payment receipts, update flat payment status, and post notices.</>
+                    <div style={{ color: '#0369A1' }}>
+                      👤 <strong>Verified Member Session Active (Flat #{currentAdminFlat}):</strong> You are logged in to Flat #{currentAdminFlat}. You can view monthly maintenance details and pay your flat dues via UPI.
+                    </div>
                   )}
                 </div>
 
@@ -584,7 +608,7 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
                     }}
                     style={{ width: '100%', justifyContent: 'center', background: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA', padding: '10px 14px', fontSize: '0.82rem' }}
                   >
-                    <Lock size={16} /> Lock / Logout Admin
+                    <Lock size={16} /> Logout / Switch Member Session
                   </button>
                 </div>
               </div>
