@@ -120,3 +120,65 @@ export function importAppStateJSON(file: File): Promise<AppState> {
     reader.readAsText(file);
   });
 }
+
+const LOGIN_SESSION_KEY = 'rs_towers_maint_login_session_v1';
+
+export interface LoginSession {
+  isLoggedIn: boolean;
+  flatNo: string;
+}
+
+export function getStoredLoginSession(): LoginSession {
+  try {
+    const raw = localStorage.getItem(LOGIN_SESSION_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed.isLoggedIn === 'boolean' && parsed.flatNo) {
+        return parsed;
+      }
+    }
+    // Backward compatibility check for legacy keys
+    const isLegacyAdmin = localStorage.getItem('rs_towers_maint_is_admin') === 'true';
+    const legacyFlat = localStorage.getItem('rs_towers_maint_admin_flat') || '302';
+    if (isLegacyAdmin) {
+      return { isLoggedIn: true, flatNo: legacyFlat };
+    }
+  } catch (err) {
+    console.error('Error loading login session:', err);
+  }
+  return { isLoggedIn: false, flatNo: '302' };
+}
+
+export function saveLoginSession(flatNo: string): void {
+  try {
+    const session: LoginSession = { isLoggedIn: true, flatNo };
+    localStorage.setItem(LOGIN_SESSION_KEY, JSON.stringify(session));
+    localStorage.setItem('rs_towers_maint_is_admin', 'true');
+    localStorage.setItem('rs_towers_maint_admin_flat', flatNo);
+
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      const bc = new BroadcastChannel('rs_towers_maintenance_sync');
+      bc.postMessage({ type: 'LOGIN_SESSION_UPDATE', session });
+      bc.close();
+    }
+  } catch (err) {
+    console.error('Error saving login session:', err);
+  }
+}
+
+export function clearLoginSession(): void {
+  try {
+    const session: LoginSession = { isLoggedIn: false, flatNo: '302' };
+    localStorage.removeItem(LOGIN_SESSION_KEY);
+    localStorage.setItem('rs_towers_maint_is_admin', 'false');
+    localStorage.removeItem('rs_towers_maint_admin_flat');
+
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      const bc = new BroadcastChannel('rs_towers_maintenance_sync');
+      bc.postMessage({ type: 'LOGIN_SESSION_UPDATE', session });
+      bc.close();
+    }
+  } catch (err) {
+    console.error('Error clearing login session:', err);
+  }
+}

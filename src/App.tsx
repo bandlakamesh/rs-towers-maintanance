@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
 import { Table, Wrench, Contact, Megaphone, Landmark, BarChart2, Calendar, Plus, UserCheck, Trash2, ShieldAlert, Shield, X } from 'lucide-react';
 import type { AppState, MonthMaintenanceRecord, FlatReading, WaterCalculationConfig, CommonExpenseItem, PaymentMode, PeriodicTask, ApartmentVendor, NoticeItem, CorpusFundConfig, UserRole, CommitteeMember, FlatDirectoryEntry } from './types';
-import { loadAppState, saveAppStateLocal, fetchLatestCloudState, syncToCloudRemote } from './utils/storage';
+import { loadAppState, saveAppStateLocal, fetchLatestCloudState, syncToCloudRemote, getStoredLoginSession, saveLoginSession, clearLoginSession } from './utils/storage';
 import { recalculateMonthRecord } from './utils/calculator';
 
 import { Navbar } from './components/Navbar';
@@ -25,9 +25,10 @@ export const App: React.FC = () => {
   const [appState, setAppState] = useState<AppState>(() => loadAppState());
   const [activeTab, setActiveTab] = useState<'table' | 'analytics' | 'occupants' | 'committee' | 'corpus' | 'amc' | 'vendors' | 'notices'>('table');
 
-  // Role Security State
-  const [isAdmin, setIsAdmin] = useState<boolean>(() => localStorage.getItem('rs_towers_maint_is_admin') === 'true');
-  const [currentAdminFlat, setCurrentAdminFlat] = useState<string>(() => localStorage.getItem('rs_towers_maint_admin_flat') || '302');
+  // Role Security & Persistent Session State
+  const initialSession = getStoredLoginSession();
+  const [isAdmin, setIsAdmin] = useState<boolean>(initialSession.isLoggedIn);
+  const [currentAdminFlat, setCurrentAdminFlat] = useState<string>(initialSession.flatNo);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState<boolean>(false);
 
   const rootFlat = appState.rootFlat || '302';
@@ -118,6 +119,9 @@ export const App: React.FC = () => {
       channel.onmessage = (event) => {
         if (event.data?.type === 'STATE_UPDATE' && event.data.state) {
           processRemoteUpdate(event.data.state);
+        } else if (event.data?.type === 'LOGIN_SESSION_UPDATE' && event.data.session) {
+          setIsAdmin(event.data.session.isLoggedIn);
+          setCurrentAdminFlat(event.data.session.flatNo);
         }
       };
     }
@@ -806,12 +810,11 @@ export const App: React.FC = () => {
           onAdminLoginSuccess={(flatNo) => {
             setIsAdmin(true);
             setCurrentAdminFlat(flatNo);
-            localStorage.setItem('rs_towers_maint_is_admin', 'true');
-            localStorage.setItem('rs_towers_maint_admin_flat', flatNo);
+            saveLoginSession(flatNo);
           }}
           onAdminLogout={() => {
             setIsAdmin(false);
-            localStorage.setItem('rs_towers_maint_is_admin', 'false');
+            clearLoginSession();
           }}
           flatsList={activeRecord.flatReadings}
           adminFlats={appState.adminFlats}
