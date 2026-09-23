@@ -17,6 +17,10 @@ interface AdminPinModalProps {
   rootFlat?: string;
   onToggleFlatAdmin?: (flatNo: string) => void;
   onSetFlatRole?: (flatNo: string, role: 'MaintenanceLead' | 'CoAdmin' | 'Resident') => void;
+  treasurerUpiId?: string;
+  treasurerPhone?: string;
+  treasurerName?: string;
+  onUpdateTreasurerSettings?: (upiId: string, phone: string, name: string) => void;
 }
 
 export const AdminPinModal: React.FC<AdminPinModalProps> = ({
@@ -30,6 +34,10 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
   maintenanceLeadFlats = ['101'],
   rootFlat = '302',
   onSetFlatRole,
+  treasurerUpiId = '9963275455@upi',
+  treasurerPhone = '9963275455',
+  treasurerName = 'Bobby (Flat 101 - Maintenance Lead)',
+  onUpdateTreasurerSettings,
 }) => {
   const [authMode, setAuthMode] = useState<'otp' | 'pin'>('otp');
   const [selectedFlat, setSelectedFlat] = useState<string>('302');
@@ -46,9 +54,20 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
-  const [adminTab, setAdminTab] = useState<'overview' | 'manage_rights' | 'change_pin'>('overview');
+  const [adminTab, setAdminTab] = useState<'overview' | 'manage_rights' | 'treasurer_settings' | 'change_pin'>('overview');
   const [currentPinInput, setCurrentPinInput] = useState('');
   const [newPinInput, setNewPinInput] = useState('');
+
+  // Treasurer Settings Form State
+  const [upiInput, setUpiInput] = useState(treasurerUpiId);
+  const [phoneInput, setPhoneInput] = useState(treasurerPhone);
+  const [nameInput, setNameInput] = useState(treasurerName);
+
+  useEffect(() => {
+    setUpiInput(treasurerUpiId);
+    setPhoneInput(treasurerPhone);
+    setNameInput(treasurerName);
+  }, [treasurerUpiId, treasurerPhone, treasurerName]);
 
   const digitInputRefs = [
     useRef<HTMLInputElement>(null),
@@ -98,7 +117,7 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
   const handleSendOtpWhatsApp = () => {
     if (!rawPhone) return;
     const cleanNumber = rawPhone.replace(/\D/g, '');
-    const msg = `🔐 *RS TOWERS MAINTENANCE LOGIN OTP*\n\nYour 4-digit verification code for Flat #${selectedFlat} is: *${generatedOtp}*\n\nPlease enter this code in the app to complete your login.\n\n*Ganpati Bappa Morya!* 🙏`;
+    const msg = `🔐 *RS TOWERS MAINTENANCE LOGIN OTP*\n\nYour 4-digit verification code for Flat #${selectedFlat} is: *${generatedOtp}*\n\nPlease enter this code in the app to complete your login.\n\nThank you! 🙏\n*RS TOWERS APARTMENT ASSOCIATION*`;
     window.open(`https://api.whatsapp.com/send?phone=91${cleanNumber}&text=${encodeURIComponent(msg)}`, '_blank');
   };
 
@@ -513,8 +532,8 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
         {/* State 2: Unlocked / Logged In Options */}
         {isAdmin && (
           <div>
-            {/* Show Root Admin Tabs only to Kamesh (#302) */}
-            {currentAdminFlat === rootFlat && (
+            {/* Show Admin Tabs for Root Super Admin (#302) or Maintenance Lead (#101) */}
+            {(currentAdminFlat === rootFlat || maintenanceLeadFlats.includes(currentAdminFlat)) && (
               <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '16px', borderBottom: '1px solid #E2E8F0', paddingBottom: '10px' }}>
                 <button
                   type="button"
@@ -525,23 +544,36 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
                   <ShieldCheck size={13} /> Overview
                 </button>
 
-                <button
-                  type="button"
-                  className={`chip ${adminTab === 'manage_rights' ? 'active' : ''}`}
-                  onClick={() => setAdminTab('manage_rights')}
-                  style={{ fontSize: '0.76rem', padding: '6px 12px', background: adminTab === 'manage_rights' ? '#FEF3C7' : undefined, color: adminTab === 'manage_rights' ? '#B45309' : undefined, borderColor: adminTab === 'manage_rights' ? '#FDE68A' : undefined }}
-                >
-                  <Crown size={13} color="#D97706" /> Manage Flat Access
-                </button>
+                {currentAdminFlat === rootFlat && (
+                  <button
+                    type="button"
+                    className={`chip ${adminTab === 'manage_rights' ? 'active' : ''}`}
+                    onClick={() => setAdminTab('manage_rights')}
+                    style={{ fontSize: '0.76rem', padding: '6px 12px', background: adminTab === 'manage_rights' ? '#FEF3C7' : undefined, color: adminTab === 'manage_rights' ? '#B45309' : undefined, borderColor: adminTab === 'manage_rights' ? '#FDE68A' : undefined }}
+                  >
+                    <Crown size={13} color="#D97706" /> Manage Access
+                  </button>
+                )}
 
                 <button
                   type="button"
-                  className={`chip ${adminTab === 'change_pin' ? 'active' : ''}`}
-                  onClick={() => setAdminTab('change_pin')}
-                  style={{ fontSize: '0.76rem', padding: '6px 12px' }}
+                  className={`chip ${adminTab === 'treasurer_settings' ? 'active' : ''}`}
+                  onClick={() => setAdminTab('treasurer_settings')}
+                  style={{ fontSize: '0.76rem', padding: '6px 12px', background: adminTab === 'treasurer_settings' ? '#ECFDF5' : undefined, color: adminTab === 'treasurer_settings' ? '#065F46' : undefined, borderColor: adminTab === 'treasurer_settings' ? '#A7F3D0' : undefined }}
                 >
-                  <KeyRound size={13} /> Change PIN
+                  💳 Treasurer UPI & Contact
                 </button>
+
+                {currentAdminFlat === rootFlat && (
+                  <button
+                    type="button"
+                    className={`chip ${adminTab === 'change_pin' ? 'active' : ''}`}
+                    onClick={() => setAdminTab('change_pin')}
+                    style={{ fontSize: '0.76rem', padding: '6px 12px' }}
+                  >
+                    <KeyRound size={13} /> Change PIN
+                  </button>
+                )}
               </div>
             )}
 
@@ -570,11 +602,11 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
                 }}>
                   {currentAdminFlat === rootFlat ? (
                     <div style={{ color: '#92400E' }}>
-                      👑 <strong>Root Super Admin Session Active (Flat #302 - Kamesh):</strong> Full system control unlocked. You can manage member access, edit building water rates, and restore database backups.
+                      👑 <strong>Root Super Admin Session Active (Flat #302 - Kamesh):</strong> Full system control unlocked. You can manage member access, edit building water rates, update Treasurer UPI ID, and restore database backups.
                     </div>
                   ) : maintenanceLeadFlats.includes(currentAdminFlat) ? (
                     <div style={{ color: '#065F46' }}>
-                      🛠️ <strong>Maintenance Lead & Treasurer Active (Flat #101 - Bobby):</strong> You have control over monthly dues collection, water tank audits, and common building expenses.
+                      🛠️ <strong>Maintenance Lead & Treasurer Active (Flat #101 - Bobby):</strong> You have control over monthly dues collection, water tank audits, common building expenses, and dynamic Treasurer UPI ID settings.
                     </div>
                   ) : adminFlats.includes(currentAdminFlat) ? (
                     <div style={{ color: '#1E40AF' }}>
@@ -588,6 +620,17 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {(currentAdminFlat === rootFlat || maintenanceLeadFlats.includes(currentAdminFlat)) && (
+                    <button
+                      type="button"
+                      className="app-btn app-btn-secondary"
+                      onClick={() => setAdminTab('treasurer_settings')}
+                      style={{ width: '100%', justifyContent: 'center', background: '#ECFDF5', color: '#065F46', border: '1px solid #A7F3D0', padding: '10px 14px', fontSize: '0.82rem', fontWeight: 700 }}
+                    >
+                      💳 Edit Treasurer Payment UPI & Contact Details ({upiInput})
+                    </button>
+                  )}
+
                   {currentAdminFlat === rootFlat && (
                     <button
                       type="button"
@@ -732,6 +775,77 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
                   </button>
                 </div>
               </div>
+            )}
+
+            {adminTab === 'treasurer_settings' && (
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                if (!upiInput.trim()) {
+                  setErrorMsg('❌ UPI ID cannot be empty');
+                  return;
+                }
+                onUpdateTreasurerSettings?.(upiInput.trim(), phoneInput.trim(), nameInput.trim());
+                setSuccessMsg('✅ Treasurer UPI ID and contact details updated & synced live across all devices!');
+                setErrorMsg('');
+              }}>
+                <div style={{ padding: '10px 12px', borderRadius: '8px', background: '#ECFDF5', border: '1px solid #A7F3D0', marginBottom: '14px', fontSize: '0.78rem', color: '#065F46', lineHeight: 1.4 }}>
+                  💳 <strong>Treasurer Payment Settings (Root Admin & Maintenance Lead):</strong> Edit the default UPI ID, Phone Number, and Treasurer Name. All QR codes, dynamic payment links, and WhatsApp reminders update instantly!
+                </div>
+
+                <div className="form-group" style={{ marginBottom: '12px' }}>
+                  <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '4px', display: 'block' }}>
+                    Treasurer UPI ID (e.g., number@upi, name@ybl, name@okicici):
+                  </label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={upiInput}
+                    onChange={(e) => setUpiInput(e.target.value)}
+                    required
+                    placeholder="e.g., 9963275455@upi"
+                    style={{ fontSize: '0.92rem', padding: '9px 12px', fontWeight: 600 }}
+                  />
+                </div>
+
+                <div className="form-group" style={{ marginBottom: '12px' }}>
+                  <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '4px', display: 'block' }}>
+                    Treasurer Mobile / Phone Number:
+                  </label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={phoneInput}
+                    onChange={(e) => setPhoneInput(e.target.value)}
+                    required
+                    placeholder="e.g., 9963275455"
+                    style={{ fontSize: '0.92rem', padding: '9px 12px', fontWeight: 600 }}
+                  />
+                </div>
+
+                <div className="form-group" style={{ marginBottom: '14px' }}>
+                  <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '4px', display: 'block' }}>
+                    Treasurer Display Name & Role:
+                  </label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={nameInput}
+                    onChange={(e) => setNameInput(e.target.value)}
+                    required
+                    placeholder="e.g., Bobby (Flat 101 - Maintenance Lead)"
+                    style={{ fontSize: '0.92rem', padding: '9px 12px', fontWeight: 600 }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '16px' }}>
+                  <button type="button" className="app-btn app-btn-secondary" onClick={() => setAdminTab('overview')} style={{ padding: '8px 14px', fontSize: '0.82rem' }}>
+                    Cancel
+                  </button>
+                  <button type="submit" className="app-btn app-btn-primary" style={{ padding: '8px 16px', fontSize: '0.82rem', gap: '6px' }}>
+                    <Save size={16} /> Save Treasurer Details
+                  </button>
+                </div>
+              </form>
             )}
 
             {adminTab === 'change_pin' && (

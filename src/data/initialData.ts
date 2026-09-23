@@ -84,6 +84,9 @@ export const INITIAL_APP_STATE: AppState = {
   cloudSyncKey: 'rs-towers-maintenance-2026-key',
   dueDateDay: 10,
   flatDirectory: INITIAL_FLAT_DIRECTORY,
+  treasurerUpiId: '9963275455@upi',
+  treasurerPhone: '9963275455',
+  treasurerName: 'Bobby (Flat 101 - Maintenance Lead)',
   periodicTasks: [
     {
       id: 'task-lift-1',

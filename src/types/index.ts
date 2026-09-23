@@ -154,6 +154,9 @@ export interface AppState {
   privacyMode?: boolean;
   committeeMembers?: CommitteeMember[];
   flatDirectory?: Record<string, FlatDirectoryEntry>;
+  treasurerUpiId?: string; // default '9963275455@upi'
+  treasurerPhone?: string; // default '9963275455'
+  treasurerName?: string; // default 'Bobby (Flat 101 - Maintenance Lead)'
 }
 
 

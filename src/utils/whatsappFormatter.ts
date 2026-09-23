@@ -2,7 +2,9 @@ import type { MonthMaintenanceRecord, FlatReading } from '../types';
 
 export function generateWhatsAppFlatBillText(
   flat: FlatReading,
-  record: MonthMaintenanceRecord
+  record: MonthMaintenanceRecord,
+  treasurerUpiId: string = '9963275455@upi',
+  treasurerName: string = 'Bobby (Flat 101 - Maintenance Lead)'
 ): string {
   const isWM = flat.flatNo === 'WM';
 
@@ -25,9 +27,10 @@ export function generateWhatsAppFlatBillText(
 ----------------------------------------
 📌 *Payment Status*: *${flat.status === 'Received' ? '✅ PAID' : '⏳ PENDING'}*
 ${flat.notes ? `📝 *Note*: ${flat.notes}\n` : ''}
-📲 *UPI Payment*: 9963275455@upi (Flat 101 - Bobby)
+📲 *UPI Payment*: ${treasurerUpiId} (${treasurerName})
 
-*Ganpati Bappa Morya!* 🙏`;
+Thank you! 🙏
+*RS TOWERS APARTMENT ASSOCIATION*`;
 }
 
 export function generateWhatsAppMonthlySummary(record: MonthMaintenanceRecord): string {
@@ -58,7 +61,9 @@ Thank you! 🙏`;
 export function generateWhatsAppOverdueReminderText(
   flat: FlatReading,
   record: MonthMaintenanceRecord,
-  dueDateDay: number = 10
+  dueDateDay: number = 10,
+  treasurerUpiId: string = '9963275455@upi',
+  treasurerName: string = 'Bobby (Flat 101 - Maintenance Lead)'
 ): string {
   const pendingAmount = Math.max(0, flat.roundedValue - flat.paidAmount);
 
@@ -71,7 +76,7 @@ Friendly reminder that your monthly maintenance payment of *₹${pendingAmount.t
 
 ----------------------------------------
 💰 *Total Amount Due*: *₹${pendingAmount.toLocaleString('en-IN')}*
-📲 *UPI ID*: 9963275455@upi (Flat 101 - Bobby)
+📲 *UPI ID*: ${treasurerUpiId} (${treasurerName})
 ----------------------------------------
 
 Please complete the transfer at your earliest convenience to assist in uninterrupted building services (Lift, Water Tanker & Watchman). If already paid, please ignore this notice.

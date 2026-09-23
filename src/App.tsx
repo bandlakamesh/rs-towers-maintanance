@@ -497,6 +497,25 @@ export const App: React.FC = () => {
   };
 
   // Handler for Corpus Config
+  // Handler for Treasurer UPI & Contact Settings
+  const handleUpdateTreasurerSettings = (upiId: string, phone: string, name: string) => {
+    if (!isPrivilegedAdmin) {
+      alert('🔒 Permission Denied: Only Root Super Admin or Maintenance Lead can update Treasurer settings.');
+      return;
+    }
+
+    const newState: AppState = {
+      ...appState,
+      treasurerUpiId: upiId,
+      treasurerPhone: phone,
+      treasurerName: name,
+      lastUpdated: Date.now(),
+    };
+    saveAppStateLocal(newState);
+    setAppState(newState);
+    syncToCloudRemote(newState);
+  };
+
   const handleUpdateCorpusConfig = (updatedConfig: CorpusFundConfig) => {
     const newState: AppState = {
       ...appState,
@@ -797,6 +816,9 @@ export const App: React.FC = () => {
           record={activeRecord}
           initialFlatNo={selectedFlatForPayment}
           isAdmin={isAdmin}
+          treasurerUpiId={appState.treasurerUpiId || '9963275455@upi'}
+          treasurerPhone={appState.treasurerPhone || '9963275455'}
+          treasurerName={appState.treasurerName || 'Bobby (Flat 101 - Maintenance Lead)'}
           onClose={() => setIsPaymentModalOpen(false)}
           onSavePayment={handleSavePayment}
         />
@@ -822,6 +844,10 @@ export const App: React.FC = () => {
           rootFlat={appState.rootFlat}
           onToggleFlatAdmin={handleToggleFlatAdmin}
           onSetFlatRole={handleSetFlatRole}
+          treasurerUpiId={appState.treasurerUpiId || '9963275455@upi'}
+          treasurerPhone={appState.treasurerPhone || '9963275455'}
+          treasurerName={appState.treasurerName || 'Bobby (Flat 101 - Maintenance Lead)'}
+          onUpdateTreasurerSettings={handleUpdateTreasurerSettings}
         />
       )}
 
