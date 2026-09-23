@@ -31,14 +31,20 @@ export const App: React.FC = () => {
   const [isAdminModalOpen, setIsAdminModalOpen] = useState<boolean>(false);
 
   const maintenanceLeadFlats = appState.maintenanceLeadFlats || ['101'];
+  const adminFlats = appState.adminFlats || ['302', '301', '401'];
+  const rootFlat = appState.rootFlat || '302';
+
   const userRole: UserRole = !isAdmin
     ? 'PublicResident'
-    : currentAdminFlat === (appState.rootFlat || '302')
+    : currentAdminFlat === rootFlat
     ? 'RootAdmin'
     : maintenanceLeadFlats.includes(currentAdminFlat)
     ? 'MaintenanceLead'
-    : 'CoAdmin';
+    : adminFlats.includes(currentAdminFlat)
+    ? 'CoAdmin'
+    : 'VerifiedResident';
 
+  const isPrivilegedAdmin = userRole === 'RootAdmin' || userRole === 'MaintenanceLead' || userRole === 'CoAdmin';
   const canEditMaintenance = userRole === 'RootAdmin' || userRole === 'MaintenanceLead';
 
   // Payment & Month Modals State
@@ -57,12 +63,12 @@ export const App: React.FC = () => {
 
   const activeRecord: MonthMaintenanceRecord = appState.months[appState.activeMonthId] || Object.values(appState.months)[0];
 
-  // Auto-reset activeTab to 'table' for public residents if on an admin tab
+  // Auto-reset activeTab to 'table' for non-admin residents if on an admin tab
   useEffect(() => {
-    if (!isAdmin && ['analytics', 'occupants', 'corpus', 'amc', 'vendors', 'notices'].includes(activeTab)) {
+    if (!isPrivilegedAdmin && ['analytics', 'occupants', 'corpus', 'amc', 'vendors', 'notices'].includes(activeTab)) {
       setActiveTab('table');
     }
-  }, [isAdmin, activeTab]);
+  }, [isPrivilegedAdmin, activeTab]);
 
   // Live Firebase Realtime DB listener & polling fallback
   useEffect(() => {
@@ -604,7 +610,7 @@ export const App: React.FC = () => {
             <Table size={15} /> 📊 Monthly Maintenance Sheet
           </button>
 
-          {isAdmin && (
+          {isPrivilegedAdmin && (
             <button
               className={`chip ${activeTab === 'analytics' ? 'active' : ''}`}
               onClick={() => setActiveTab('analytics')}
@@ -613,7 +619,7 @@ export const App: React.FC = () => {
             </button>
           )}
 
-          {isAdmin && (
+          {isPrivilegedAdmin && (
             <button
               className={`chip ${activeTab === 'occupants' ? 'active' : ''}`}
               onClick={() => setActiveTab('occupants')}
@@ -629,7 +635,7 @@ export const App: React.FC = () => {
             <Shield size={15} /> 🏛️ Executive Committee
           </button>
 
-          {isAdmin && (
+          {isPrivilegedAdmin && (
             <button
               className={`chip ${activeTab === 'corpus' ? 'active' : ''}`}
               onClick={() => setActiveTab('corpus')}
@@ -638,7 +644,7 @@ export const App: React.FC = () => {
             </button>
           )}
 
-          {isAdmin && (
+          {isPrivilegedAdmin && (
             <button
               className={`chip ${activeTab === 'amc' ? 'active' : ''}`}
               onClick={() => setActiveTab('amc')}
@@ -647,7 +653,7 @@ export const App: React.FC = () => {
             </button>
           )}
 
-          {isAdmin && (
+          {isPrivilegedAdmin && (
             <button
               className={`chip ${activeTab === 'vendors' ? 'active' : ''}`}
               onClick={() => setActiveTab('vendors')}
@@ -656,7 +662,7 @@ export const App: React.FC = () => {
             </button>
           )}
 
-          {isAdmin && (
+          {isPrivilegedAdmin && (
             <button
               className={`chip ${activeTab === 'notices' ? 'active' : ''}`}
               onClick={() => setActiveTab('notices')}
