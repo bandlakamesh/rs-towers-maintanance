@@ -34,12 +34,14 @@ export function saveAppStateLocal(state: AppState): void {
 }
 
 export async function fetchLatestCloudState(): Promise<AppState | null> {
+  const hasLocalStorage = typeof localStorage !== 'undefined' && !!localStorage.getItem(LOCAL_STORAGE_KEY);
+
   // First try Firebase 100% Free Lifetime Realtime Database
   try {
     const fbState = await fetchInitialFirebaseState();
     if (fbState && fbState.months && fbState.activeMonthId) {
       const localState = loadAppState();
-      if (!localState || (fbState.lastUpdated && fbState.lastUpdated > localState.lastUpdated)) {
+      if (!hasLocalStorage || !localState || (fbState.lastUpdated && fbState.lastUpdated >= (localState.lastUpdated || 0))) {
         saveAppStateLocal(fbState);
         return fbState;
       }
@@ -55,7 +57,7 @@ export async function fetchLatestCloudState(): Promise<AppState | null> {
       const cloudState = await response.json();
       if (cloudState && cloudState.months && cloudState.activeMonthId) {
         const localState = loadAppState();
-        if (!localState || (cloudState.lastUpdated && cloudState.lastUpdated > localState.lastUpdated)) {
+        if (!hasLocalStorage || !localState || (cloudState.lastUpdated && cloudState.lastUpdated >= (localState.lastUpdated || 0))) {
           saveAppStateLocal(cloudState);
           return cloudState;
         }

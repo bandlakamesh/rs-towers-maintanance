@@ -74,9 +74,13 @@ export const App: React.FC = () => {
       setAppState((currentLocal) => {
         const localTime = currentLocal?.lastUpdated || 0;
         const remoteTime = remoteState?.lastUpdated || 0;
+        const hasLocalStorage = typeof localStorage !== 'undefined' && !!localStorage.getItem('rs_towers_maintenance_app_state_v1');
 
-        // ONLY accept remote update if remote state is STRICTLY NEWER than local state
-        if (remoteTime > localTime) {
+        // Accept remote update if:
+        // 1) Local storage is empty (fresh browser / incognito tab)
+        // 2) OR local state timestamp is 0 (initial fallback code state)
+        // 3) OR remote state timestamp is >= local timestamp
+        if (!hasLocalStorage || localTime === 0 || remoteTime >= localTime) {
           saveAppStateLocal(remoteState);
           return remoteState;
         }

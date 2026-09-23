@@ -80,7 +80,7 @@ export const INITIAL_APP_STATE: AppState = {
   adminFlats: ['302', '301', '401'],
   maintenanceLeadFlats: ['101'],
   rootFlat: '302',
-  lastUpdated: Date.now(),
+  lastUpdated: 0,
   cloudSyncKey: 'rs-towers-maintenance-2026-key',
   dueDateDay: 10,
   flatDirectory: INITIAL_FLAT_DIRECTORY,
