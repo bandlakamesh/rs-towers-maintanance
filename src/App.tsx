@@ -821,6 +821,7 @@ export const App: React.FC = () => {
           treasurerName={appState.treasurerName || 'Bobby (Flat 101 - Maintenance Lead)'}
           onClose={() => setIsPaymentModalOpen(false)}
           onSavePayment={handleSavePayment}
+          onUpdateTreasurerSettings={handleUpdateTreasurerSettings}
         />
       )}
 

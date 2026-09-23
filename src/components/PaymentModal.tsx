@@ -11,6 +11,7 @@ interface PaymentModalProps {
   treasurerUpiId?: string;
   treasurerPhone?: string;
   treasurerName?: string;
+  onUpdateTreasurerSettings?: (upiId: string, phone: string, name: string) => void;
 }
 
 export const PaymentModal: React.FC<PaymentModalProps> = ({
@@ -22,6 +23,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   treasurerUpiId = '9963275455@upi',
   treasurerPhone = '9963275455',
   treasurerName = 'Bobby (Flat 101 - Maintenance Lead)',
+  onUpdateTreasurerSettings,
 }) => {
   const [selectedFlatNo, setSelectedFlatNo] = useState<string>(initialFlatNo);
   const selectedFlat = record.flatReadings.find((f) => f.flatNo === selectedFlatNo);
@@ -35,6 +37,12 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const [paymentMode, setPaymentMode] = useState<PaymentMode>('UPI');
   const [notes, setNotes] = useState<string>(selectedFlat?.notes || '');
   const [copiedUpi, setCopiedUpi] = useState<boolean>(false);
+  
+  // Inline Treasurer UPI Editing State
+  const [isEditingUpi, setIsEditingUpi] = useState<boolean>(false);
+  const [editUpiInput, setEditUpiInput] = useState<string>(treasurerUpiId);
+  const [editPhoneInput, setEditPhoneInput] = useState<string>(treasurerPhone);
+  const [editNameInput, setEditNameInput] = useState<string>(treasurerName);
   const [showAdminEditForm, setShowAdminEditForm] = useState<boolean>(false);
 
   const bobbyUpiId = treasurerUpiId;
@@ -317,9 +325,67 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
                 {/* Payee Info & Copy UPI Actions */}
                 <div style={{ flex: 1, minWidth: '200px' }}>
-                  <div style={{ fontSize: '0.82rem', color: '#0369A1', marginBottom: '6px' }}>
-                    Recipient: <strong>Bobby (Flat 101 - Maintenance Lead)</strong>
+                  <div style={{ fontSize: '0.82rem', color: '#0369A1', marginBottom: '6px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span>Recipient: <strong>{bobbyName}</strong></span>
+                    {isAdmin && (
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingUpi(!isEditingUpi)}
+                        style={{ background: 'none', border: 'none', color: '#0284C7', cursor: 'pointer', fontSize: '0.74rem', fontWeight: 800, textDecoration: 'underline' }}
+                      >
+                        {isEditingUpi ? 'Close Edit' : '✏️ Edit UPI'}
+                      </button>
+                    )}
                   </div>
+
+                  {/* Inline Edit Form for Admins */}
+                  {isEditingUpi && (
+                    <div style={{ background: '#F0F9FF', border: '1.5px solid #7DD3FC', borderRadius: '10px', padding: '10px', marginBottom: '10px' }}>
+                      <div style={{ fontSize: '0.76rem', fontWeight: 700, color: '#0369A1', marginBottom: '6px' }}>
+                        💳 Edit Treasurer UPI & Phone (Live Sync):
+                      </div>
+                      <input
+                        type="text"
+                        value={editUpiInput}
+                        onChange={(e) => setEditUpiInput(e.target.value)}
+                        placeholder="UPI ID (e.g. 9963275455@upi)"
+                        style={{ width: '100%', padding: '6px 8px', fontSize: '0.82rem', borderRadius: '6px', border: '1px solid #CBD5E1', marginBottom: '6px' }}
+                      />
+                      <input
+                        type="text"
+                        value={editPhoneInput}
+                        onChange={(e) => setEditPhoneInput(e.target.value)}
+                        placeholder="Mobile (e.g. 9963275455)"
+                        style={{ width: '100%', padding: '6px 8px', fontSize: '0.82rem', borderRadius: '6px', border: '1px solid #CBD5E1', marginBottom: '6px' }}
+                      />
+                      <input
+                        type="text"
+                        value={editNameInput}
+                        onChange={(e) => setEditNameInput(e.target.value)}
+                        placeholder="Name (e.g. Bobby - Flat 101)"
+                        style={{ width: '100%', padding: '6px 8px', fontSize: '0.82rem', borderRadius: '6px', border: '1px solid #CBD5E1', marginBottom: '8px' }}
+                      />
+                      <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
+                        <button
+                          type="button"
+                          onClick={() => setIsEditingUpi(false)}
+                          style={{ padding: '4px 10px', fontSize: '0.74rem', borderRadius: '6px', border: '1px solid #CBD5E1', background: '#FFFFFF' }}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onUpdateTreasurerSettings?.(editUpiInput, editPhoneInput, editNameInput);
+                            setIsEditingUpi(false);
+                          }}
+                          style={{ padding: '4px 12px', fontSize: '0.74rem', borderRadius: '6px', border: 'none', background: '#0284C7', color: '#FFFFFF', fontWeight: 700 }}
+                        >
+                          Save UPI
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
                   {/* UPI ID Pill with 1-Click Copy */}
                   <div style={{

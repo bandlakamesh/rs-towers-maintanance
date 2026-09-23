@@ -532,50 +532,48 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
         {/* State 2: Unlocked / Logged In Options */}
         {isAdmin && (
           <div>
-            {/* Show Admin Tabs for Root Super Admin (#302) or Maintenance Lead (#101) */}
-            {(currentAdminFlat === rootFlat || maintenanceLeadFlats.includes(currentAdminFlat)) && (
-              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '16px', borderBottom: '1px solid #E2E8F0', paddingBottom: '10px' }}>
+            {/* Show Admin Tabs for All Logged-In Members */}
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '16px', borderBottom: '1px solid #E2E8F0', paddingBottom: '10px' }}>
+              <button
+                type="button"
+                className={`chip ${adminTab === 'overview' ? 'active' : ''}`}
+                onClick={() => setAdminTab('overview')}
+                style={{ fontSize: '0.76rem', padding: '6px 12px' }}
+              >
+                <ShieldCheck size={13} /> Overview
+              </button>
+
+              {(currentAdminFlat === rootFlat || currentAdminFlat === '302') && (
                 <button
                   type="button"
-                  className={`chip ${adminTab === 'overview' ? 'active' : ''}`}
-                  onClick={() => setAdminTab('overview')}
+                  className={`chip ${adminTab === 'manage_rights' ? 'active' : ''}`}
+                  onClick={() => setAdminTab('manage_rights')}
+                  style={{ fontSize: '0.76rem', padding: '6px 12px', background: adminTab === 'manage_rights' ? '#FEF3C7' : undefined, color: adminTab === 'manage_rights' ? '#B45309' : undefined, borderColor: adminTab === 'manage_rights' ? '#FDE68A' : undefined }}
+                >
+                  <Crown size={13} color="#D97706" /> Manage Access
+                </button>
+              )}
+
+              <button
+                type="button"
+                className={`chip ${adminTab === 'treasurer_settings' ? 'active' : ''}`}
+                onClick={() => setAdminTab('treasurer_settings')}
+                style={{ fontSize: '0.76rem', padding: '6px 12px', background: adminTab === 'treasurer_settings' ? '#ECFDF5' : undefined, color: adminTab === 'treasurer_settings' ? '#065F46' : undefined, borderColor: adminTab === 'treasurer_settings' ? '#A7F3D0' : undefined }}
+              >
+                💳 Treasurer UPI & Contact
+              </button>
+
+              {(currentAdminFlat === rootFlat || currentAdminFlat === '302') && (
+                <button
+                  type="button"
+                  className={`chip ${adminTab === 'change_pin' ? 'active' : ''}`}
+                  onClick={() => setAdminTab('change_pin')}
                   style={{ fontSize: '0.76rem', padding: '6px 12px' }}
                 >
-                  <ShieldCheck size={13} /> Overview
+                  <KeyRound size={13} /> Change PIN
                 </button>
-
-                {currentAdminFlat === rootFlat && (
-                  <button
-                    type="button"
-                    className={`chip ${adminTab === 'manage_rights' ? 'active' : ''}`}
-                    onClick={() => setAdminTab('manage_rights')}
-                    style={{ fontSize: '0.76rem', padding: '6px 12px', background: adminTab === 'manage_rights' ? '#FEF3C7' : undefined, color: adminTab === 'manage_rights' ? '#B45309' : undefined, borderColor: adminTab === 'manage_rights' ? '#FDE68A' : undefined }}
-                  >
-                    <Crown size={13} color="#D97706" /> Manage Access
-                  </button>
-                )}
-
-                <button
-                  type="button"
-                  className={`chip ${adminTab === 'treasurer_settings' ? 'active' : ''}`}
-                  onClick={() => setAdminTab('treasurer_settings')}
-                  style={{ fontSize: '0.76rem', padding: '6px 12px', background: adminTab === 'treasurer_settings' ? '#ECFDF5' : undefined, color: adminTab === 'treasurer_settings' ? '#065F46' : undefined, borderColor: adminTab === 'treasurer_settings' ? '#A7F3D0' : undefined }}
-                >
-                  💳 Treasurer UPI & Contact
-                </button>
-
-                {currentAdminFlat === rootFlat && (
-                  <button
-                    type="button"
-                    className={`chip ${adminTab === 'change_pin' ? 'active' : ''}`}
-                    onClick={() => setAdminTab('change_pin')}
-                    style={{ fontSize: '0.76rem', padding: '6px 12px' }}
-                  >
-                    <KeyRound size={13} /> Change PIN
-                  </button>
-                )}
-              </div>
-            )}
+              )}
+            </div>
 
             {adminTab === 'overview' && (
               <div>
@@ -620,16 +618,14 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  {(currentAdminFlat === rootFlat || maintenanceLeadFlats.includes(currentAdminFlat)) && (
-                    <button
-                      type="button"
-                      className="app-btn app-btn-secondary"
-                      onClick={() => setAdminTab('treasurer_settings')}
-                      style={{ width: '100%', justifyContent: 'center', background: '#ECFDF5', color: '#065F46', border: '1px solid #A7F3D0', padding: '10px 14px', fontSize: '0.82rem', fontWeight: 700 }}
-                    >
-                      💳 Edit Treasurer Payment UPI & Contact Details ({upiInput})
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    className="app-btn app-btn-secondary"
+                    onClick={() => setAdminTab('treasurer_settings')}
+                    style={{ width: '100%', justifyContent: 'center', background: '#ECFDF5', color: '#065F46', border: '1px solid #A7F3D0', padding: '10px 14px', fontSize: '0.82rem', fontWeight: 700 }}
+                  >
+                    💳 Edit / View Treasurer Payment UPI & Contact Details ({upiInput})
+                  </button>
 
                   {currentAdminFlat === rootFlat && (
                     <button
