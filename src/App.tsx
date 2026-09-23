@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
 import { Table, Wrench, Contact, Megaphone, Landmark, BarChart2, Calendar, Plus, UserCheck, Trash2, ShieldAlert, Shield, X } from 'lucide-react';
 import type { AppState, MonthMaintenanceRecord, FlatReading, WaterCalculationConfig, CommonExpenseItem, PaymentMode, PeriodicTask, ApartmentVendor, NoticeItem, CorpusFundConfig, UserRole, CommitteeMember } from './types';
-import { loadAppState, fetchLatestCloudState, syncToCloudRemote } from './utils/storage';
+import { loadAppState, saveAppStateLocal, fetchLatestCloudState, syncToCloudRemote } from './utils/storage';
 import { recalculateMonthRecord } from './utils/calculator';
 
 import { Navbar } from './components/Navbar';
@@ -68,17 +68,29 @@ export const App: React.FC = () => {
   useEffect(() => {
     let isMounted = true;
 
+    const processRemoteUpdate = (remoteState: AppState) => {
+      if (!isMounted || !remoteState || !remoteState.months || !remoteState.activeMonthId) return;
+
+      setAppState((currentLocal) => {
+        const localTime = currentLocal?.lastUpdated || 0;
+        const remoteTime = remoteState?.lastUpdated || 0;
+
+        // ONLY accept remote update if remote state is STRICTLY NEWER than local state
+        if (remoteTime > localTime) {
+          saveAppStateLocal(remoteState);
+          return remoteState;
+        }
+        return currentLocal;
+      });
+    };
+
     // Subscribe to Firebase Realtime DB for instantaneous live cloud sync across all devices
-    const unsubscribeFirebase = subscribeToFirebaseState((remoteState) => {
-      if (isMounted && remoteState) {
-        setAppState(remoteState);
-      }
-    });
+    const unsubscribeFirebase = subscribeToFirebaseState(processRemoteUpdate);
 
     const pullCloud = async () => {
       const cloud = await fetchLatestCloudState();
-      if (isMounted && cloud) {
-        setAppState(cloud);
+      if (cloud) {
+        processRemoteUpdate(cloud);
       }
     };
 
@@ -90,7 +102,7 @@ export const App: React.FC = () => {
       const channel = new BroadcastChannel('rs_towers_maintenance_sync');
       channel.onmessage = (event) => {
         if (event.data?.type === 'STATE_UPDATE' && event.data.state) {
-          setAppState(event.data.state);
+          processRemoteUpdate(event.data.state);
         }
       };
     }
@@ -103,8 +115,13 @@ export const App: React.FC = () => {
   }, []);
 
   const handleStateUpdate = (newState: AppState) => {
-    setAppState(newState);
-    syncToCloudRemote(newState);
+    const updatedState: AppState = {
+      ...newState,
+      lastUpdated: Date.now(),
+    };
+    saveAppStateLocal(updatedState);
+    setAppState(updatedState);
+    syncToCloudRemote(updatedState);
   };
 
   const handleUpdateRecord = (updatedRecord: MonthMaintenanceRecord) => {
@@ -127,6 +144,7 @@ export const App: React.FC = () => {
         },
         lastUpdated: Date.now(),
       };
+      saveAppStateLocal(newState);
       setAppState(newState);
       syncToCloudRemote(newState);
     };
@@ -172,6 +190,7 @@ export const App: React.FC = () => {
           months: remainingMonths,
           lastUpdated: Date.now(),
         };
+        saveAppStateLocal(newState);
         setAppState(newState);
         syncToCloudRemote(newState);
       },
@@ -222,6 +241,7 @@ export const App: React.FC = () => {
       lastUpdated: Date.now(),
     };
 
+    saveAppStateLocal(newState);
     setAppState(newState);
     syncToCloudRemote(newState);
   };

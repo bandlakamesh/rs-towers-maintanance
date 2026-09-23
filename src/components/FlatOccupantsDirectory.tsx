@@ -84,7 +84,7 @@ export const FlatOccupantsDirectory: React.FC<FlatOccupantsDirectoryProps> = ({
 
     const ownerName = f.ownerName || ownerData.name;
     const ownerPhone = f.ownerPhone || ownerData.phone;
-    const residentName = isTenant ? (f.residentName !== 'Tenant' && f.residentName !== ownerName ? f.residentName : tenantData.name) : ownerName;
+    const residentName = f.residentName || (isTenant ? tenantData.name : ownerName);
     const tenantPhone = f.tenantPhone || tenantData.phone;
 
     const term = searchTerm.toLowerCase();
@@ -115,7 +115,7 @@ export const FlatOccupantsDirectory: React.FC<FlatOccupantsDirectoryProps> = ({
     setEditingFlat(flat);
     setEditOwnerName(flat.ownerName || ownerData.name);
     setEditOwnerPhone(flat.ownerPhone || ownerData.phone);
-    setEditResidentName(isTenant ? (flat.residentName !== 'Tenant' ? flat.residentName : tenantData.name) : ownerData.name);
+    setEditResidentName(flat.residentName || (isTenant ? tenantData.name : ownerData.name));
     setEditTenantPhone(flat.tenantPhone || tenantData.phone);
     setEditType(isTenant ? 'Tenant' : 'Owner');
     setEditOccupied(flat.isOccupied);
@@ -307,7 +307,7 @@ export const FlatOccupantsDirectory: React.FC<FlatOccupantsDirectoryProps> = ({
           const ownerPhone = isPublic ? maskPhoneNumber(rawOwnerPhone) : rawOwnerPhone;
 
           const tenantName = isTenantOccupied
-            ? (flat.residentName && flat.residentName !== 'Tenant' && flat.residentName !== ownerName ? flat.residentName : defaultTenant.name)
+            ? (flat.residentName || defaultTenant.name)
             : defaultTenant.name;
           const tenantPhone = isPublic ? maskPhoneNumber(rawTenantPhone) : rawTenantPhone;
 
