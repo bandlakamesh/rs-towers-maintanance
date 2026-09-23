@@ -40,6 +40,7 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
   const todayDate = new Date().getDate();
   const isPastDueDate = todayDate > dueDateDay;
   const isRootOrLead = userRole === 'RootAdmin' || userRole === 'MaintenanceLead';
+  const isPrivilegedAdmin = userRole === 'RootAdmin' || userRole === 'MaintenanceLead' || userRole === 'CoAdmin';
 
   const getEffectiveFlat = (flat: FlatReading): FlatReading => {
     const dirEntry = flatDirectory?.[flat.flatNo];
@@ -85,8 +86,7 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
   };
 
   const handleSendOverdueWhatsApp = (flat: FlatReading) => {
-    const eff = getEffectiveFlat(flat);
-    const text = generateWhatsAppOverdueReminderText(eff, record, dueDateDay);
+    const text = generateWhatsAppOverdueReminderText(flat, record, dueDateDay, treasurerUpiId, treasurerName);
     openWhatsAppShareLink(text);
   };
 
@@ -100,8 +100,8 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
   return (
     <div style={{ marginBottom: '28px' }}>
 
-      {/* 10th of Month Overdue Alert Banner - Logged-in Members / Admins Only */}
-      {isAdmin && pendingFlats.length > 0 && (
+      {/* 10th of Month Overdue Alert Banner - Privileged Admins Only */}
+      {isPrivilegedAdmin && pendingFlats.length > 0 && (
         <div style={{
           background: isPastDueDate ? 'linear-gradient(135deg, #FEF2F2 0%, #FFF5F5 100%)' : 'linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%)',
           border: isPastDueDate ? '2px solid #FCA5A5' : '2px solid #FDE68A',
@@ -164,8 +164,8 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
           </p>
         </div>
 
-        {/* Integrated Treasurer UPI Pill - Logged-in Members / Admins Only */}
-        {isAdmin && (
+        {/* Integrated Treasurer UPI Pill - Privileged Admins Only */}
+        {isPrivilegedAdmin && (
           <div style={{
             display: 'inline-flex',
             alignItems: 'center',
