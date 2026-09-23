@@ -100,8 +100,8 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
   return (
     <div style={{ marginBottom: '28px' }}>
 
-      {/* 10th of Month Overdue Alert Banner */}
-      {pendingFlats.length > 0 && (
+      {/* 10th of Month Overdue Alert Banner - Logged-in Members / Admins Only */}
+      {isAdmin && pendingFlats.length > 0 && (
         <div style={{
           background: isPastDueDate ? 'linear-gradient(135deg, #FEF2F2 0%, #FFF5F5 100%)' : 'linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%)',
           border: isPastDueDate ? '2px solid #FCA5A5' : '2px solid #FDE68A',
@@ -164,25 +164,25 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
           </p>
         </div>
 
-        {/* Integrated Treasurer UPI Pill */}
-        <div style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '8px',
-          background: '#ECFDF5',
-          border: '1.5px solid #A7F3D0',
-          borderRadius: '10px',
-          padding: '6px 12px',
-          fontSize: '0.8rem',
-          color: '#065F46',
-          fontWeight: 700,
-          boxShadow: '0 2px 6px rgba(5, 150, 105, 0.08)',
-        }}>
-          <CreditCard size={15} color="#059669" />
-          <span title={`Recipient: ${treasurerName} (Ph: ${treasurerPhone})`}>
-            Payee UPI: <strong style={{ color: '#0F172A', fontFamily: 'monospace', fontSize: '0.88rem' }}>{treasurerUpiId}</strong> ({treasurerName})
-          </span>
-          {isAdmin && (
+        {/* Integrated Treasurer UPI Pill - Logged-in Members / Admins Only */}
+        {isAdmin && (
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            background: '#ECFDF5',
+            border: '1.5px solid #A7F3D0',
+            borderRadius: '10px',
+            padding: '6px 12px',
+            fontSize: '0.8rem',
+            color: '#065F46',
+            fontWeight: 700,
+            boxShadow: '0 2px 6px rgba(5, 150, 105, 0.08)',
+          }}>
+            <CreditCard size={15} color="#059669" />
+            <span title={`Recipient: ${treasurerName} (Ph: ${treasurerPhone})`}>
+              Payee UPI: <strong style={{ color: '#0F172A', fontFamily: 'monospace', fontSize: '0.88rem' }}>{treasurerUpiId}</strong> ({treasurerName})
+            </span>
             <button
               onClick={onOpenAdminModal}
               style={{
@@ -200,8 +200,8 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
             >
               ✏️ Edit
             </button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Main Table Container */}
