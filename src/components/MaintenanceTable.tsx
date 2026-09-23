@@ -12,6 +12,10 @@ interface MaintenanceTableProps {
   onUpdateReadings: (updatedReadings: FlatReading[]) => void;
   onSelectFlatPayment?: (flatNo: string) => void;
   flatDirectory?: Record<string, FlatDirectoryEntry>;
+  treasurerUpiId?: string;
+  treasurerPhone?: string;
+  treasurerName?: string;
+  onOpenAdminModal?: () => void;
 }
 
 export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
@@ -23,6 +27,10 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
   onUpdateReadings,
   onSelectFlatPayment,
   flatDirectory,
+  treasurerUpiId = '9963275455@upi',
+  treasurerPhone = '9963275455',
+  treasurerName = 'Bobby (Flat 101 - Maintenance Lead)',
+  onOpenAdminModal,
 }) => {
   const [editingFlatNo, setEditingFlatNo] = useState<string | null>(null);
   const [tempPrev, setTempPrev] = useState<number>(0);
@@ -144,6 +152,71 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
           </button>
         </div>
       )}
+
+      {/* Building Treasurer UPI Info & Quick Edit Bar */}
+      <div style={{
+        background: 'linear-gradient(135deg, #ECFDF5 0%, #F0FDF4 100%)',
+        border: '1.5px solid #A7F3D0',
+        borderRadius: '14px',
+        padding: '12px 18px',
+        marginBottom: '20px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: '12px',
+        boxShadow: '0 2px 10px rgba(5, 150, 105, 0.08)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{
+            width: '36px',
+            height: '36px',
+            borderRadius: '50%',
+            background: '#D1FAE5',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#059669',
+            flexShrink: 0
+          }}>
+            <CreditCard size={20} />
+          </div>
+          <div>
+            <div style={{ fontSize: '0.86rem', fontWeight: 800, color: '#065F46', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <span>Building Payment UPI:</span>
+              <code style={{ fontSize: '1rem', color: '#0F172A', background: '#FFFFFF', padding: '2px 8px', borderRadius: '6px', border: '1px solid #6EE7B7' }}>
+                {treasurerUpiId}
+              </code>
+            </div>
+            <div style={{ fontSize: '0.76rem', color: '#047857', fontWeight: 600, marginTop: '2px' }}>
+              Recipient: <strong>{treasurerName}</strong> • Phone: <strong style={{ fontFamily: 'monospace' }}>{treasurerPhone}</strong>
+            </div>
+          </div>
+        </div>
+
+        {isAdmin && (
+          <button
+            onClick={onOpenAdminModal}
+            className="app-btn"
+            style={{
+              background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+              color: '#FFFFFF',
+              border: 'none',
+              borderRadius: '10px',
+              padding: '8px 16px',
+              fontSize: '0.82rem',
+              fontWeight: 800,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              boxShadow: '0 3px 10px rgba(5, 150, 105, 0.25)',
+            }}
+          >
+            ✏️ Edit Treasurer UPI ID & Phone
+          </button>
+        )}
+      </div>
       
       {/* Table Header Bar */}
       <div className="table-header-bar">
