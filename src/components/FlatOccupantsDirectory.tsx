@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Search, UserCheck, Phone, MessageSquare, Edit3, Check, X, Shield, Crown, Home } from 'lucide-react';
-import type { MonthMaintenanceRecord, FlatReading, UserRole } from '../types';
+import type { MonthMaintenanceRecord, FlatReading, UserRole, FlatDirectoryEntry } from '../types';
 
 interface FlatOccupantsDirectoryProps {
   record: MonthMaintenanceRecord;
+  flatDirectory?: Record<string, FlatDirectoryEntry>;
   isAdmin: boolean;
   userRole?: UserRole;
   onUpdateReadings: (updatedReadings: FlatReading[]) => void;
@@ -50,6 +51,7 @@ export const DEFAULT_FLAT_TENANTS: Record<string, { name: string; phone: string 
 
 export const FlatOccupantsDirectory: React.FC<FlatOccupantsDirectoryProps> = ({
   record,
+  flatDirectory,
   isAdmin,
   userRole = 'PublicResident',
   onUpdateReadings,
@@ -78,14 +80,15 @@ export const FlatOccupantsDirectory: React.FC<FlatOccupantsDirectoryProps> = ({
   const vacantFlats = allFlats.filter((f) => !f.isOccupied);
 
   const filteredFlats = allFlats.filter((f) => {
-    const isTenant = RENTED_FLATS.includes(f.flatNo) || f.residentType === 'Tenant';
+    const dirEntry = flatDirectory?.[f.flatNo];
+    const isTenant = RENTED_FLATS.includes(f.flatNo) || (dirEntry?.residentType || f.residentType) === 'Tenant';
     const ownerData = DEFAULT_FLAT_OWNERS[f.flatNo] || { name: 'Flat Owner', phone: '9963275455' };
     const tenantData = DEFAULT_FLAT_TENANTS[f.flatNo] || { name: f.residentName, phone: '9849010200' };
 
-    const ownerName = f.ownerName || ownerData.name;
-    const ownerPhone = f.ownerPhone || ownerData.phone;
-    const residentName = f.residentName || (isTenant ? tenantData.name : ownerName);
-    const tenantPhone = f.tenantPhone || tenantData.phone;
+    const ownerName = f.ownerName || dirEntry?.ownerName || ownerData.name;
+    const ownerPhone = f.ownerPhone || dirEntry?.ownerPhone || ownerData.phone;
+    const residentName = f.residentName || dirEntry?.residentName || (isTenant ? tenantData.name : ownerName);
+    const tenantPhone = f.tenantPhone || dirEntry?.tenantPhone || tenantData.phone;
 
     const term = searchTerm.toLowerCase();
     const matchesSearch =
@@ -108,15 +111,16 @@ export const FlatOccupantsDirectory: React.FC<FlatOccupantsDirectoryProps> = ({
   });
 
   const handleOpenEdit = (flat: FlatReading) => {
-    const isTenant = RENTED_FLATS.includes(flat.flatNo) || flat.residentType === 'Tenant';
+    const dirEntry = flatDirectory?.[flat.flatNo];
+    const isTenant = RENTED_FLATS.includes(flat.flatNo) || (dirEntry?.residentType || flat.residentType) === 'Tenant';
     const ownerData = DEFAULT_FLAT_OWNERS[flat.flatNo] || { name: 'Flat Owner', phone: '9963275455' };
     const tenantData = DEFAULT_FLAT_TENANTS[flat.flatNo] || { name: flat.residentName, phone: '9849010200' };
 
     setEditingFlat(flat);
-    setEditOwnerName(flat.ownerName || ownerData.name);
-    setEditOwnerPhone(flat.ownerPhone || ownerData.phone);
-    setEditResidentName(flat.residentName || (isTenant ? tenantData.name : ownerData.name));
-    setEditTenantPhone(flat.tenantPhone || tenantData.phone);
+    setEditOwnerName(flat.ownerName || dirEntry?.ownerName || ownerData.name);
+    setEditOwnerPhone(flat.ownerPhone || dirEntry?.ownerPhone || ownerData.phone);
+    setEditResidentName(flat.residentName || dirEntry?.residentName || (isTenant ? tenantData.name : ownerData.name));
+    setEditTenantPhone(flat.tenantPhone || dirEntry?.tenantPhone || tenantData.phone);
     setEditType(isTenant ? 'Tenant' : 'Owner');
     setEditOccupied(flat.isOccupied);
   };
@@ -293,21 +297,22 @@ export const FlatOccupantsDirectory: React.FC<FlatOccupantsDirectoryProps> = ({
       {/* Grid of Resident Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px', alignItems: 'stretch' }}>
         {filteredFlats.map((flat) => {
-          const isTenantOccupied = (RENTED_FLATS.includes(flat.flatNo) || flat.residentType === 'Tenant') && flat.isOccupied;
+          const dirEntry = flatDirectory?.[flat.flatNo];
+          const isTenantOccupied = (RENTED_FLATS.includes(flat.flatNo) || (dirEntry?.residentType || flat.residentType) === 'Tenant') && flat.isOccupied;
           const isOwnerOccupied = !isTenantOccupied && flat.isOccupied;
           const isVacant = !flat.isOccupied;
 
           const defaultOwner = DEFAULT_FLAT_OWNERS[flat.flatNo] || { name: 'Flat Owner', phone: '9963275455' };
           const defaultTenant = DEFAULT_FLAT_TENANTS[flat.flatNo] || { name: flat.residentName, phone: '9849010200' };
 
-          const rawOwnerPhone = flat.ownerPhone || defaultOwner.phone;
-          const rawTenantPhone = flat.tenantPhone || defaultTenant.phone;
+          const rawOwnerPhone = flat.ownerPhone || dirEntry?.ownerPhone || defaultOwner.phone;
+          const rawTenantPhone = flat.tenantPhone || dirEntry?.tenantPhone || defaultTenant.phone;
 
-          const ownerName = flat.ownerName || defaultOwner.name;
+          const ownerName = flat.ownerName || dirEntry?.ownerName || defaultOwner.name;
           const ownerPhone = isPublic ? maskPhoneNumber(rawOwnerPhone) : rawOwnerPhone;
 
           const tenantName = isTenantOccupied
-            ? (flat.residentName || defaultTenant.name)
+            ? (flat.residentName || dirEntry?.residentName || defaultTenant.name)
             : defaultTenant.name;
           const tenantPhone = isPublic ? maskPhoneNumber(rawTenantPhone) : rawTenantPhone;
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Table, Send, CheckCircle2, AlertCircle, Edit2, AlertTriangle, Bell, CreditCard } from 'lucide-react';
-import type { MonthMaintenanceRecord, FlatReading, UserRole } from '../types';
+import type { MonthMaintenanceRecord, FlatReading, UserRole, FlatDirectoryEntry } from '../types';
 import { generateWhatsAppFlatBillText, generateWhatsAppOverdueReminderText, openWhatsAppShareLink } from '../utils/whatsappFormatter';
 
 interface MaintenanceTableProps {
@@ -11,6 +11,7 @@ interface MaintenanceTableProps {
   dueDateDay?: number;
   onUpdateReadings: (updatedReadings: FlatReading[]) => void;
   onSelectFlatPayment?: (flatNo: string) => void;
+  flatDirectory?: Record<string, FlatDirectoryEntry>;
 }
 
 export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
@@ -21,6 +22,7 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
   dueDateDay = 10,
   onUpdateReadings,
   onSelectFlatPayment,
+  flatDirectory,
 }) => {
   const [editingFlatNo, setEditingFlatNo] = useState<string | null>(null);
   const [tempPrev, setTempPrev] = useState<number>(0);
@@ -30,6 +32,20 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
   const todayDate = new Date().getDate();
   const isPastDueDate = todayDate > dueDateDay;
   const isRootOrLead = userRole === 'RootAdmin' || userRole === 'MaintenanceLead';
+
+  const getEffectiveFlat = (flat: FlatReading): FlatReading => {
+    const dirEntry = flatDirectory?.[flat.flatNo];
+    if (!dirEntry) return flat;
+    return {
+      ...flat,
+      residentName: dirEntry.residentName || dirEntry.ownerName || flat.residentName,
+      residentType: dirEntry.residentType || flat.residentType,
+      ownerName: dirEntry.ownerName || flat.ownerName,
+      ownerPhone: dirEntry.ownerPhone || flat.ownerPhone,
+      tenantPhone: dirEntry.tenantPhone || flat.tenantPhone,
+      isOccupied: dirEntry.isOccupied !== undefined ? dirEntry.isOccupied : flat.isOccupied,
+    };
+  };
 
   const handleStartEdit = (flat: FlatReading) => {
     setEditingFlatNo(flat.flatNo);
@@ -55,14 +71,17 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
   };
 
   const handleSendFlatWhatsApp = (flat: FlatReading) => {
-    const text = generateWhatsAppFlatBillText(flat, record);
+    const eff = getEffectiveFlat(flat);
+    const text = generateWhatsAppFlatBillText(eff, record);
     openWhatsAppShareLink(text);
   };
 
   const handleSendOverdueWhatsApp = (flat: FlatReading) => {
-    const text = generateWhatsAppOverdueReminderText(flat, record, dueDateDay);
+    const eff = getEffectiveFlat(flat);
+    const text = generateWhatsAppOverdueReminderText(eff, record, dueDateDay);
     openWhatsAppShareLink(text);
   };
+
 
   const occupiedCount = record.flatReadings.filter((f) => f.flatNo !== 'WM' && f.isOccupied).length;
   const pendingFlats = record.flatReadings.filter((f) => f.flatNo !== 'WM' && f.isOccupied && f.status !== 'Received');
@@ -159,10 +178,11 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
           </thead>
           <tbody>
             {record.flatReadings.map((f) => {
+              const effFlat = getEffectiveFlat(f);
               const isWM = f.flatNo === 'WM';
               const isEditing = editingFlatNo === f.flatNo;
               const isPaid = f.status === 'Received';
-              const isVacant = !f.isOccupied && !isWM;
+              const isVacant = !effFlat.isOccupied && !isWM;
               const isUserFlat = currentAdminFlat === f.flatNo;
               const canPayThisFlat = isAdmin && (isRootOrLead || isUserFlat);
 
@@ -194,14 +214,14 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
                   {/* Resident Name with Inline Status Badge */}
                   <td style={{ padding: '10px 14px', fontWeight: 600, color: '#0F172A', whiteSpace: 'nowrap' }}>
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', flexWrap: 'nowrap' }}>
-                      <span>{f.residentName}</span>
-                      {f.residentType === 'Tenant' && (
+                      <span>{effFlat.residentName}</span>
+                      {effFlat.residentType === 'Tenant' && (
                         <span style={{ fontSize: '0.68rem', color: '#64748B', background: '#F1F5F9', padding: '1px 5px', borderRadius: '4px' }}>
                           Tenant
                         </span>
                       )}
                       
-                      {!isWM && f.isOccupied && (
+                      {!isWM && effFlat.isOccupied && (
                         isPaid ? (
                           <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#059669', background: '#ECFDF5', border: '1px solid #A7F3D0', padding: '2px 7px', borderRadius: '10px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
                             <CheckCircle2 size={11} /> Paid

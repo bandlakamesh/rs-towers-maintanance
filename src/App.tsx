@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
 import { Table, Wrench, Contact, Megaphone, Landmark, BarChart2, Calendar, Plus, UserCheck, Trash2, ShieldAlert, Shield, X } from 'lucide-react';
-import type { AppState, MonthMaintenanceRecord, FlatReading, WaterCalculationConfig, CommonExpenseItem, PaymentMode, PeriodicTask, ApartmentVendor, NoticeItem, CorpusFundConfig, UserRole, CommitteeMember } from './types';
+import type { AppState, MonthMaintenanceRecord, FlatReading, WaterCalculationConfig, CommonExpenseItem, PaymentMode, PeriodicTask, ApartmentVendor, NoticeItem, CorpusFundConfig, UserRole, CommitteeMember, FlatDirectoryEntry } from './types';
 import { loadAppState, saveAppStateLocal, fetchLatestCloudState, syncToCloudRemote } from './utils/storage';
 import { recalculateMonthRecord } from './utils/calculator';
 
@@ -210,20 +210,36 @@ export const App: React.FC = () => {
       return;
     }
 
+    const updatedDirMap: Record<string, FlatDirectoryEntry> = { ...(appState.flatDirectory || INITIAL_APP_STATE.flatDirectory || {}) };
+
+    updatedReadings.forEach((f) => {
+      if (f.flatNo !== 'WM') {
+        updatedDirMap[f.flatNo] = {
+          flatNo: f.flatNo,
+          ownerName: f.ownerName || '',
+          ownerPhone: f.ownerPhone || '',
+          residentName: f.residentName || f.ownerName || '',
+          tenantPhone: f.tenantPhone || '',
+          residentType: f.residentType || 'Owner',
+          isOccupied: f.isOccupied !== undefined ? f.isOccupied : true,
+        };
+      }
+    });
+
     const updatedMonths = { ...appState.months };
     Object.keys(updatedMonths).forEach((mId) => {
       const month = updatedMonths[mId];
       const newReadings = month.flatReadings.map((reading) => {
-        const match = updatedReadings.find((u) => u.flatNo === reading.flatNo);
-        if (match) {
+        const dirEntry = updatedDirMap[reading.flatNo];
+        if (dirEntry) {
           return {
             ...reading,
-            ownerName: match.ownerName,
-            ownerPhone: match.ownerPhone,
-            residentName: match.residentName,
-            tenantPhone: match.tenantPhone,
-            residentType: match.residentType,
-            isOccupied: match.isOccupied,
+            ownerName: dirEntry.ownerName,
+            ownerPhone: dirEntry.ownerPhone,
+            residentName: dirEntry.residentName,
+            tenantPhone: dirEntry.tenantPhone,
+            residentType: dirEntry.residentType,
+            isOccupied: dirEntry.isOccupied,
           };
         }
         return reading;
@@ -235,10 +251,12 @@ export const App: React.FC = () => {
       });
     });
 
+    const now = Date.now();
     const newState: AppState = {
       ...appState,
+      flatDirectory: updatedDirMap,
       months: updatedMonths,
-      lastUpdated: Date.now(),
+      lastUpdated: now,
     };
 
     saveAppStateLocal(newState);
@@ -658,6 +676,7 @@ export const App: React.FC = () => {
                 setSelectedFlatForPayment(flatNo);
                 setIsPaymentModalOpen(true);
               }}
+              flatDirectory={appState.flatDirectory || INITIAL_APP_STATE.flatDirectory}
             />
 
             <ExpenseBreakdown
@@ -681,6 +700,7 @@ export const App: React.FC = () => {
         {activeTab === 'occupants' && (
           <FlatOccupantsDirectory
             record={activeRecord}
+            flatDirectory={appState.flatDirectory || INITIAL_APP_STATE.flatDirectory}
             isAdmin={isAdmin}
             userRole={userRole}
             onUpdateReadings={handleUpdateReadings}
@@ -694,6 +714,7 @@ export const App: React.FC = () => {
           <ApartmentCommittee
             committeeMembers={appState.committeeMembers || INITIAL_APP_STATE.committeeMembers || []}
             flatReadings={activeRecord.flatReadings}
+            flatDirectory={appState.flatDirectory || INITIAL_APP_STATE.flatDirectory}
             userRole={userRole}
             isAdmin={isAdmin}
             onAddMember={handleAddCommitteeMember}

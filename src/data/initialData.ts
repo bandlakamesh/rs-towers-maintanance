@@ -51,6 +51,24 @@ export const INITIAL_AUG_2026_RECORD: MonthMaintenanceRecord = {
   lastUpdated: 1789469180100,
 };
 
+export const INITIAL_FLAT_DIRECTORY: Record<string, any> = {
+  '101': { flatNo: '101', ownerName: 'Bobby', ownerPhone: '9963275455', residentName: 'Bobby', tenantPhone: '', residentType: 'Owner', isOccupied: true },
+  '102': { flatNo: '102', ownerName: 'Suresh', ownerPhone: '9849010201', residentName: 'Venkat (Tenant)', tenantPhone: '9849010200', residentType: 'Tenant', isOccupied: true },
+  '103': { flatNo: '103', ownerName: 'Balaji', ownerPhone: '9849010300', residentName: 'Balaji', tenantPhone: '', residentType: 'Owner', isOccupied: true },
+  '201': { flatNo: '201', ownerName: 'Naveen Varma', ownerPhone: '9849020100', residentName: 'Naveen Varma', tenantPhone: '', residentType: 'Owner', isOccupied: true },
+  '202': { flatNo: '202', ownerName: 'Subba Rao', ownerPhone: '9849020201', residentName: 'Satya Nimmakayala', tenantPhone: '9849020200', residentType: 'Tenant', isOccupied: true },
+  '203': { flatNo: '203', ownerName: 'Harshavardhan', ownerPhone: '9849020300', residentName: 'Harshavardhan', tenantPhone: '', residentType: 'Owner', isOccupied: true },
+  '301': { flatNo: '301', ownerName: 'Yugandhar', ownerPhone: '9849030100', residentName: 'Yugandhar', tenantPhone: '', residentType: 'Owner', isOccupied: true },
+  '302': { flatNo: '302', ownerName: 'Kamesh', ownerPhone: '9849030200', residentName: 'Kamesh', tenantPhone: '', residentType: 'Owner', isOccupied: true },
+  '303': { flatNo: '303', ownerName: 'Sharath Babu', ownerPhone: '9849030300', residentName: 'Sharath Babu', tenantPhone: '', residentType: 'Owner', isOccupied: true },
+  '401': { flatNo: '401', ownerName: 'Arun', ownerPhone: '9849040100', residentName: 'Arun', tenantPhone: '', residentType: 'Owner', isOccupied: true },
+  '402': { flatNo: '402', ownerName: 'Ramesh', ownerPhone: '9849040201', residentName: 'Ujwala', tenantPhone: '9849040200', residentType: 'Tenant', isOccupied: true },
+  '403': { flatNo: '403', ownerName: 'Ravi Shankar', ownerPhone: '9849040300', residentName: 'Ravi Shankar', tenantPhone: '', residentType: 'Owner', isOccupied: true },
+  '501': { flatNo: '501', ownerName: 'Srikanth', ownerPhone: '9849050100', residentName: 'Srikanth', tenantPhone: '', residentType: 'Owner', isOccupied: true },
+  '502': { flatNo: '502', ownerName: 'Prasanna', ownerPhone: '9849050200', residentName: 'Prasanna', tenantPhone: '', residentType: 'Owner', isOccupied: true },
+  '503': { flatNo: '503', ownerName: 'Venkateswara Rao', ownerPhone: '9849050300', residentName: 'Owner', tenantPhone: '', residentType: 'Owner', isOccupied: false },
+};
+
 // Calculate exact initial baseline
 const BASELINE_RECALCULATED = recalculateMonthRecord(INITIAL_AUG_2026_RECORD);
 
@@ -59,12 +77,13 @@ export const INITIAL_APP_STATE: AppState = {
   months: {
     'AUG-2026': BASELINE_RECALCULATED,
   },
-  adminFlats: ['302'],
+  adminFlats: ['302', '301', '401'],
   maintenanceLeadFlats: ['101'],
   rootFlat: '302',
   lastUpdated: Date.now(),
   cloudSyncKey: 'rs-towers-maintenance-2026-key',
   dueDateDay: 10,
+  flatDirectory: INITIAL_FLAT_DIRECTORY,
   periodicTasks: [
     {
       id: 'task-lift-1',
@@ -168,72 +187,6 @@ export const INITIAL_APP_STATE: AppState = {
       postedBy: 'Association Management',
       priority: 'Normal'
     }
-  ],
-  corpusConfig: {
-    monthlyRatePerFlat: 200,
-    pastMonthsCollected: 12,
-    baselineTotalCollected: 33600, // 14 flats * 200 * 12 months
-    corpusExpenses: [
-      {
-        id: 'cexp-1',
-        date: '2026-08-15',
-        title: '13th Corpus Fund Reserve Allocation',
-        amount: 2800,
-        category: 'Lift Overhaul',
-        approvedBy: 'Bobby (Flat 101 - Maintenance Lead)',
-        notes: 'Annual reserve set aside for major lift wire rope inspection and emergency repairs.'
-      }
-    ]
-  },
-  committeeMembers: [
-    {
-      id: 'cm-1',
-      name: 'Kamesh Bandla',
-      designation: 'President & Super Admin',
-      flatNo: '302',
-      phone: '9849030200',
-      email: 'kamesh.bandla@rstowers.org',
-      termPeriod: '2025 - 2027',
-      responsibilities: ['Association Master Governance', 'Financial & Account Audit', 'System Access & Root Admin Control']
-    },
-    {
-      id: 'cm-2',
-      name: 'Bobby',
-      designation: 'Maintenance Lead & Treasurer',
-      flatNo: '101',
-      phone: '9963275455',
-      email: 'bobby.flat101@rstowers.org',
-      termPeriod: '2025 - 2027',
-      responsibilities: ['Monthly Dues Collection (9963275455@upi)', 'Water Tanker Ordering & Bill Audit', 'Building Repairs & AMC Management']
-    },
-    {
-      id: 'cm-3',
-      name: 'Naveen Varma',
-      designation: 'Vice President',
-      flatNo: '201',
-      phone: '9849020100',
-      termPeriod: '2025 - 2027',
-      responsibilities: ['Resident Welfare & Grievance Resolution', 'Vendor Contract Agreements & Legal Oversight']
-    },
-    {
-      id: 'cm-4',
-      name: 'Balaji',
-      designation: 'General Secretary',
-      flatNo: '103',
-      phone: '9849010300',
-      termPeriod: '2025 - 2027',
-      responsibilities: ['GBM Meeting Minutes & Official Records', 'Notice Board & WhatsApp Group Broadcasts']
-    },
-    {
-      id: 'cm-5',
-      name: 'Yugandhar',
-      designation: 'Security & Facility Lead',
-      flatNo: '301',
-      phone: '9849030100',
-      termPeriod: '2025 - 2027',
-      responsibilities: ['Watchman Guard Supervision', 'CCTV Camera & Lift Safety Audits']
-    }
   ]
 };
-
 

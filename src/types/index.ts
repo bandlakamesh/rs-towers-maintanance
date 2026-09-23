@@ -126,6 +126,16 @@ export interface CommitteeMember {
   responsibilities: string[];
 }
 
+export interface FlatDirectoryEntry {
+  flatNo: string;
+  ownerName: string;
+  ownerPhone: string;
+  residentName: string;
+  tenantPhone: string;
+  residentType: 'Owner' | 'Tenant';
+  isOccupied: boolean;
+}
+
 export type UserRole = 'RootAdmin' | 'MaintenanceLead' | 'CoAdmin' | 'VerifiedResident' | 'PublicResident';
 
 export interface AppState {
@@ -143,6 +153,7 @@ export interface AppState {
   corpusConfig?: CorpusFundConfig;
   privacyMode?: boolean;
   committeeMembers?: CommitteeMember[];
+  flatDirectory?: Record<string, FlatDirectoryEntry>;
 }
 
 

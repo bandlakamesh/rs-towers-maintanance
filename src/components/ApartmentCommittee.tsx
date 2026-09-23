@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { Shield, Plus, Edit2, Trash2, Camera, Phone, Mail, User, ExternalLink, X } from 'lucide-react';
-import type { CommitteeMember, UserRole, FlatReading } from '../types';
+import type { CommitteeMember, UserRole, FlatReading, FlatDirectoryEntry } from '../types';
 import { maskPhoneNumber } from '../utils/whatsappFormatter';
 import { DEFAULT_FLAT_OWNERS, DEFAULT_FLAT_TENANTS } from './FlatOccupantsDirectory';
 
 interface ApartmentCommitteeProps {
   committeeMembers: CommitteeMember[];
   flatReadings?: FlatReading[];
+  flatDirectory?: Record<string, FlatDirectoryEntry>;
   userRole: UserRole;
   isAdmin: boolean;
   onAddMember: (member: CommitteeMember) => void;
@@ -35,6 +36,7 @@ const RESIDENT_ROSTER: Record<string, { name: string; phone: string; email: stri
 export const ApartmentCommittee: React.FC<ApartmentCommitteeProps> = ({
   committeeMembers,
   flatReadings = [],
+  flatDirectory,
   userRole,
   isAdmin,
   onAddMember,
@@ -59,11 +61,14 @@ export const ApartmentCommittee: React.FC<ApartmentCommitteeProps> = ({
   const isPublicViewer = !isAdmin;
 
   const getRosterMemberInfo = (flatNum: string) => {
+    const dirEntry = flatDirectory?.[flatNum];
     const flatItem = flatReadings?.find((f) => f.flatNo === flatNum);
     const defaultOwner = DEFAULT_FLAT_OWNERS[flatNum];
     const defaultTenant = DEFAULT_FLAT_TENANTS[flatNum];
 
     const resolvedName =
+      dirEntry?.ownerName ||
+      dirEntry?.residentName ||
       flatItem?.ownerName ||
       flatItem?.residentName ||
       defaultOwner?.name ||
@@ -72,6 +77,8 @@ export const ApartmentCommittee: React.FC<ApartmentCommitteeProps> = ({
       `Flat #${flatNum}`;
 
     const resolvedPhone =
+      dirEntry?.ownerPhone ||
+      dirEntry?.tenantPhone ||
       flatItem?.ownerPhone ||
       flatItem?.tenantPhone ||
       defaultOwner?.phone ||
