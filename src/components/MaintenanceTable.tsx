@@ -153,73 +153,8 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
         </div>
       )}
 
-      {/* Building Treasurer UPI Info & Quick Edit Bar */}
-      <div style={{
-        background: 'linear-gradient(135deg, #ECFDF5 0%, #F0FDF4 100%)',
-        border: '1.5px solid #A7F3D0',
-        borderRadius: '14px',
-        padding: '12px 18px',
-        marginBottom: '20px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: '12px',
-        boxShadow: '0 2px 10px rgba(5, 150, 105, 0.08)',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{
-            width: '36px',
-            height: '36px',
-            borderRadius: '50%',
-            background: '#D1FAE5',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#059669',
-            flexShrink: 0
-          }}>
-            <CreditCard size={20} />
-          </div>
-          <div>
-            <div style={{ fontSize: '0.86rem', fontWeight: 800, color: '#065F46', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-              <span>Building Payment UPI:</span>
-              <code style={{ fontSize: '1rem', color: '#0F172A', background: '#FFFFFF', padding: '2px 8px', borderRadius: '6px', border: '1px solid #6EE7B7' }}>
-                {treasurerUpiId}
-              </code>
-            </div>
-            <div style={{ fontSize: '0.76rem', color: '#047857', fontWeight: 600, marginTop: '2px' }}>
-              Recipient: <strong>{treasurerName}</strong> • Phone: <strong style={{ fontFamily: 'monospace' }}>{treasurerPhone}</strong>
-            </div>
-          </div>
-        </div>
-
-        {isAdmin && (
-          <button
-            onClick={onOpenAdminModal}
-            className="app-btn"
-            style={{
-              background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
-              color: '#FFFFFF',
-              border: 'none',
-              borderRadius: '10px',
-              padding: '8px 16px',
-              fontSize: '0.82rem',
-              fontWeight: 800,
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              boxShadow: '0 3px 10px rgba(5, 150, 105, 0.25)',
-            }}
-          >
-            ✏️ Edit Treasurer UPI ID & Phone
-          </button>
-        )}
-      </div>
-      
       {/* Table Header Bar */}
-      <div className="table-header-bar">
+      <div className="table-header-bar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '14px' }}>
         <div className="section-header-title">
           <h2>
             <Table style={{ color: '#0096C7', flexShrink: 0 }} /> {record.monthTitle}
@@ -227,6 +162,45 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
           <p>
             Water Meter Readings, Consumed Units & Per-Flat Bill Breakdown ({occupiedCount} Occupied Flats • Watchman Meter: {wmUnits} units)
           </p>
+        </div>
+
+        {/* Integrated Treasurer UPI Pill */}
+        <div style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '8px',
+          background: '#ECFDF5',
+          border: '1.5px solid #A7F3D0',
+          borderRadius: '10px',
+          padding: '6px 12px',
+          fontSize: '0.8rem',
+          color: '#065F46',
+          fontWeight: 700,
+          boxShadow: '0 2px 6px rgba(5, 150, 105, 0.08)',
+        }}>
+          <CreditCard size={15} color="#059669" />
+          <span title={`Recipient: ${treasurerName} (Ph: ${treasurerPhone})`}>
+            Payee UPI: <strong style={{ color: '#0F172A', fontFamily: 'monospace', fontSize: '0.88rem' }}>{treasurerUpiId}</strong> ({treasurerName})
+          </span>
+          {isAdmin && (
+            <button
+              onClick={onOpenAdminModal}
+              style={{
+                background: '#059669',
+                color: '#FFFFFF',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '3px 8px',
+                fontSize: '0.74rem',
+                fontWeight: 800,
+                cursor: 'pointer',
+                marginLeft: '4px',
+              }}
+              title="Edit Treasurer UPI ID & Phone Number"
+            >
+              ✏️ Edit
+            </button>
+          )}
         </div>
       </div>
 
