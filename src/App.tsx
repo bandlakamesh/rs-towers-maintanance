@@ -30,17 +30,22 @@ export const App: React.FC = () => {
   const [currentAdminFlat, setCurrentAdminFlat] = useState<string>(() => localStorage.getItem('rs_towers_maint_admin_flat') || '302');
   const [isAdminModalOpen, setIsAdminModalOpen] = useState<boolean>(false);
 
-  const maintenanceLeadFlats = appState.maintenanceLeadFlats || ['101'];
-  const adminFlats = appState.adminFlats || ['302', '301', '401'];
   const rootFlat = appState.rootFlat || '302';
+  const maintLeadFlats = Array.isArray(appState.maintenanceLeadFlats)
+    ? appState.maintenanceLeadFlats
+    : ['101'];
+  
+  const coAdminFlats = Array.isArray(appState.adminFlats)
+    ? appState.adminFlats.filter((f) => f !== '302' && !maintLeadFlats.includes(f))
+    : ['301', '401'];
 
   const userRole: UserRole = !isAdmin
     ? 'PublicResident'
     : currentAdminFlat === rootFlat
     ? 'RootAdmin'
-    : maintenanceLeadFlats.includes(currentAdminFlat)
+    : maintLeadFlats.includes(currentAdminFlat)
     ? 'MaintenanceLead'
-    : adminFlats.includes(currentAdminFlat)
+    : coAdminFlats.includes(currentAdminFlat) && ['301', '401'].includes(currentAdminFlat)
     ? 'CoAdmin'
     : 'VerifiedResident';
 
