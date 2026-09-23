@@ -13,6 +13,10 @@ interface ApartmentCommitteeProps {
   onAddMember: (member: CommitteeMember) => void;
   onUpdateMember: (member: CommitteeMember) => void;
   onDeleteMember: (id: string) => void;
+  treasurerUpiId?: string;
+  treasurerPhone?: string;
+  treasurerName?: string;
+  onOpenAdminModal?: () => void;
 }
 
 const RESIDENT_ROSTER: Record<string, { name: string; phone: string; email: string }> = {
@@ -42,6 +46,10 @@ export const ApartmentCommittee: React.FC<ApartmentCommitteeProps> = ({
   onAddMember,
   onUpdateMember,
   onDeleteMember,
+  treasurerUpiId = '9963275455@upi',
+  treasurerPhone = '9963275455',
+  treasurerName = 'Bobby (Flat 101 - Maintenance Lead)',
+  onOpenAdminModal,
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<CommitteeMember | null>(null);
@@ -271,6 +279,16 @@ export const ApartmentCommittee: React.FC<ApartmentCommitteeProps> = ({
           const resolvedPhone = info.phone || member.phone;
 
           const displayPhone = isPublicViewer ? maskPhoneNumber(resolvedPhone) : resolvedPhone;
+          const isTreasurerRole = member.designation === 'Maintenance Lead & Treasurer' || member.designation.includes('Treasurer') || member.designation.includes('Maintenance Lead');
+
+          const displayResponsibilities = (isTreasurerRole && (!member.responsibilities || member.responsibilities.length === 0 || (member.responsibilities.length === 1 && member.responsibilities[0].includes('Building Operations'))))
+            ? [
+                'Monthly Dues Collection & Payment Verification',
+                'Water Tanker Audits & Municipal Water Share Accounting',
+                'Building Electricity, Lift AMC & Common Expenses',
+                'Apartment Maintenance Fund & Bank Account Management',
+              ]
+            : member.responsibilities;
 
           return (
             <div
@@ -278,13 +296,13 @@ export const ApartmentCommittee: React.FC<ApartmentCommitteeProps> = ({
               className="app-card hover-lift"
               style={{
                 borderRadius: '18px',
-                border: '1px solid #E2E8F0',
+                border: isTreasurerRole ? '2px solid #A7F3D0' : '1px solid #E2E8F0',
                 padding: '20px',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
                 background: '#FFFFFF',
-                boxShadow: '0 4px 14px rgba(0,0,0,0.04)',
+                boxShadow: isTreasurerRole ? '0 6px 18px rgba(5, 150, 105, 0.08)' : '0 4px 14px rgba(0,0,0,0.04)',
                 position: 'relative',
               }}
             >
@@ -410,14 +428,40 @@ export const ApartmentCommittee: React.FC<ApartmentCommitteeProps> = ({
                   )}
                 </div>
 
+                {/* Dedicated Official Payment UPI Box for Treasurer / Maintenance Lead */}
+                {isTreasurerRole && (
+                  <div style={{ background: 'linear-gradient(135deg, #ECFDF5 0%, #F0FDF4 100%)', border: '1.5px solid #A7F3D0', borderRadius: '12px', padding: '10px 12px', marginBottom: '14px' }}>
+                    <div style={{ fontSize: '0.74rem', fontWeight: 800, color: '#065F46', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span>💳 Official Maintenance Payment UPI</span>
+                      {canEdit && (
+                        <button
+                          type="button"
+                          onClick={onOpenAdminModal}
+                          style={{ background: 'none', border: 'none', color: '#059669', cursor: 'pointer', fontSize: '0.74rem', fontWeight: 800, textDecoration: 'underline' }}
+                        >
+                          ✏️ Edit UPI
+                        </button>
+                      )}
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                      <code style={{ fontSize: '0.94rem', fontWeight: 800, color: '#0F172A', background: '#FFFFFF', padding: '2px 8px', borderRadius: '6px', border: '1px solid #6EE7B7' }}>
+                        {treasurerUpiId || '9963275455@upi'}
+                      </code>
+                      <span style={{ fontSize: '0.74rem', color: '#047857', fontWeight: 600 }}>
+                        • Recipient: <strong>{treasurerName}</strong> (Mobile: {treasurerPhone})
+                      </span>
+                    </div>
+                  </div>
+                )}
+
                 {/* Key Responsibilities */}
-                {member.responsibilities && member.responsibilities.length > 0 && (
+                {displayResponsibilities && displayResponsibilities.length > 0 && (
                   <div>
                     <div style={{ fontSize: '0.76rem', fontWeight: 800, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px' }}>
                       Key Responsibilities
                     </div>
                     <ul style={{ margin: 0, paddingLeft: '16px', fontSize: '0.82rem', color: '#475569', lineHeight: 1.4 }}>
-                      {member.responsibilities.map((resp, idx) => (
+                      {displayResponsibilities.map((resp, idx) => (
                         <li key={idx} style={{ marginBottom: '3px' }}>
                           {resp}
                         </li>
@@ -695,7 +739,15 @@ export const ApartmentCommittee: React.FC<ApartmentCommitteeProps> = ({
                     <select
                       className="form-control"
                       value={designation}
-                      onChange={(e) => setDesignation(e.target.value as any)}
+                      onChange={(e) => {
+                        const newDesig = e.target.value as any;
+                        setDesignation(newDesig);
+                        if (newDesig === 'Maintenance Lead & Treasurer') {
+                          setResponsibilitiesText(
+                            'Monthly Dues Collection & Payment Verification\nWater Tanker Audits & Municipal Water Share Accounting\nBuilding Electricity, Lift AMC & Common Expenses\nApartment Maintenance Fund & Bank Account Management'
+                          );
+                        }
+                      }}
                       style={{ padding: '10px 14px', fontSize: '0.88rem', background: '#F8FAFC', border: '1.5px solid #CBD5E1' }}
                     >
                       <option value="President & Super Admin">👑 President & Super Admin</option>

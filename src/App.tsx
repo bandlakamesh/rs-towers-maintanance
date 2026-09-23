@@ -762,6 +762,10 @@ export const App: React.FC = () => {
             onAddMember={handleAddCommitteeMember}
             onUpdateMember={handleUpdateCommitteeMember}
             onDeleteMember={handleDeleteCommitteeMember}
+            treasurerUpiId={appState.treasurerUpiId || '9963275455@upi'}
+            treasurerPhone={appState.treasurerPhone || '9963275455'}
+            treasurerName={appState.treasurerName || 'Bobby (Flat 101 - Maintenance Lead)'}
+            onOpenAdminModal={() => setIsAdminModalOpen(true)}
           />
         )}
 
