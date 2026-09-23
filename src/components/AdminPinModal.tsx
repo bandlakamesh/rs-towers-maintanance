@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ShieldCheck, Lock, Unlock, X, KeyRound, Check, Crown, Smartphone, RefreshCw, Send, Save, Home } from 'lucide-react';
 import type { FlatReading } from '../types';
-import { DEFAULT_FLAT_OWNERS, DEFAULT_FLAT_TENANTS } from './FlatOccupantsDirectory';
+import { maskPhoneNumber, DEFAULT_FLAT_OWNERS, DEFAULT_FLAT_TENANTS } from './FlatOccupantsDirectory';
 
 const RENTED_FLATS_SET = ['102', '202', '402'];
 
@@ -74,6 +74,11 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
     return localStorage.getItem('rs_towers_maint_pin') || '2026';
   };
 
+  const selectedFlatObj = flatsList.find((f) => f.flatNo === selectedFlat);
+  const defaultOwner = DEFAULT_FLAT_OWNERS[selectedFlat] || { name: 'Flat Resident', phone: '9849030200' };
+  const rawPhone = selectedFlatObj?.ownerPhone || selectedFlatObj?.tenantPhone || defaultOwner.phone;
+  const maskedMobile = maskPhoneNumber(rawPhone);
+
   // Handle Send OTP Action
   const handleSendOtp = () => {
     const randomCode = Math.floor(1000 + Math.random() * 9000).toString();
@@ -83,7 +88,7 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
     setTimerSeconds(30);
     setIsTimerActive(true);
     setErrorMsg('');
-    setSuccessMsg(`📲 OTP code sent to registered mobile for Flat #${selectedFlat}.`);
+    setSuccessMsg(`📲 OTP code sent to registered mobile (${maskedMobile}) for Flat #${selectedFlat}. (Demo OTP: ${randomCode})`);
 
     setTimeout(() => {
       digitInputRefs[0].current?.focus();
@@ -306,6 +311,23 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
                       </select>
                     </div>
 
+                    {/* Registered Phone Hint Box */}
+                    <div style={{
+                      background: '#F0F9FF',
+                      border: '1.5px solid #BAE6FD',
+                      borderRadius: '12px',
+                      padding: '10px 14px',
+                      marginBottom: '16px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px'
+                    }}>
+                      <Smartphone size={18} color="#0284C7" />
+                      <div style={{ fontSize: '0.82rem', color: '#0369A1', fontWeight: 600 }}>
+                        Registered Mobile: <strong style={{ color: '#0F172A', fontFamily: 'monospace', fontSize: '0.92rem' }}>{maskedMobile}</strong>
+                      </div>
+                    </div>
+
                     <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '16px' }}>
                       <button type="button" className="app-btn app-btn-secondary" onClick={onClose} style={{ padding: '8px 14px', fontSize: '0.82rem' }}>
                         Cancel
@@ -329,8 +351,8 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
                       <div style={{ fontSize: '0.86rem', fontWeight: 700, color: '#0F172A', marginBottom: '4px' }}>
                         Enter 4-Digit OTP Code
                       </div>
-                      <div style={{ fontSize: '0.78rem', color: '#64748B' }}>
-                        Sent to registered mobile for Flat #{selectedFlat}
+                      <div style={{ fontSize: '0.82rem', color: '#0369A1', fontWeight: 600 }}>
+                        Sent to registered mobile <strong style={{ color: '#0F172A', fontFamily: 'monospace', fontSize: '0.9rem' }}>{maskedMobile}</strong> for Flat #{selectedFlat}
                       </div>
                     </div>
 
