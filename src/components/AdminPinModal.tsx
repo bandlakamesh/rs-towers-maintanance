@@ -88,11 +88,18 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
     setTimerSeconds(30);
     setIsTimerActive(true);
     setErrorMsg('');
-    setSuccessMsg(`📲 OTP code sent to registered mobile (${maskedMobile}) for Flat #${selectedFlat}. (Demo OTP: ${randomCode})`);
+    setSuccessMsg(`📲 OTP code generated for Flat #${selectedFlat}: ${randomCode}. Click WhatsApp below to receive it on mobile!`);
 
     setTimeout(() => {
       digitInputRefs[0].current?.focus();
     }, 150);
+  };
+
+  const handleSendOtpWhatsApp = () => {
+    if (!rawPhone) return;
+    const cleanNumber = rawPhone.replace(/\D/g, '');
+    const msg = `🔐 *RS TOWERS MAINTENANCE LOGIN OTP*\n\nYour 4-digit verification code for Flat #${selectedFlat} is: *${generatedOtp}*\n\nPlease enter this code in the app to complete your login.\n\n*Ganpati Bappa Morya!* 🙏`;
+    window.open(`https://api.whatsapp.com/send?phone=91${cleanNumber}&text=${encodeURIComponent(msg)}`, '_blank');
   };
 
   // Handle Digit Change
@@ -357,7 +364,7 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
                     </div>
 
                     {/* 4 Digit Boxes */}
-                    <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginBottom: '18px' }}>
+                    <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginBottom: '16px' }}>
                       {otpDigits.map((digit, idx) => (
                         <input
                           key={idx}
@@ -384,6 +391,42 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
                           }}
                         />
                       ))}
+                    </div>
+
+                    {/* Instant WhatsApp Realtime OTP Dispatch */}
+                    <div style={{
+                      background: '#ECFDF5',
+                      border: '1.5px solid #A7F3D0',
+                      borderRadius: '12px',
+                      padding: '10px 14px',
+                      marginBottom: '16px',
+                      textAlign: 'center'
+                    }}>
+                      <div style={{ fontSize: '0.78rem', color: '#065F46', fontWeight: 700, marginBottom: '6px' }}>
+                        💬 Realtime OTP Delivery to registered phone ({maskedMobile}):
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleSendOtpWhatsApp}
+                        style={{
+                          background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                          color: '#FFFFFF',
+                          border: 'none',
+                          borderRadius: '10px',
+                          padding: '8px 16px',
+                          fontSize: '0.82rem',
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          boxShadow: '0 4px 10px rgba(5, 150, 105, 0.25)',
+                          width: '100%',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        <Send size={15} /> Receive OTP on WhatsApp ({generatedOtp})
+                      </button>
                     </div>
 
                     {/* Resend Timer & Change Flat controls */}
