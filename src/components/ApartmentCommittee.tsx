@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { Shield, Plus, Edit2, Trash2, Camera, Phone, Mail, User, ExternalLink, X } from 'lucide-react';
-import type { CommitteeMember, UserRole } from '../types';
+import type { CommitteeMember, UserRole, FlatReading } from '../types';
 import { maskPhoneNumber } from '../utils/whatsappFormatter';
+import { DEFAULT_FLAT_OWNERS, DEFAULT_FLAT_TENANTS } from './FlatOccupantsDirectory';
 
 interface ApartmentCommitteeProps {
   committeeMembers: CommitteeMember[];
-  flatReadings?: any[];
+  flatReadings?: FlatReading[];
   userRole: UserRole;
   isAdmin: boolean;
   onAddMember: (member: CommitteeMember) => void;
@@ -33,6 +34,7 @@ const RESIDENT_ROSTER: Record<string, { name: string; phone: string; email: stri
 
 export const ApartmentCommittee: React.FC<ApartmentCommitteeProps> = ({
   committeeMembers,
+  flatReadings = [],
   userRole,
   isAdmin,
   onAddMember,
@@ -56,10 +58,41 @@ export const ApartmentCommittee: React.FC<ApartmentCommitteeProps> = ({
   const canEdit = userRole === 'RootAdmin' || userRole === 'MaintenanceLead';
   const isPublicViewer = !isAdmin;
 
+  const getRosterMemberInfo = (flatNum: string) => {
+    const flatItem = flatReadings?.find((f) => f.flatNo === flatNum);
+    const defaultOwner = DEFAULT_FLAT_OWNERS[flatNum];
+    const defaultTenant = DEFAULT_FLAT_TENANTS[flatNum];
+
+    const resolvedName =
+      flatItem?.ownerName ||
+      flatItem?.residentName ||
+      defaultOwner?.name ||
+      defaultTenant?.name ||
+      RESIDENT_ROSTER[flatNum]?.name ||
+      `Flat #${flatNum}`;
+
+    const resolvedPhone =
+      flatItem?.ownerPhone ||
+      flatItem?.tenantPhone ||
+      defaultOwner?.phone ||
+      defaultTenant?.phone ||
+      RESIDENT_ROSTER[flatNum]?.phone ||
+      '';
+
+    const email = RESIDENT_ROSTER[flatNum]?.email || `resident.flat${flatNum}@rstowers.org`;
+
+    return { name: resolvedName, phone: resolvedPhone, email };
+  };
+
+  const flatOptions =
+    flatReadings && flatReadings.length > 0
+      ? flatReadings.filter((f) => f.flatNo !== 'WM').map((f) => f.flatNo)
+      : Object.keys(RESIDENT_ROSTER);
+
   const handleSelectRosterMember = (key: string) => {
     setSelectedRosterKey(key);
-    if (key && RESIDENT_ROSTER[key]) {
-      const info = RESIDENT_ROSTER[key];
+    if (key && key !== 'CUSTOM') {
+      const info = getRosterMemberInfo(key);
       setName(info.name);
       setFlatNo(key);
       setPhone(info.phone);
@@ -69,12 +102,14 @@ export const ApartmentCommittee: React.FC<ApartmentCommitteeProps> = ({
 
   const handleOpenAdd = () => {
     setEditingMember(null);
-    setSelectedRosterKey('101');
-    setName('Bobby');
+    const defaultFlat = flatOptions[0] || '101';
+    const info = getRosterMemberInfo(defaultFlat);
+    setSelectedRosterKey(defaultFlat);
+    setName(info.name);
     setDesignation('Executive Member');
-    setFlatNo('101');
-    setPhone('9963275455');
-    setEmail('bobby.flat101@rstowers.org');
+    setFlatNo(defaultFlat);
+    setPhone(info.phone);
+    setEmail(info.email);
     setTermPeriod('2025 - 2027');
     setPhotoUrl('');
     setResponsibilitiesText('Building Operations & Resident Support');
@@ -83,11 +118,12 @@ export const ApartmentCommittee: React.FC<ApartmentCommitteeProps> = ({
 
   const handleOpenEdit = (m: CommitteeMember) => {
     setEditingMember(m);
-    setName(m.name);
+    const info = getRosterMemberInfo(m.flatNo);
+    setName(info.name || m.name);
     setDesignation(m.designation);
     setFlatNo(m.flatNo);
-    setPhone(m.phone);
-    setEmail(m.email || '');
+    setPhone(info.phone || m.phone);
+    setEmail(m.email || info.email);
     setTermPeriod(m.termPeriod || '2025 - 2027');
     setPhotoUrl(m.photoUrl || '');
     setResponsibilitiesText(m.responsibilities ? m.responsibilities.join('\n') : '');
@@ -223,7 +259,11 @@ export const ApartmentCommittee: React.FC<ApartmentCommitteeProps> = ({
       >
         {committeeMembers.map((member) => {
           const badge = getDesignationBadge(member.designation);
-          const displayPhone = isPublicViewer ? maskPhoneNumber(member.phone) : member.phone;
+          const info = getRosterMemberInfo(member.flatNo);
+          const resolvedName = info.name || member.name;
+          const resolvedPhone = info.phone || member.phone;
+
+          const displayPhone = isPublicViewer ? maskPhoneNumber(resolvedPhone) : resolvedPhone;
 
           return (
             <div
@@ -249,7 +289,7 @@ export const ApartmentCommittee: React.FC<ApartmentCommitteeProps> = ({
                     {member.photoUrl ? (
                       <img
                         src={member.photoUrl}
-                        alt={member.name}
+                        alt={resolvedName}
                         style={{
                           width: '72px',
                           height: '72px',
@@ -276,7 +316,7 @@ export const ApartmentCommittee: React.FC<ApartmentCommitteeProps> = ({
                           boxShadow: '0 4px 10px rgba(0,0,0,0.06)',
                         }}
                       >
-                        {member.name.charAt(0)}
+                        {resolvedName.charAt(0)}
                       </div>
                     )}
 
@@ -327,7 +367,7 @@ export const ApartmentCommittee: React.FC<ApartmentCommitteeProps> = ({
                       {badge.label}
                     </span>
                     <h3 style={{ margin: '0 0 2px 0', fontSize: '1.15rem', fontWeight: 800, color: '#0F172A' }}>
-                      {member.name}
+                      {resolvedName}
                     </h3>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.84rem', color: '#64748B', fontWeight: 600 }}>
                       <span style={{ color: '#0284C7', background: '#E0F2FE', padding: '1px 6px', borderRadius: '4px', fontSize: '0.78rem' }}>
@@ -341,13 +381,13 @@ export const ApartmentCommittee: React.FC<ApartmentCommitteeProps> = ({
 
                 {/* Contact Info */}
                 <div style={{ background: '#F8FAFC', borderRadius: '12px', padding: '10px 12px', marginBottom: '14px', fontSize: '0.84rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: '#334155', fontWeight: 600, marginBottom: member.email ? '6px' : 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: '#334155', fontWeight: 600, marginBottom: (member.email || info.email) ? '6px' : 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <Phone size={14} color="#0284C7" />
                       <span>{displayPhone}</span>
                     </div>
                     <a
-                      href={`https://wa.me/91${member.phone}`}
+                      href={`https://wa.me/91${resolvedPhone.replace(/\D/g, '')}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       style={{ color: '#059669', fontWeight: 700, textDecoration: 'none', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '4px' }}
@@ -355,10 +395,10 @@ export const ApartmentCommittee: React.FC<ApartmentCommitteeProps> = ({
                       WhatsApp <ExternalLink size={11} />
                     </a>
                   </div>
-                  {member.email && (
+                  {(member.email || info.email) && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#64748B', fontSize: '0.8rem' }}>
                       <Mail size={13} color="#64748B" />
-                      <span>{member.email}</span>
+                      <span>{member.email || info.email}</span>
                     </div>
                   )}
                 </div>
@@ -393,7 +433,7 @@ export const ApartmentCommittee: React.FC<ApartmentCommitteeProps> = ({
                   {userRole === 'RootAdmin' && (
                     <button
                       onClick={() => {
-                        if (confirm(`Are you sure you want to remove ${member.name} from Executive Committee?`)) {
+                        if (confirm(`Are you sure you want to remove ${resolvedName} from Executive Committee?`)) {
                           onDeleteMember(member.id);
                         }
                       }}
@@ -596,11 +636,14 @@ export const ApartmentCommittee: React.FC<ApartmentCommitteeProps> = ({
                       }}
                       style={{ padding: '10px 14px', fontSize: '0.88rem', background: '#F8FAFC', border: '1.5px solid #CBD5E1', marginBottom: selectedRosterKey === 'CUSTOM' ? '6px' : 0 }}
                     >
-                      {Object.keys(RESIDENT_ROSTER).map((fNum) => (
-                        <option key={fNum} value={fNum}>
-                          {RESIDENT_ROSTER[fNum].name} (Flat #{fNum})
-                        </option>
-                      ))}
+                      {flatOptions.map((fNum) => {
+                        const info = getRosterMemberInfo(fNum);
+                        return (
+                          <option key={fNum} value={fNum}>
+                            {info.name} (Flat #{fNum})
+                          </option>
+                        );
+                      })}
                       <option value="CUSTOM">✏️ Custom / Other Name...</option>
                     </select>
 
@@ -627,7 +670,7 @@ export const ApartmentCommittee: React.FC<ApartmentCommitteeProps> = ({
                       onChange={(e) => handleSelectRosterMember(e.target.value)}
                       style={{ padding: '10px 14px', fontSize: '0.88rem', background: '#F8FAFC', border: '1.5px solid #CBD5E1' }}
                     >
-                      {Object.keys(RESIDENT_ROSTER).map((fNum) => (
+                      {flatOptions.map((fNum) => (
                         <option key={fNum} value={fNum}>
                           Flat #{fNum}
                         </option>
