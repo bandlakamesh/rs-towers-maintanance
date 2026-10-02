@@ -1,21 +1,24 @@
 import React, { useState } from 'react';
-import type { NoticeItem } from '../types';
+import type { NoticeItem, UserRole } from '../types';
 import { Megaphone, Plus, Share2, AlertCircle, Calendar, User, Trash2 } from 'lucide-react';
 import { generateWhatsAppNoticeText, openWhatsAppShareLink } from '../utils/whatsappFormatter';
 
 interface NoticeBoardProps {
   notices: NoticeItem[];
   isAdmin: boolean;
+  userRole?: UserRole;
   onAddNotice: (newNotice: NoticeItem) => void;
   onDeleteNotice: (noticeId: string) => void;
 }
 
 export const NoticeBoard: React.FC<NoticeBoardProps> = ({
   notices,
-  isAdmin,
+  isAdmin: _isAdmin,
+  userRole = 'PublicResident',
   onAddNotice,
   onDeleteNotice,
 }) => {
+  const isPrivilegedAdmin = userRole === 'RootAdmin' || userRole === 'MaintenanceLead' || userRole === 'CoAdmin';
   const [showAddModal, setShowAddModal] = useState(false);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -85,7 +88,7 @@ export const NoticeBoard: React.FC<NoticeBoardProps> = ({
           </div>
         </div>
 
-        {isAdmin && (
+        {isPrivilegedAdmin && (
           <button
             onClick={() => setShowAddModal(true)}
             className="app-btn"
@@ -152,7 +155,7 @@ export const NoticeBoard: React.FC<NoticeBoardProps> = ({
                   </h3>
                 </div>
 
-                {isAdmin && (
+                {isPrivilegedAdmin && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <button
                       onClick={() => handleBroadcastWhatsApp(notice)}

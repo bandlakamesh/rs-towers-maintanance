@@ -53,6 +53,8 @@ export const Navbar: React.FC<NavbarProps> = ({
     }
   };
 
+  const isPrivilegedAdmin = userRole === 'RootAdmin' || userRole === 'MaintenanceLead' || userRole === 'CoAdmin';
+
   const loggedInFlat = currentAdminFlat || '302';
   const residentName = state.flatDirectory?.[loggedInFlat]?.residentName || state.flatDirectory?.[loggedInFlat]?.ownerName;
   const flatDisplay = residentName ? `#${loggedInFlat} (${residentName})` : `#${loggedInFlat}`;
@@ -131,15 +133,15 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* Navbar Action Buttons */}
         <div className="navbar-actions-group no-print" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
           
-          {/* Share WhatsApp - ADMIN ONLY */}
-          {isAdmin && (
+          {/* Share WhatsApp - PRIVILEGED ADMIN ONLY */}
+          {isPrivilegedAdmin && (
             <button className="app-btn app-btn-whatsapp" onClick={handleShareSummaryWhatsApp} style={{ padding: '7px 12px', fontSize: '0.8rem' }}>
               <Share2 size={15} /> <span>Share</span>
             </button>
           )}
 
-          {/* Print PDF - ADMIN ONLY */}
-          {isAdmin && (
+          {/* Print PDF - PRIVILEGED ADMIN ONLY */}
+          {isPrivilegedAdmin && (
             <button className="app-btn" onClick={handlePrintPDF} style={{ background: 'linear-gradient(135deg, #00B4D8 0%, #0096C7 100%)', color: '#FFF', padding: '7px 12px', fontSize: '0.8rem' }}>
               <Printer size={15} /> <span>Print PDF</span>
             </button>

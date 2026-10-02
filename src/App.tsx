@@ -748,7 +748,7 @@ export const App: React.FC = () => {
             flatReadings={activeRecord.flatReadings}
             flatDirectory={appState.flatDirectory || INITIAL_APP_STATE.flatDirectory}
             userRole={userRole}
-            isAdmin={isAdmin}
+            isAdmin={isPrivilegedAdmin}
             onAddMember={handleAddCommitteeMember}
             onUpdateMember={handleUpdateCommitteeMember}
             onDeleteMember={handleDeleteCommitteeMember}
@@ -783,7 +783,7 @@ export const App: React.FC = () => {
         {activeTab === 'vendors' && (
           <VendorDirectory
             vendors={appState.vendors || []}
-            isAdmin={canEditMaintenance}
+            isAdmin={isPrivilegedAdmin}
             onAddVendor={handleAddVendor}
             onDeleteVendor={handleDeleteVendor}
           />
@@ -793,7 +793,8 @@ export const App: React.FC = () => {
         {activeTab === 'notices' && (
           <NoticeBoard
             notices={appState.notices || []}
-            isAdmin={isAdmin}
+            isAdmin={isPrivilegedAdmin}
+            userRole={userRole}
             onAddNotice={handleAddNotice}
             onDeleteNotice={handleDeleteNotice}
           />
