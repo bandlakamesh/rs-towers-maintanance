@@ -52,7 +52,7 @@ export const DEFAULT_FLAT_TENANTS: Record<string, { name: string; phone: string 
 export const FlatOccupantsDirectory: React.FC<FlatOccupantsDirectoryProps> = ({
   record,
   flatDirectory,
-  isAdmin,
+  isAdmin: _isAdmin,
   userRole = 'PublicResident',
   onUpdateReadings,
   onUpdateDirectory,
