@@ -59,6 +59,9 @@ export const App: React.FC = () => {
   const [selectedFlatForPayment, setSelectedFlatForPayment] = useState<string>('101');
   const [isNewMonthModalOpen, setIsNewMonthModalOpen] = useState<boolean>(false);
 
+  // Month selection state decoupled from cloud sync resets
+  const [selectedMonthId, setSelectedMonthId] = useState<string>(() => loadAppState().activeMonthId || '2026-09');
+
   // Past Month Confirmation Safeguard Modal State
   const [confirmModalData, setConfirmModalData] = useState<{
     isOpen: boolean;
@@ -68,7 +71,11 @@ export const App: React.FC = () => {
     onConfirm: () => void;
   } | null>(null);
 
-  const activeRecord: MonthMaintenanceRecord = appState.months[appState.activeMonthId] || Object.values(appState.months)[0];
+  const activeMonthId = (selectedMonthId && appState.months[selectedMonthId])
+    ? selectedMonthId
+    : (appState.months[appState.activeMonthId] ? appState.activeMonthId : Object.keys(appState.months)[0]);
+
+  const activeRecord: MonthMaintenanceRecord = appState.months[activeMonthId] || Object.values(appState.months)[0];
 
   // Auto-reset activeTab to 'table' for non-permitted users if on Corpus or Audit tab
   useEffect(() => {
@@ -237,6 +244,8 @@ export const App: React.FC = () => {
         delete remainingMonths[monthId];
         const newActiveId = Object.keys(remainingMonths)[0];
 
+        setSelectedMonthId(newActiveId);
+
         const newState: AppState = {
           ...appState,
           activeMonthId: newActiveId,
@@ -358,6 +367,7 @@ export const App: React.FC = () => {
 
   const handleCreateMonth = (newMonthRecord: MonthMaintenanceRecord) => {
     logAuditAction('CREATE_MONTH', `Created new monthly calculation sheet '${newMonthRecord.monthTitle}'`);
+    setSelectedMonthId(newMonthRecord.monthId);
     const newState: AppState = {
       ...appState,
       activeMonthId: newMonthRecord.monthId,
@@ -373,10 +383,13 @@ export const App: React.FC = () => {
   };
 
   const handleSelectMonth = (monthId: string) => {
+    setSelectedMonthId(monthId);
     const newState: AppState = {
       ...appState,
       activeMonthId: monthId,
+      lastUpdated: Date.now(),
     };
+    saveAppStateLocal(newState);
     setAppState(newState);
     syncToCloudRemote(newState);
   };
@@ -742,7 +755,7 @@ export const App: React.FC = () => {
                 <Calendar size={18} color="#FFD166" style={{ flexShrink: 0 }} />
                 <span className="month-label">Maintenance Month:</span>
                 <select
-                  value={appState.activeMonthId}
+                  value={activeMonthId}
                   onChange={(e) => handleSelectMonth(e.target.value)}
                   className="month-select"
                 >
@@ -778,7 +791,7 @@ export const App: React.FC = () => {
               {/* Root Admin Only Delete Month Sheet Button */}
               {userRole === 'RootAdmin' && monthIds.length > 1 && (
                 <button
-                  onClick={() => handleDeleteMonthSheet(appState.activeMonthId)}
+                  onClick={() => handleDeleteMonthSheet(activeMonthId)}
                   className="app-btn"
                   style={{
                     background: '#FEF2F2',
@@ -798,7 +811,7 @@ export const App: React.FC = () => {
 
         {/* Tab 1: Maintenance Calculations Table */}
         {activeTab === 'table' && (
-          <>
+          <div key={activeRecord.monthId} className="month-sheet-container">
             <MaintenanceTable
               record={activeRecord}
               isAdmin={isAdmin}
@@ -823,15 +836,17 @@ export const App: React.FC = () => {
               onUpdateWaterConfig={handleUpdateWaterConfig}
               onUpdateCommonExpenses={handleUpdateCommonExpenses}
             />
-          </>
+          </div>
         )}
 
         {/* Tab 2: Analytics Dashboard */}
         {activeTab === 'analytics' && (
-          <AnalyticsDashboard
-            appState={appState}
-            activeRecord={activeRecord}
-          />
+          <div key={activeRecord.monthId} className="month-sheet-container">
+            <AnalyticsDashboard
+              appState={appState}
+              activeRecord={activeRecord}
+            />
+          </div>
         )}
 
         {/* Tab 3: Flat Occupants & Directory */}
