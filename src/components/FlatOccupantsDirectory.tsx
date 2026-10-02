@@ -69,7 +69,7 @@ export const FlatOccupantsDirectory: React.FC<FlatOccupantsDirectoryProps> = ({
   const [editType, setEditType] = useState<'Owner' | 'Tenant'>('Owner');
   const [editOccupied, setEditOccupied] = useState(true);
 
-  const isPublic = userRole === 'PublicResident';
+  const isPrivilegedAdmin = userRole === 'RootAdmin' || userRole === 'MaintenanceLead' || userRole === 'CoAdmin';
 
   const allFlats = record.flatReadings.filter((f) => f.flatNo !== 'WM');
 
@@ -110,6 +110,7 @@ export const FlatOccupantsDirectory: React.FC<FlatOccupantsDirectoryProps> = ({
   });
 
   const handleOpenEdit = (flat: FlatReading) => {
+    if (!isPrivilegedAdmin) return;
     const dirEntry = flatDirectory?.[flat.flatNo];
     const isTenant = RENTED_FLATS.includes(flat.flatNo) || (dirEntry?.residentType || flat.residentType) === 'Tenant';
     const ownerData = DEFAULT_FLAT_OWNERS[flat.flatNo] || { name: 'Flat Owner', phone: '9963275455' };
@@ -126,7 +127,7 @@ export const FlatOccupantsDirectory: React.FC<FlatOccupantsDirectoryProps> = ({
 
   const handleSaveEdit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingFlat) return;
+    if (!editingFlat || !isPrivilegedAdmin) return;
 
     const updated = record.flatReadings.map((f) => {
       if (f.flatNo === editingFlat.flatNo) {
@@ -260,12 +261,12 @@ export const FlatOccupantsDirectory: React.FC<FlatOccupantsDirectoryProps> = ({
           const rawTenantPhone = flat.tenantPhone || dirEntry?.tenantPhone || defaultTenant.phone;
 
           const ownerName = flat.ownerName || dirEntry?.ownerName || defaultOwner.name;
-          const ownerPhone = isPublic ? maskPhoneNumber(rawOwnerPhone) : rawOwnerPhone;
+          const ownerPhone = isPrivilegedAdmin ? rawOwnerPhone : maskPhoneNumber(rawOwnerPhone);
 
           const tenantName = isTenantOccupied
             ? (flat.residentName || dirEntry?.residentName || defaultTenant.name)
             : defaultTenant.name;
-          const tenantPhone = isPublic ? maskPhoneNumber(rawTenantPhone) : rawTenantPhone;
+          const tenantPhone = isPrivilegedAdmin ? rawTenantPhone : maskPhoneNumber(rawTenantPhone);
 
           return (
             <div
@@ -330,11 +331,11 @@ export const FlatOccupantsDirectory: React.FC<FlatOccupantsDirectoryProps> = ({
                       <div style={{ fontSize: '0.98rem', fontWeight: 800, color: '#0F172A', marginBottom: '3px' }}>
                         {ownerName}
                       </div>
-                      <div style={{ fontSize: '0.78rem', color: '#475569', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: !isPublic ? '8px' : '0px' }}>
+                      <div style={{ fontSize: '0.78rem', color: '#475569', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: isPrivilegedAdmin ? '8px' : '0px' }}>
                         <Phone size={12} color="#D97706" />
                         <span>Owner Mobile: <strong>{ownerPhone}</strong></span>
                       </div>
-                      {!isPublic && (
+                      {isPrivilegedAdmin && (
                         <div style={{ display: 'flex', gap: '6px' }}>
                           <a
                             href={`tel:${rawOwnerPhone}`}
@@ -370,11 +371,11 @@ export const FlatOccupantsDirectory: React.FC<FlatOccupantsDirectoryProps> = ({
                       <div style={{ fontSize: '0.98rem', fontWeight: 800, color: '#0F172A', marginBottom: '3px' }}>
                         {tenantName}
                       </div>
-                      <div style={{ fontSize: '0.78rem', color: '#475569', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: !isPublic ? '8px' : '0px' }}>
+                      <div style={{ fontSize: '0.78rem', color: '#475569', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: isPrivilegedAdmin ? '8px' : '0px' }}>
                         <Phone size={12} color="#7C3AED" />
                         <span>Tenant Mobile: <strong>{tenantPhone}</strong></span>
                       </div>
-                      {!isPublic && (
+                      {isPrivilegedAdmin && (
                         <div style={{ display: 'flex', gap: '6px' }}>
                           <a
                             href={`tel:${rawTenantPhone}`}
@@ -414,11 +415,11 @@ export const FlatOccupantsDirectory: React.FC<FlatOccupantsDirectoryProps> = ({
                       <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F172A', marginBottom: '4px' }}>
                         {ownerName}
                       </div>
-                      <div style={{ fontSize: '0.78rem', color: '#475569', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: !isPublic ? '10px' : '0px' }}>
+                      <div style={{ fontSize: '0.78rem', color: '#475569', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: isPrivilegedAdmin ? '10px' : '0px' }}>
                         <Phone size={12} color="#0284C7" />
                         <span>Mobile: <strong>{ownerPhone}</strong></span>
                       </div>
-                      {!isPublic && (
+                      {isPrivilegedAdmin && (
                         <div style={{ display: 'flex', gap: '6px' }}>
                           <a
                             href={`tel:${rawOwnerPhone}`}
@@ -473,11 +474,11 @@ export const FlatOccupantsDirectory: React.FC<FlatOccupantsDirectoryProps> = ({
                       <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F172A', marginBottom: '4px' }}>
                         {ownerName}
                       </div>
-                      <div style={{ fontSize: '0.78rem', color: '#64748B', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: !isPublic ? '10px' : '0px' }}>
+                      <div style={{ fontSize: '0.78rem', color: '#64748B', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: isPrivilegedAdmin ? '10px' : '0px' }}>
                         <Phone size={12} color="#0284C7" />
                         <span>Mobile: <strong>{ownerPhone}</strong></span>
                       </div>
-                      {!isPublic && (
+                      {isPrivilegedAdmin && (
                         <div style={{ display: 'flex', gap: '6px' }}>
                           <a href={`tel:${rawOwnerPhone}`} className="app-btn app-btn-secondary" style={{ padding: '5px 10px', fontSize: '0.76rem', flex: 1, justifyContent: 'center' }}>
                             <Phone size={12} /> Call Owner
@@ -508,7 +509,7 @@ export const FlatOccupantsDirectory: React.FC<FlatOccupantsDirectoryProps> = ({
               </div>
 
               {/* Admin Edit Button Footer */}
-              {isAdmin && (
+              {isPrivilegedAdmin && (
                 <div style={{ borderTop: '1px solid rgba(0,0,0,0.08)', paddingTop: '10px', marginTop: '12px', display: 'flex', justifyContent: 'flex-end' }}>
                   <button
                     onClick={() => handleOpenEdit(flat)}
