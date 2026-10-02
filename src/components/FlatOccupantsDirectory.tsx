@@ -56,7 +56,6 @@ export const FlatOccupantsDirectory: React.FC<FlatOccupantsDirectoryProps> = ({
   userRole = 'PublicResident',
   onUpdateReadings,
   onUpdateDirectory,
-  onOpenAdminModal,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<'All' | 'Owner' | 'Tenant' | 'Vacant'>('All');
