@@ -54,34 +54,45 @@ export const App: React.FC = () => {
   const isPrivilegedAdmin = userRole === 'RootAdmin' || userRole === 'MaintenanceLead' || userRole === 'CoAdmin';
   const canEditMaintenance = userRole === 'RootAdmin' || userRole === 'MaintenanceLead';
 
+  // Centralized Atomic State Updater with Storage Persistence & Firebase Sync
+  const updateAppState = (
+    updater: (prev: AppState) => AppState,
+    auditLogInfo?: { actionType: AuditLogEntry['actionType']; description: string }
+  ) => {
+    setAppState((prev) => {
+      let updated = updater(prev);
+      if (auditLogInfo) {
+        const now = new Date();
+        const formattedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+        const newLog: AuditLogEntry = {
+          id: 'audit-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6),
+          timestamp: formattedDate,
+          flatNo: currentAdminFlat || '302',
+          userRole,
+          actionType: auditLogInfo.actionType,
+          description: auditLogInfo.description,
+        };
+        updated = {
+          ...updated,
+          auditLogs: [newLog, ...(updated.auditLogs || [])].slice(0, 500),
+        };
+      }
+      const finalState: AppState = {
+        ...updated,
+        lastUpdated: Date.now(),
+      };
+      saveAppStateLocal(finalState);
+      syncToCloudRemote(finalState);
+      return finalState;
+    });
+  };
+
   // Audit Log Action Helper
   const logAuditAction = (
     actionType: AuditLogEntry['actionType'],
     description: string
   ) => {
-    const now = new Date();
-    const formattedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
-
-    const newLog: AuditLogEntry = {
-      id: 'audit-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6),
-      timestamp: formattedDate,
-      flatNo: currentAdminFlat || '302',
-      userRole,
-      actionType,
-      description,
-    };
-
-    setAppState((prev) => {
-      const currentLogs = prev.auditLogs || [];
-      const updatedState: AppState = {
-        ...prev,
-        auditLogs: [newLog, ...currentLogs].slice(0, 500),
-        lastUpdated: Date.now(),
-      };
-      saveAppStateLocal(updatedState);
-      syncToCloudRemote(updatedState);
-      return updatedState;
-    });
+    updateAppState((prev) => prev, { actionType, description });
   };
 
   // Payment & Month Modals State
@@ -175,16 +186,13 @@ export const App: React.FC = () => {
   }, []);
 
   const handleStateUpdate = (newState: AppState) => {
-    const updatedState: AppState = {
-      ...newState,
-      lastUpdated: Date.now(),
-    };
-    saveAppStateLocal(updatedState);
-    setAppState(updatedState);
-    syncToCloudRemote(updatedState);
+    updateAppState(() => newState);
   };
 
-  const handleUpdateRecord = (updatedRecord: MonthMaintenanceRecord) => {
+  const handleUpdateRecord = (
+    updatedRecord: MonthMaintenanceRecord,
+    auditLogInfo?: { actionType: AuditLogEntry['actionType']; description: string }
+  ) => {
     const allMonthIds = Object.keys(appState.months);
     const isLatest = updatedRecord.monthId === allMonthIds[allMonthIds.length - 1];
 
@@ -195,48 +203,45 @@ export const App: React.FC = () => {
     }
 
     const applyMutation = () => {
-      const recalculated = recalculateMonthRecord(updatedRecord);
-      
-      const monthKeys = Object.keys(appState.months);
-      const updatedMonths: Record<string, MonthMaintenanceRecord> = {
-        ...appState.months,
-        [recalculated.monthId]: recalculated,
-      };
+      updateAppState((prev) => {
+        const recalculated = recalculateMonthRecord(updatedRecord);
+        const monthKeys = Object.keys(prev.months);
+        const updatedMonths: Record<string, MonthMaintenanceRecord> = {
+          ...prev.months,
+          [recalculated.monthId]: recalculated,
+        };
 
-      // Cascade updated current readings to starting previous readings for subsequent months
-      const updatedIndex = monthKeys.indexOf(recalculated.monthId);
-      if (updatedIndex >= 0 && updatedIndex < monthKeys.length - 1) {
-        for (let i = updatedIndex; i < monthKeys.length - 1; i++) {
-          const prevM = updatedMonths[monthKeys[i]];
-          const nextMId = monthKeys[i + 1];
-          const nextM = updatedMonths[nextMId];
+        // Cascade updated current readings to starting previous readings for subsequent months
+        const updatedIndex = monthKeys.indexOf(recalculated.monthId);
+        if (updatedIndex >= 0 && updatedIndex < monthKeys.length - 1) {
+          for (let i = updatedIndex; i < monthKeys.length - 1; i++) {
+            const prevM = updatedMonths[monthKeys[i]];
+            const nextMId = monthKeys[i + 1];
+            const nextM = updatedMonths[nextMId];
 
-          const nextReadings = nextM.flatReadings.map((nf) => {
-            const pf = prevM.flatReadings.find((p) => p.flatNo === nf.flatNo);
-            if (pf) {
-              return {
-                ...nf,
-                previousReading: pf.currentReading,
-              };
-            }
-            return nf;
-          });
+            const nextReadings = nextM.flatReadings.map((nf) => {
+              const pf = prevM.flatReadings.find((p) => p.flatNo === nf.flatNo);
+              if (pf) {
+                return {
+                  ...nf,
+                  previousReading: pf.currentReading,
+                };
+              }
+              return nf;
+            });
 
-          updatedMonths[nextMId] = recalculateMonthRecord({
-            ...nextM,
-            flatReadings: nextReadings,
-          });
+            updatedMonths[nextMId] = recalculateMonthRecord({
+              ...nextM,
+              flatReadings: nextReadings,
+            });
+          }
         }
-      }
 
-      const newState: AppState = {
-        ...appState,
-        months: updatedMonths,
-        lastUpdated: Date.now(),
-      };
-      saveAppStateLocal(newState);
-      setAppState(newState);
-      syncToCloudRemote(newState);
+        return {
+          ...prev,
+          months: updatedMonths,
+        };
+      }, auditLogInfo);
     };
 
     if (!isLatest && userRole === 'RootAdmin') {
@@ -270,22 +275,24 @@ export const App: React.FC = () => {
       message: `Root Admin Safeguard: Are you sure you want to PERMANENTLY DELETE calculation sheet '${monthId}'? All readings and calculation data for this month will be removed.`,
       actionType: 'delete',
       onConfirm: () => {
-        logAuditAction('DELETE_MONTH', `Permanently deleted calculation sheet '${monthId}'`);
-        const remainingMonths = { ...appState.months };
-        delete remainingMonths[monthId];
-        const newActiveId = Object.keys(remainingMonths)[0];
+        updateAppState(
+          (prev) => {
+            const remainingMonths = { ...prev.months };
+            delete remainingMonths[monthId];
+            const newActiveId = Object.keys(remainingMonths)[0];
+            setSelectedMonthId(newActiveId);
 
-        setSelectedMonthId(newActiveId);
-
-        const newState: AppState = {
-          ...appState,
-          activeMonthId: newActiveId,
-          months: remainingMonths,
-          lastUpdated: Date.now(),
-        };
-        saveAppStateLocal(newState);
-        setAppState(newState);
-        syncToCloudRemote(newState);
+            return {
+              ...prev,
+              activeMonthId: newActiveId,
+              months: remainingMonths,
+            };
+          },
+          {
+            actionType: 'DELETE_MONTH',
+            description: `Permanently deleted calculation sheet '${monthId}'`,
+          }
+        );
       },
     });
   };
@@ -316,11 +323,16 @@ export const App: React.FC = () => {
       ? `Updated '${activeRecord.monthTitle}': ${changes.join(' ; ')}`
       : `Updated meter readings / notes in '${activeRecord.monthTitle}'`;
 
-    logAuditAction('EDIT_READING', diffDesc);
-    handleUpdateRecord({
-      ...activeRecord,
-      flatReadings: updatedReadings,
-    });
+    handleUpdateRecord(
+      {
+        ...activeRecord,
+        flatReadings: updatedReadings,
+      },
+      {
+        actionType: 'EDIT_READING',
+        description: diffDesc,
+      }
+    );
   };
 
   const handleUpdateFlatDirectory = (updatedReadings: FlatReading[]) => {
@@ -369,44 +381,44 @@ export const App: React.FC = () => {
       ? `Updated Flat Directory details: ${diffs.join(' ; ')}`
       : `Updated Flat Directory entries & occupant details`;
 
-    logAuditAction('DIRECTORY', desc);
+    updateAppState(
+      (prev) => {
+        const updatedMonths = { ...prev.months };
+        Object.keys(updatedMonths).forEach((mId) => {
+          const month = updatedMonths[mId];
+          const newReadings = month.flatReadings.map((reading) => {
+            const dirEntry = updatedDirMap[reading.flatNo];
+            if (dirEntry) {
+              return {
+                ...reading,
+                ownerName: dirEntry.ownerName,
+                ownerPhone: dirEntry.ownerPhone,
+                residentName: dirEntry.residentName,
+                tenantPhone: dirEntry.tenantPhone,
+                residentType: dirEntry.residentType,
+                isOccupied: dirEntry.isOccupied,
+              };
+            }
+            return reading;
+          });
 
-    const updatedMonths = { ...appState.months };
-    Object.keys(updatedMonths).forEach((mId) => {
-      const month = updatedMonths[mId];
-      const newReadings = month.flatReadings.map((reading) => {
-        const dirEntry = updatedDirMap[reading.flatNo];
-        if (dirEntry) {
-          return {
-            ...reading,
-            ownerName: dirEntry.ownerName,
-            ownerPhone: dirEntry.ownerPhone,
-            residentName: dirEntry.residentName,
-            tenantPhone: dirEntry.tenantPhone,
-            residentType: dirEntry.residentType,
-            isOccupied: dirEntry.isOccupied,
-          };
-        }
-        return reading;
-      });
+          updatedMonths[mId] = recalculateMonthRecord({
+            ...month,
+            flatReadings: newReadings,
+          });
+        });
 
-      updatedMonths[mId] = recalculateMonthRecord({
-        ...month,
-        flatReadings: newReadings,
-      });
-    });
-
-    const now = Date.now();
-    const newState: AppState = {
-      ...appState,
-      flatDirectory: updatedDirMap,
-      months: updatedMonths,
-      lastUpdated: now,
-    };
-
-    saveAppStateLocal(newState);
-    setAppState(newState);
-    syncToCloudRemote(newState);
+        return {
+          ...prev,
+          flatDirectory: updatedDirMap,
+          months: updatedMonths,
+        };
+      },
+      {
+        actionType: 'DIRECTORY',
+        description: desc,
+      }
+    );
   };
 
   const handleUpdateWaterConfig = (config: WaterCalculationConfig) => {
@@ -436,17 +448,21 @@ export const App: React.FC = () => {
       ? `Updated water calculation rates in '${activeRecord.monthTitle}': ${diffs.join(' | ')}`
       : `Updated water calculation config for '${activeRecord.monthTitle}'`;
 
-    logAuditAction('EDIT_READING', desc);
-    handleUpdateRecord({
-      ...activeRecord,
-      waterConfig: config,
-    });
+    handleUpdateRecord(
+      {
+        ...activeRecord,
+        waterConfig: config,
+      },
+      {
+        actionType: 'EDIT_READING',
+        description: desc,
+      }
+    );
   };
 
   const handleUpdateCommonExpenses = (expenses: CommonExpenseItem[]) => {
     const prevMap = new Map(activeRecord.commonExpenses.map((e) => [e.id, e]));
     const newMap = new Map(expenses.map((e) => [e.id, e]));
-
     const diffs: string[] = [];
 
     expenses.forEach((newE) => {
@@ -468,11 +484,16 @@ export const App: React.FC = () => {
       ? `Updated common expenses in '${activeRecord.monthTitle}': ${diffs.join(' | ')}`
       : `Updated common maintenance expenses for '${activeRecord.monthTitle}'`;
 
-    logAuditAction('EDIT_READING', desc);
-    handleUpdateRecord({
-      ...activeRecord,
-      commonExpenses: expenses,
-    });
+    handleUpdateRecord(
+      {
+        ...activeRecord,
+        commonExpenses: expenses,
+      },
+      {
+        actionType: 'EDIT_READING',
+        description: desc,
+      }
+    );
   };
 
   const handleSavePayment = (flatNo: string, amount: number, paymentMode: PaymentMode, notes: string) => {
@@ -496,12 +517,16 @@ export const App: React.FC = () => {
       return f;
     });
 
-    logAuditAction('PAYMENT_RECORDED', `Flat #${flatNo} Payment: Added ₹${amount.toLocaleString('en-IN')} (${paymentMode}) in '${activeRecord.monthTitle}'. Paid Amount: ₹${prevPaid.toLocaleString('en-IN')} → ₹${newPaid.toLocaleString('en-IN')} (Status: ${prevStatus} → ${newStatus})`);
-
-    handleUpdateRecord({
-      ...activeRecord,
-      flatReadings: updated,
-    });
+    handleUpdateRecord(
+      {
+        ...activeRecord,
+        flatReadings: updated,
+      },
+      {
+        actionType: 'PAYMENT_RECORDED',
+        description: `Flat #${flatNo} Payment: Added ₹${amount.toLocaleString('en-IN')} (${paymentMode}) in '${activeRecord.monthTitle}'. Paid Amount: ₹${prevPaid.toLocaleString('en-IN')} → ₹${newPaid.toLocaleString('en-IN')} (Status: ${prevStatus} → ${newStatus})`,
+      }
+    );
 
     confetti({
       particleCount: 80,
@@ -511,238 +536,250 @@ export const App: React.FC = () => {
   };
 
   const handleCreateMonth = (newMonthRecord: MonthMaintenanceRecord) => {
-    logAuditAction('CREATE_MONTH', `Created new monthly calculation sheet '${newMonthRecord.monthTitle}'`);
     setSelectedMonthId(newMonthRecord.monthId);
-    const newState: AppState = {
-      ...appState,
-      activeMonthId: newMonthRecord.monthId,
-      months: {
-        ...appState.months,
-        [newMonthRecord.monthId]: newMonthRecord,
-      },
-      lastUpdated: Date.now(),
-    };
-    saveAppStateLocal(newState);
-    setAppState(newState);
-    syncToCloudRemote(newState);
+    updateAppState(
+      (prev) => ({
+        ...prev,
+        activeMonthId: newMonthRecord.monthId,
+        months: {
+          ...prev.months,
+          [newMonthRecord.monthId]: newMonthRecord,
+        },
+      }),
+      {
+        actionType: 'CREATE_MONTH',
+        description: `Created new monthly calculation sheet '${newMonthRecord.monthTitle}'`,
+      }
+    );
   };
 
   const handleSelectMonth = (monthId: string) => {
     setSelectedMonthId(monthId);
-    const newState: AppState = {
-      ...appState,
+    updateAppState((prev) => ({
+      ...prev,
       activeMonthId: monthId,
-      lastUpdated: Date.now(),
-    };
-    saveAppStateLocal(newState);
-    setAppState(newState);
-    syncToCloudRemote(newState);
+    }));
   };
 
   const handleToggleFlatAdmin = (flatNo: string) => {
     if (flatNo === '302') return;
-    const currentAdminFlats = appState.adminFlats || ['302'];
-    const exists = currentAdminFlats.includes(flatNo);
-    const updated = exists ? currentAdminFlats.filter((f) => f !== flatNo) : [...currentAdminFlats, flatNo];
-
-    logAuditAction('PIN_CHANGE', `Toggled admin privileges for Flat #${flatNo}`);
-
-    const newState: AppState = {
-      ...appState,
-      adminFlats: updated,
-      lastUpdated: Date.now(),
-    };
-    setAppState(newState);
-    syncToCloudRemote(newState);
+    updateAppState(
+      (prev) => {
+        const currentAdminFlats = prev.adminFlats || ['302'];
+        const exists = currentAdminFlats.includes(flatNo);
+        const updated = exists ? currentAdminFlats.filter((f) => f !== flatNo) : [...currentAdminFlats, flatNo];
+        return {
+          ...prev,
+          adminFlats: updated,
+        };
+      },
+      {
+        actionType: 'PIN_CHANGE',
+        description: `Toggled admin privileges for Flat #${flatNo}`,
+      }
+    );
   };
 
   const handleSetFlatRole = (flatNo: string, role: 'MaintenanceLead' | 'CoAdmin' | 'Resident') => {
     if (flatNo === (appState.rootFlat || '302')) return;
+    updateAppState(
+      (prev) => {
+        let currentAdminFlats = prev.adminFlats || ['302'];
+        let currentMaintFlats = prev.maintenanceLeadFlats || ['101'];
 
-    let currentAdminFlats = appState.adminFlats || ['302'];
-    let currentMaintFlats = appState.maintenanceLeadFlats || ['101'];
+        if (role === 'MaintenanceLead') {
+          if (!currentMaintFlats.includes(flatNo)) currentMaintFlats = [...currentMaintFlats, flatNo];
+          if (!currentAdminFlats.includes(flatNo)) currentAdminFlats = [...currentAdminFlats, flatNo];
+        } else if (role === 'CoAdmin') {
+          currentMaintFlats = currentMaintFlats.filter((f) => f !== flatNo);
+          if (!currentAdminFlats.includes(flatNo)) currentAdminFlats = [...currentAdminFlats, flatNo];
+        } else {
+          currentMaintFlats = currentMaintFlats.filter((f) => f !== flatNo);
+          currentAdminFlats = currentAdminFlats.filter((f) => f !== flatNo);
+        }
 
-    if (role === 'MaintenanceLead') {
-      if (!currentMaintFlats.includes(flatNo)) {
-        currentMaintFlats = [...currentMaintFlats, flatNo];
+        return {
+          ...prev,
+          adminFlats: currentAdminFlats,
+          maintenanceLeadFlats: currentMaintFlats,
+        };
+      },
+      {
+        actionType: 'PIN_CHANGE',
+        description: `Updated role permission for Flat #${flatNo} to '${role}'`,
       }
-      if (!currentAdminFlats.includes(flatNo)) {
-        currentAdminFlats = [...currentAdminFlats, flatNo];
-      }
-    } else if (role === 'CoAdmin') {
-      currentMaintFlats = currentMaintFlats.filter((f) => f !== flatNo);
-      if (!currentAdminFlats.includes(flatNo)) {
-        currentAdminFlats = [...currentAdminFlats, flatNo];
-      }
-    } else {
-      currentMaintFlats = currentMaintFlats.filter((f) => f !== flatNo);
-      currentAdminFlats = currentAdminFlats.filter((f) => f !== flatNo);
-    }
-
-    logAuditAction('PIN_CHANGE', `Updated role permission for Flat #${flatNo} to '${role}'`);
-
-    const newState: AppState = {
-      ...appState,
-      adminFlats: currentAdminFlats,
-      maintenanceLeadFlats: currentMaintFlats,
-      lastUpdated: Date.now(),
-    };
-    setAppState(newState);
-    syncToCloudRemote(newState);
+    );
   };
 
   // Handlers for Periodic AMC Tasks
   const handleUpdatePeriodicTask = (updatedTask: PeriodicTask) => {
-    logAuditAction('AMC_TASK', `Updated AMC task '${updatedTask.title}' (${updatedTask.category})`);
-    const updatedTasks = (appState.periodicTasks || []).map((t) => (t.id === updatedTask.id ? updatedTask : t));
-    const newState: AppState = {
-      ...appState,
-      periodicTasks: updatedTasks,
-      lastUpdated: Date.now(),
-    };
-    setAppState(newState);
-    syncToCloudRemote(newState);
+    updateAppState(
+      (prev) => ({
+        ...prev,
+        periodicTasks: (prev.periodicTasks || []).map((t) => (t.id === updatedTask.id ? updatedTask : t)),
+      }),
+      {
+        actionType: 'AMC_TASK',
+        description: `Updated AMC task '${updatedTask.title}' (${updatedTask.category})`,
+      }
+    );
   };
 
   const handleAddPeriodicTask = (newTask: PeriodicTask) => {
-    logAuditAction('AMC_TASK', `Added new AMC task '${newTask.title}' (${newTask.category})`);
-    const updatedTasks = [newTask, ...(appState.periodicTasks || [])];
-    const newState: AppState = {
-      ...appState,
-      periodicTasks: updatedTasks,
-      lastUpdated: Date.now(),
-    };
-    setAppState(newState);
-    syncToCloudRemote(newState);
+    updateAppState(
+      (prev) => ({
+        ...prev,
+        periodicTasks: [newTask, ...(prev.periodicTasks || [])],
+      }),
+      {
+        actionType: 'AMC_TASK',
+        description: `Added new AMC task '${newTask.title}' (${newTask.category})`,
+      }
+    );
   };
 
   const handleDeletePeriodicTask = (taskId: string) => {
-    logAuditAction('AMC_TASK', `Deleted AMC task (ID: ${taskId})`);
-    const updatedTasks = (appState.periodicTasks || []).filter((t) => t.id !== taskId);
-    const newState: AppState = {
-      ...appState,
-      periodicTasks: updatedTasks,
-      lastUpdated: Date.now(),
-    };
-    saveAppStateLocal(newState);
-    setAppState(newState);
-    syncToCloudRemote(newState);
+    updateAppState(
+      (prev) => ({
+        ...prev,
+        periodicTasks: (prev.periodicTasks || []).filter((t) => t.id !== taskId),
+      }),
+      {
+        actionType: 'AMC_TASK',
+        description: `Deleted AMC task (ID: ${taskId})`,
+      }
+    );
   };
 
   // Handlers for Vendors
   const handleAddVendor = (newVendor: ApartmentVendor) => {
-    logAuditAction('VENDOR', `Added vendor '${newVendor.name}' (${newVendor.role})`);
-    const updatedVendors = [newVendor, ...(appState.vendors || [])];
-    const newState: AppState = {
-      ...appState,
-      vendors: updatedVendors,
-      lastUpdated: Date.now(),
-    };
-    setAppState(newState);
-    syncToCloudRemote(newState);
+    updateAppState(
+      (prev) => ({
+        ...prev,
+        vendors: [newVendor, ...(prev.vendors || [])],
+      }),
+      {
+        actionType: 'VENDOR',
+        description: `Added vendor '${newVendor.name}' (${newVendor.role})`,
+      }
+    );
   };
 
   const handleDeleteVendor = (vendorId: string) => {
-    logAuditAction('VENDOR', `Deleted vendor (ID: ${vendorId})`);
-    const updatedVendors = (appState.vendors || []).filter((v) => v.id !== vendorId);
-    const newState: AppState = {
-      ...appState,
-      vendors: updatedVendors,
-      lastUpdated: Date.now(),
-    };
-    setAppState(newState);
-    syncToCloudRemote(newState);
+    updateAppState(
+      (prev) => ({
+        ...prev,
+        vendors: (prev.vendors || []).filter((v) => v.id !== vendorId),
+      }),
+      {
+        actionType: 'VENDOR',
+        description: `Deleted vendor (ID: ${vendorId})`,
+      }
+    );
   };
 
   // Handlers for Notices
   const handleAddNotice = (newNotice: NoticeItem) => {
-    logAuditAction('NOTICE', `Published notice '${newNotice.title}'`);
-    const updatedNotices = [newNotice, ...(appState.notices || [])];
-    const newState: AppState = {
-      ...appState,
-      notices: updatedNotices,
-      lastUpdated: Date.now(),
-    };
-    setAppState(newState);
-    syncToCloudRemote(newState);
+    updateAppState(
+      (prev) => ({
+        ...prev,
+        notices: [newNotice, ...(prev.notices || [])],
+      }),
+      {
+        actionType: 'NOTICE',
+        description: `Published notice '${newNotice.title}'`,
+      }
+    );
   };
 
   const handleDeleteNotice = (noticeId: string) => {
-    logAuditAction('NOTICE', `Deleted notice (ID: ${noticeId})`);
-    const updatedNotices = (appState.notices || []).filter((n) => n.id !== noticeId);
-    const newState: AppState = {
-      ...appState,
-      notices: updatedNotices,
-      lastUpdated: Date.now(),
-    };
-    setAppState(newState);
-    syncToCloudRemote(newState);
+    updateAppState(
+      (prev) => ({
+        ...prev,
+        notices: (prev.notices || []).filter((n) => n.id !== noticeId),
+      }),
+      {
+        actionType: 'NOTICE',
+        description: `Deleted notice (ID: ${noticeId})`,
+      }
+    );
   };
 
   // Handlers for Committee Members
   const handleAddCommitteeMember = (newMember: CommitteeMember) => {
-    logAuditAction('DIRECTORY', `Added Executive Committee member '${newMember.name}' (${newMember.designation})`);
-    const currentMembers = appState.committeeMembers || INITIAL_APP_STATE.committeeMembers || [];
-    const newState: AppState = {
-      ...appState,
-      committeeMembers: [newMember, ...currentMembers],
-      lastUpdated: Date.now(),
-    };
-    setAppState(newState);
-    syncToCloudRemote(newState);
+    updateAppState(
+      (prev) => {
+        const currentMembers = prev.committeeMembers || INITIAL_APP_STATE.committeeMembers || [];
+        return {
+          ...prev,
+          committeeMembers: [newMember, ...currentMembers],
+        };
+      },
+      {
+        actionType: 'DIRECTORY',
+        description: `Added Executive Committee member '${newMember.name}' (${newMember.designation})`,
+      }
+    );
   };
 
   const handleUpdateCommitteeMember = (updatedMember: CommitteeMember) => {
-    logAuditAction('DIRECTORY', `Updated Executive Committee member '${updatedMember.name}' (${updatedMember.designation})`);
-    const currentMembers = appState.committeeMembers || INITIAL_APP_STATE.committeeMembers || [];
-    const updated = currentMembers.map((m) => (m.id === updatedMember.id ? updatedMember : m));
-    const newState: AppState = {
-      ...appState,
-      committeeMembers: updated,
-      lastUpdated: Date.now(),
-    };
-    setAppState(newState);
-    syncToCloudRemote(newState);
+    updateAppState(
+      (prev) => {
+        const currentMembers = prev.committeeMembers || INITIAL_APP_STATE.committeeMembers || [];
+        const updated = currentMembers.map((m) => (m.id === updatedMember.id ? updatedMember : m));
+        return {
+          ...prev,
+          committeeMembers: updated,
+        };
+      },
+      {
+        actionType: 'DIRECTORY',
+        description: `Updated Executive Committee member '${updatedMember.name}' (${updatedMember.designation})`,
+      }
+    );
   };
 
   const handleDeleteCommitteeMember = (memberId: string) => {
-    logAuditAction('DIRECTORY', `Deleted Executive Committee member (ID: ${memberId})`);
-    const currentMembers = appState.committeeMembers || INITIAL_APP_STATE.committeeMembers || [];
-    const updated = currentMembers.filter((m) => m.id !== memberId);
-    const newState: AppState = {
-      ...appState,
-      committeeMembers: updated,
-      lastUpdated: Date.now(),
-    };
-    setAppState(newState);
-    syncToCloudRemote(newState);
+    updateAppState(
+      (prev) => {
+        const currentMembers = prev.committeeMembers || INITIAL_APP_STATE.committeeMembers || [];
+        const updated = currentMembers.filter((m) => m.id !== memberId);
+        return {
+          ...prev,
+          committeeMembers: updated,
+        };
+      },
+      {
+        actionType: 'DIRECTORY',
+        description: `Deleted Executive Committee member (ID: ${memberId})`,
+      }
+    );
   };
 
   // Handler for Persistent Security PIN Updates across Cloud & Storage
   const handleUpdateFlatPin = (flatNo: string, newPin: string) => {
-    const currentPins = appState.flatPins || {};
-    const updatedPins = {
-      ...currentPins,
-      [flatNo]: newPin,
-    };
-
-    // Store in localStorage as immediate browser-level cache fallback
     localStorage.setItem(`rs_towers_flat_pin_${flatNo}`, newPin);
     if (flatNo === (appState.rootFlat || '302')) {
       localStorage.setItem('rs_towers_maint_pin', newPin);
     }
-
-    const newState: AppState = {
-      ...appState,
-      flatPins: updatedPins,
-      masterPin: flatNo === (appState.rootFlat || '302') ? newPin : (appState.masterPin || '2026'),
-      lastUpdated: Date.now(),
-    };
-
-    saveAppStateLocal(newState);
-    setAppState(newState);
-    syncToCloudRemote(newState);
-    logAuditAction('PIN_CHANGE', `Security PIN for Flat #${flatNo} updated and saved across all devices`);
+    updateAppState(
+      (prev) => {
+        const currentPins = prev.flatPins || {};
+        const updatedPins = {
+          ...currentPins,
+          [flatNo]: newPin,
+        };
+        return {
+          ...prev,
+          flatPins: updatedPins,
+          masterPin: flatNo === (prev.rootFlat || '302') ? newPin : (prev.masterPin || '2026'),
+        };
+      },
+      {
+        actionType: 'PIN_CHANGE',
+        description: `Security PIN for Flat #${flatNo} updated and saved across all devices`,
+      }
+    );
   };
 
   const handleUpdateTreasurerSettings = (upiId: string, phone: string, name: string) => {
@@ -750,30 +787,31 @@ export const App: React.FC = () => {
       alert('🔒 Permission Denied: Only Root Super Admin or Maintenance Lead can update Treasurer settings.');
       return;
     }
-
-    logAuditAction('TREASURER', `Updated Treasurer payment settings: UPI '${upiId}', Phone '${phone}', Name '${name}'`);
-
-    const newState: AppState = {
-      ...appState,
-      treasurerUpiId: upiId,
-      treasurerPhone: phone,
-      treasurerName: name,
-      lastUpdated: Date.now(),
-    };
-    saveAppStateLocal(newState);
-    setAppState(newState);
-    syncToCloudRemote(newState);
+    updateAppState(
+      (prev) => ({
+        ...prev,
+        treasurerUpiId: upiId,
+        treasurerPhone: phone,
+        treasurerName: name,
+      }),
+      {
+        actionType: 'TREASURER',
+        description: `Updated Treasurer payment settings: UPI '${upiId}', Phone '${phone}', Name '${name}'`,
+      }
+    );
   };
 
   const handleUpdateCorpusConfig = (updatedConfig: CorpusFundConfig) => {
-    logAuditAction('CORPUS', `Updated Corpus Fund configuration & expenses`);
-    const newState: AppState = {
-      ...appState,
-      corpusConfig: updatedConfig,
-      lastUpdated: Date.now(),
-    };
-    setAppState(newState);
-    syncToCloudRemote(newState);
+    updateAppState(
+      (prev) => ({
+        ...prev,
+        corpusConfig: updatedConfig,
+      }),
+      {
+        actionType: 'CORPUS',
+        description: `Updated Corpus Fund configuration & expenses`,
+      }
+    );
   };
 
   const defaultCorpusConfig: CorpusFundConfig = appState.corpusConfig || {
@@ -803,14 +841,10 @@ export const App: React.FC = () => {
     : 0;
 
   const handleClearAuditLogs = () => {
-    const newState: AppState = {
-      ...appState,
+    updateAppState((prev) => ({
+      ...prev,
       auditLogs: [],
-      lastUpdated: Date.now(),
-    };
-    saveAppStateLocal(newState);
-    setAppState(newState);
-    syncToCloudRemote(newState);
+    }));
   };
 
   return (

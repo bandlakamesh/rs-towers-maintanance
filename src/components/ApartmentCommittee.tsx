@@ -134,10 +134,10 @@ export const ApartmentCommittee: React.FC<ApartmentCommitteeProps> = ({
   const handleOpenEdit = (m: CommitteeMember) => {
     setEditingMember(m);
     const info = getRosterMemberInfo(m.flatNo);
-    setName(info.name || m.name);
+    setName(m.name || info.name);
     setDesignation(m.designation);
     setFlatNo(m.flatNo);
-    setPhone(info.phone || m.phone);
+    setPhone(m.phone || info.phone);
     setEmail(m.email || info.email);
     setTermPeriod(m.termPeriod || '2025 - 2027');
     setPhotoUrl(m.photoUrl || '');
@@ -275,8 +275,8 @@ export const ApartmentCommittee: React.FC<ApartmentCommitteeProps> = ({
         {committeeMembers.map((member) => {
           const badge = getDesignationBadge(member.designation);
           const info = getRosterMemberInfo(member.flatNo);
-          const resolvedName = info.name || member.name;
-          const resolvedPhone = info.phone || member.phone;
+          const resolvedName = member.name || info.name;
+          const resolvedPhone = member.phone || info.phone;
 
           const displayPhone = isPublicViewer ? maskPhoneNumber(resolvedPhone) : resolvedPhone;
           const isTreasurerRole = member.designation === 'Maintenance Lead & Treasurer' || member.designation.includes('Treasurer') || member.designation.includes('Maintenance Lead');
