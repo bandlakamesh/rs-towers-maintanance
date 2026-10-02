@@ -206,23 +206,23 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
         )}
       </div>
 
-      {/* Main Table Container (Single Screen Fit Layout - No Scroll) */}
-      <div className="app-card" style={{ overflowX: 'hidden', padding: 0 }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.75rem', tableLayout: 'auto' }}>
+      {/* Desktop Table Container (>= 768px screens) */}
+      <div className="desktop-table-view app-card" style={{ overflowX: 'auto', padding: 0 }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.78rem', tableLayout: 'auto' }}>
           <thead>
             <tr style={{ background: '#F0F9FF', borderBottom: '2px solid #B2D8E5', color: '#0077B6', fontFamily: 'var(--font-title)', userSelect: 'none' }}>
-              <th style={{ padding: '6px 4px', whiteSpace: 'nowrap' }}>Flat</th>
-              <th style={{ padding: '6px 4px', whiteSpace: 'nowrap' }}>Resident</th>
-              <th style={{ padding: '6px 4px', textAlign: 'center', whiteSpace: 'nowrap' }}>Prev</th>
-              <th style={{ padding: '6px 4px', textAlign: 'center', whiteSpace: 'nowrap' }}>Curr</th>
-              <th style={{ padding: '6px 4px', textAlign: 'center', whiteSpace: 'nowrap' }}>Units</th>
-              <th style={{ padding: '6px 4px', textAlign: 'right', whiteSpace: 'nowrap' }}>Water</th>
-              <th style={{ padding: '6px 4px', textAlign: 'right', whiteSpace: 'nowrap' }}>Panch.</th>
-              <th style={{ padding: '6px 4px', textAlign: 'right', whiteSpace: 'nowrap' }}>Common</th>
-              <th style={{ padding: '6px 4px', textAlign: 'right', whiteSpace: 'nowrap' }}>Total</th>
-              <th style={{ padding: '6px 4px', textAlign: 'right', whiteSpace: 'nowrap' }}>Due</th>
-              <th style={{ padding: '6px 4px', whiteSpace: 'nowrap' }}>Notes</th>
-              <th className="no-print" style={{ padding: '6px 4px', textAlign: 'right', whiteSpace: 'nowrap' }}>Actions</th>
+              <th style={{ padding: '8px 6px', whiteSpace: 'nowrap' }}>Flat</th>
+              <th style={{ padding: '8px 6px', whiteSpace: 'nowrap' }}>Resident</th>
+              <th style={{ padding: '8px 6px', textAlign: 'center', whiteSpace: 'nowrap' }}>Prev</th>
+              <th style={{ padding: '8px 6px', textAlign: 'center', whiteSpace: 'nowrap' }}>Curr</th>
+              <th style={{ padding: '8px 6px', textAlign: 'center', whiteSpace: 'nowrap' }}>Units</th>
+              <th style={{ padding: '8px 6px', textAlign: 'right', whiteSpace: 'nowrap' }}>Water</th>
+              <th style={{ padding: '8px 6px', textAlign: 'right', whiteSpace: 'nowrap' }}>Panchayat</th>
+              <th style={{ padding: '8px 6px', textAlign: 'right', whiteSpace: 'nowrap' }}>Common</th>
+              <th style={{ padding: '8px 6px', textAlign: 'right', whiteSpace: 'nowrap' }}>Exact Total</th>
+              <th style={{ padding: '8px 6px', textAlign: 'right', whiteSpace: 'nowrap' }}>Due Amount</th>
+              <th style={{ padding: '8px 6px', whiteSpace: 'nowrap' }}>Notes</th>
+              <th className="no-print" style={{ padding: '8px 6px', textAlign: 'right', whiteSpace: 'nowrap' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -479,6 +479,228 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
             </tr>
           </tfoot>
         </table>
+      </div>
+
+      {/* Mobile Flat Cards View (< 768px screens like Pixel 9) */}
+      <div className="mobile-table-cards-view">
+        {record.flatReadings.map((f) => {
+          const effFlat = getEffectiveFlat(f);
+          const isWM = f.flatNo === 'WM';
+          const isEditing = editingFlatNo === f.flatNo;
+          const isPaid = f.status === 'Received';
+          const isVacant = !effFlat.isOccupied && !isWM;
+          const isUserFlat = currentAdminFlat === f.flatNo;
+          const canPayThisFlat = isAdmin && (isRootOrLead || isUserFlat);
+
+          return (
+            <div
+              key={f.flatNo}
+              className="app-card"
+              style={{
+                padding: '14px',
+                borderRadius: '16px',
+                border: isUserFlat && isAdmin ? '2px solid #0284C7' : isWM ? '1.5px solid #FDE68A' : isPaid ? '1.5px solid #A7F3D0' : isPastDueDate ? '1.5px solid #FCA5A5' : '1.5px solid #CBD5E1',
+                background: isWM ? '#FFFBEB' : isUserFlat && isAdmin ? '#F0F9FF' : isVacant ? '#F8FAFC' : isPaid ? '#F0FDF4' : isPastDueDate ? '#FEF2F2' : '#FFFFFF',
+              }}
+            >
+              {/* Header: Flat Badge + Resident Name + Status */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'nowrap', gap: '6px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'nowrap' }}>
+                  <span style={{
+                    fontWeight: 800,
+                    fontSize: '0.84rem',
+                    padding: '2px 7px',
+                    borderRadius: '6px',
+                    color: isWM ? '#B45309' : isUserFlat && isAdmin ? '#0284C7' : '#1D4ED8',
+                    background: isWM ? '#FEF3C7' : isUserFlat && isAdmin ? '#E0F2FE' : '#EFF6FF',
+                    border: isWM ? '1px solid #FDE68A' : isUserFlat && isAdmin ? '1.5px solid #7DD3FC' : '1px solid #BFDBFE',
+                    whiteSpace: 'nowrap',
+                  }}>
+                    {isWM ? '⚙️ WM' : isUserFlat && isAdmin ? `⭐ #${f.flatNo}` : `Flat #${f.flatNo}`}
+                  </span>
+                  <span style={{ fontWeight: 800, color: '#0F172A', fontSize: '0.92rem' }}>
+                    {effFlat.residentName}
+                  </span>
+                  {effFlat.residentType === 'Tenant' && (
+                    <span style={{ fontSize: '0.64rem', color: '#64748B', background: '#F1F5F9', padding: '1px 4px', borderRadius: '4px' }}>
+                      Tenant
+                    </span>
+                  )}
+                </div>
+
+                {!isWM && effFlat.isOccupied && (
+                  isPaid ? (
+                    <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#059669', background: '#ECFDF5', border: '1px solid #A7F3D0', padding: '2px 7px', borderRadius: '10px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                      <CheckCircle2 size={12} /> Paid
+                    </span>
+                  ) : isPastDueDate ? (
+                    <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#B91C1C', background: '#FEE2E2', border: '1px solid #FCA5A5', padding: '2px 7px', borderRadius: '10px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                      <AlertTriangle size={12} /> OVERDUE
+                    </span>
+                  ) : (
+                    <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#D97706', background: '#FEF3C7', border: '1px solid #FDE68A', padding: '2px 7px', borderRadius: '10px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                      <AlertCircle size={12} /> Pending
+                    </span>
+                  )
+                )}
+              </div>
+
+              {/* Meter Readings & Consumed Units Pill */}
+              <div style={{ background: 'rgba(255, 255, 255, 0.8)', border: '1px solid #E2E8F0', padding: '8px 10px', borderRadius: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', fontSize: '0.82rem' }}>
+                <span style={{ color: '#475569' }}>
+                  Readings: {isEditing ? (
+                    <span style={{ display: 'inline-flex', gap: '4px', alignItems: 'center' }}>
+                      <input type="number" value={tempPrev} onChange={(e) => setTempPrev(Number(e.target.value))} style={{ width: '55px', padding: '2px 4px', fontSize: '0.78rem' }} />
+                      →
+                      <input type="number" value={tempCurr} onChange={(e) => setTempCurr(Number(e.target.value))} style={{ width: '55px', padding: '2px 4px', fontSize: '0.78rem' }} />
+                    </span>
+                  ) : (
+                    <strong>{f.previousReading} → {f.currentReading}</strong>
+                  )}
+                </span>
+                <span style={{ fontWeight: 800, color: isWM ? '#B45309' : '#059669', background: isWM ? '#FEF3C7' : '#ECFDF5', border: isWM ? '1px solid #FDE68A' : '1px solid #A7F3D0', padding: '2px 8px', borderRadius: '6px' }}>
+                  {f.consumedUnits} Units
+                </span>
+              </div>
+
+              {/* Financial Cost Breakdown Grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '10px', fontSize: '0.8rem' }}>
+                <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', padding: '6px 8px', borderRadius: '8px' }}>
+                  <span style={{ color: '#64748B', display: 'block', fontSize: '0.7rem' }}>Water Cost</span>
+                  <strong style={{ color: '#0F172A' }}>₹{f.waterCost.toLocaleString('en-IN')}</strong>
+                </div>
+
+                <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', padding: '6px 8px', borderRadius: '8px' }}>
+                  <span style={{ color: '#64748B', display: 'block', fontSize: '0.7rem' }}>Panchayat Water</span>
+                  <strong style={{ color: '#475569' }}>₹{f.panchayatShare.toFixed(2)}</strong>
+                </div>
+
+                <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', padding: '6px 8px', borderRadius: '8px' }}>
+                  <span style={{ color: '#64748B', display: 'block', fontSize: '0.7rem' }}>Common Maint.</span>
+                  <strong style={{ color: '#475569' }}>₹{f.commonMaintenanceShare.toFixed(2)}</strong>
+                </div>
+
+                <div style={{ background: isPaid ? '#ECFDF5' : '#EFF6FF', border: isPaid ? '1px solid #A7F3D0' : '1px solid #BFDBFE', padding: '6px 8px', borderRadius: '8px' }}>
+                  <span style={{ color: isPaid ? '#047857' : '#1D4ED8', display: 'block', fontSize: '0.7rem', fontWeight: 700 }}>Total Due</span>
+                  <strong style={{ color: isPaid ? '#059669' : '#1D4ED8', fontSize: '0.94rem' }}>₹{f.roundedValue.toLocaleString('en-IN')}</strong>
+                </div>
+              </div>
+
+              {/* Notes */}
+              {(f.notes || isEditing) && (
+                <div style={{ fontSize: '0.78rem', marginBottom: '8px' }}>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={tempNotes}
+                      onChange={(e) => setTempNotes(e.target.value)}
+                      placeholder="Notes..."
+                      style={{ padding: '4px 6px', fontSize: '0.78rem' }}
+                    />
+                  ) : (
+                    <span style={{ color: '#DC2626', fontWeight: 600, fontStyle: 'italic' }}>Notes: {f.notes}</span>
+                  )}
+                </div>
+              )}
+
+              {/* Mobile Card Action Buttons */}
+              <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end', alignItems: 'center', paddingTop: '8px', borderTop: '1px solid #E2E8F0' }}>
+                {!isWM && f.isOccupied && canPayThisFlat && (
+                  <button
+                    onClick={() => onSelectFlatPayment && onSelectFlatPayment(f.flatNo)}
+                    style={{
+                      background: isPaid ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)' : 'linear-gradient(135deg, #0284C7 0%, #0369A1 100%)',
+                      color: '#FFFFFF',
+                      border: 'none',
+                      borderRadius: '6px',
+                      padding: '5px 12px',
+                      fontSize: '0.78rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                  >
+                    <CreditCard size={13} /> {isPaid ? 'Paid' : '💳 Pay Dues'}
+                  </button>
+                )}
+
+                {isAdmin && (
+                  <>
+                    {isEditing ? (
+                      <button
+                        onClick={() => handleSaveEdit(f.flatNo)}
+                        style={{ background: '#059669', color: '#FFF', border: 'none', borderRadius: '4px', padding: '5px 10px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer' }}
+                      >
+                        Save
+                      </button>
+                    ) : (
+                      isRootOrLead && (
+                        <button
+                          onClick={() => handleStartEdit(f)}
+                          style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', color: '#2563EB', borderRadius: '6px', padding: '4px 8px', fontSize: '0.76rem', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '3px' }}
+                        >
+                          <Edit2 size={13} /> Edit
+                        </button>
+                      )
+                    )}
+
+                    {isPrivilegedAdmin && !isWM && f.isOccupied && (
+                      <>
+                        <button
+                          onClick={() => handleSendFlatWhatsApp(f)}
+                          style={{ background: '#ECFDF5', border: '1px solid #A7F3D0', color: '#059669', borderRadius: '6px', padding: '4px 8px', fontSize: '0.76rem', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '3px' }}
+                        >
+                          <Send size={13} /> Bill
+                        </button>
+
+                        {!isPaid && (
+                          <button
+                            onClick={() => handleSendOverdueWhatsApp(f)}
+                            style={{ background: '#FEF2F2', border: '1px solid #FCA5A5', color: '#EF4444', borderRadius: '6px', padding: '4px 8px', fontSize: '0.76rem', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '3px' }}
+                          >
+                            <Bell size={13} /> Overdue
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+          );
+        })}
+
+        {/* Mobile Building Totals Summary Card */}
+        <div className="app-card" style={{ background: '#F8FAFC', border: '1.5px solid #CBD5E1', padding: '14px', borderRadius: '16px', marginTop: '6px' }}>
+          <div style={{ fontWeight: 800, color: '#0F172A', fontSize: '0.94rem', marginBottom: '10px' }}>
+            📊 Building Summary & Totals:
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '0.8rem' }}>
+            <div style={{ background: '#FFFFFF', padding: '6px 8px', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+              <span style={{ color: '#64748B', display: 'block', fontSize: '0.7rem' }}>Total Units Consumed</span>
+              <strong style={{ color: '#059669' }}>{record.totalUnitsConsumed} Units</strong>
+            </div>
+            <div style={{ background: '#FFFFFF', padding: '6px 8px', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+              <span style={{ color: '#64748B', display: 'block', fontSize: '0.7rem' }}>Water Expense</span>
+              <strong style={{ color: '#0F172A' }}>₹{record.flatReadings.reduce((sum, f) => sum + f.waterCost, 0).toLocaleString('en-IN')}</strong>
+            </div>
+            <div style={{ background: '#FFFFFF', padding: '6px 8px', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+              <span style={{ color: '#64748B', display: 'block', fontSize: '0.7rem' }}>Panchayat Bill</span>
+              <strong style={{ color: '#475569' }}>₹{record.waterConfig.panchayatWaterBill.toLocaleString('en-IN')}</strong>
+            </div>
+            <div style={{ background: '#FFFFFF', padding: '6px 8px', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+              <span style={{ color: '#64748B', display: 'block', fontSize: '0.7rem' }}>Common Maintenance</span>
+              <strong style={{ color: '#475569' }}>₹{record.totalCommonMaintenance.toLocaleString('en-IN')}</strong>
+            </div>
+          </div>
+          <div style={{ marginTop: '10px', paddingTop: '8px', borderTop: '1px solid #CBD5E1', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.84rem', fontWeight: 800, color: '#0F172A' }}>Grand Collection Target:</span>
+            <span style={{ fontSize: '1.1rem', fontWeight: 900, color: '#1D4ED8' }}>₹{record.totalGrandCollectionTarget.toLocaleString('en-IN')}</span>
+          </div>
+        </div>
       </div>
 
     </div>

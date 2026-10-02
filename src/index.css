@@ -398,7 +398,26 @@ h1, h2, h3, h4, h5, h6 {
   display: none;
 }
 
-/* Mobile Media Queries (Pixel 10 & Smartphone Screens) */
+/* Responsive Desktop Table vs Mobile Flat Cards View */
+.desktop-table-view {
+  display: block;
+}
+.mobile-table-cards-view {
+  display: none;
+}
+
+/* Mobile Media Queries (Pixel 9 & Smartphone Screens) */
+@media (max-width: 767px) {
+  .desktop-table-view {
+    display: none !important;
+  }
+  .mobile-table-cards-view {
+    display: flex !important;
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+
 @media (max-width: 640px) {
   body {
     padding-bottom: 74px !important;
