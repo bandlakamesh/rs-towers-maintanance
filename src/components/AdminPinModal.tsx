@@ -224,8 +224,6 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
     setNewPinInput('');
     setAdminTab('overview');
   };
-    setAdminTab('overview');
-  };
 
   return (
     <div className="modal-overlay" onClick={onClose}>
