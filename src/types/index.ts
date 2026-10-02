@@ -107,11 +107,18 @@ export interface CorpusExpenseLog {
   notes: string;
 }
 
+export interface FlatCorpusOverride {
+  monthsPaid?: number;
+  customPaidAmount?: number;
+  notes?: string;
+}
+
 export interface CorpusFundConfig {
   monthlyRatePerFlat: number; // default 200
   pastMonthsCollected: number; // default 12
-  baselineTotalCollected: number; // default 33600 (14 flats * 200 * 12)
+  baselineTotalCollected?: number; // optional baseline total
   corpusExpenses: CorpusExpenseLog[];
+  flatOverrides?: Record<string, FlatCorpusOverride>;
 }
 
 export interface CommitteeMember {

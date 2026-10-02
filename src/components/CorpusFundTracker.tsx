@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import type { CorpusFundConfig, CorpusExpenseLog, MonthMaintenanceRecord } from '../types';
-import { Landmark, Plus, Trash2, Calendar, FileText, CheckCircle2 } from 'lucide-react';
+import type { CorpusFundConfig, CorpusExpenseLog, MonthMaintenanceRecord, FlatCorpusOverride } from '../types';
+import { Landmark, Plus, Trash2, Calendar, FileText, CheckCircle2, Edit2, Settings, Pencil } from 'lucide-react';
 
 interface CorpusFundTrackerProps {
   corpusConfig: CorpusFundConfig;
@@ -15,55 +15,183 @@ export const CorpusFundTracker: React.FC<CorpusFundTrackerProps> = ({
   isAdmin,
   onUpdateCorpusConfig,
 }) => {
-  const [showAddModal, setShowAddModal] = useState(false);
+  // Settings Modal State
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [editMonthlyRate, setEditMonthlyRate] = useState<number>(corpusConfig.monthlyRatePerFlat || 200);
+  const [editPastMonths, setEditPastMonths] = useState<number>(corpusConfig.pastMonthsCollected || 12);
+  const [editBaseline, setEditBaseline] = useState<number>(corpusConfig.baselineTotalCollected || 33600);
+
+  // Expense Modal State (for both Add & Edit)
+  const [showExpenseModal, setShowExpenseModal] = useState(false);
+  const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
+  const [expenseDate, setExpenseDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [title, setTitle] = useState('');
   const [amount, setAmount] = useState<number>(2000);
   const [category, setCategory] = useState<CorpusExpenseLog['category']>('Lift Overhaul');
   const [approvedBy, setApprovedBy] = useState('Bobby (Flat 101 - Maintenance Lead)');
   const [notes, setNotes] = useState('');
 
+  // Per-Flat Status Edit Modal State
+  const [showFlatModal, setShowFlatModal] = useState(false);
+  const [editingFlatNo, setEditingFlatNo] = useState<string | null>(null);
+  const [flatMonthsPaid, setFlatMonthsPaid] = useState<number>(12);
+  const [flatCustomAmount, setFlatCustomAmount] = useState<number>(2400);
+  const [flatNotes, setFlatNotes] = useState<string>('');
+
   const occupiedFlats = activeRecord.flatReadings.filter((f) => f.flatNo !== 'WM' && f.isOccupied);
   const occupiedCount = occupiedFlats.length; // 14 flats
 
   const monthlyRate = corpusConfig.monthlyRatePerFlat || 200;
   const pastMonths = corpusConfig.pastMonthsCollected || 12;
-  const baselineCollected = corpusConfig.baselineTotalCollected || (occupiedCount * monthlyRate * pastMonths);
+  const flatOverrides = corpusConfig.flatOverrides || {};
+
+  // Compute calculated baseline total collected across all flats
+  const defaultTotalPerFlat = monthlyRate * pastMonths;
+  const computedCollectedTotal = occupiedFlats.reduce((sum, flat) => {
+    const override = flatOverrides[flat.flatNo];
+    if (override?.customPaidAmount !== undefined) {
+      return sum + override.customPaidAmount;
+    }
+    if (override?.monthsPaid !== undefined) {
+      return sum + (monthlyRate * override.monthsPaid);
+    }
+    return sum + defaultTotalPerFlat;
+  }, 0);
+
+  const baselineCollected = corpusConfig.baselineTotalCollected !== undefined
+    ? corpusConfig.baselineTotalCollected
+    : computedCollectedTotal;
 
   const totalSpent = (corpusConfig.corpusExpenses || []).reduce((sum, exp) => sum + exp.amount, 0);
   const netCorpusBalance = baselineCollected - totalSpent;
 
-  const handleAddExpense = (e: React.FormEvent) => {
+  // --- Handlers ---
+
+  // Save Settings (Rate, Months, Baseline)
+  const handleSaveSettings = (e: React.FormEvent) => {
+    e.preventDefault();
+    const updatedConfig: CorpusFundConfig = {
+      ...corpusConfig,
+      monthlyRatePerFlat: Number(editMonthlyRate),
+      pastMonthsCollected: Number(editPastMonths),
+      baselineTotalCollected: Number(editBaseline),
+    };
+    onUpdateCorpusConfig(updatedConfig);
+    setShowSettingsModal(false);
+  };
+
+  // Open Add Expense Modal
+  const handleOpenAddExpense = () => {
+    setEditingExpenseId(null);
+    setExpenseDate(new Date().toISOString().split('T')[0]);
+    setTitle('');
+    setAmount(2000);
+    setCategory('Lift Overhaul');
+    setApprovedBy('Bobby (Flat 101 - Maintenance Lead)');
+    setNotes('');
+    setShowExpenseModal(true);
+  };
+
+  // Open Edit Expense Modal
+  const handleOpenEditExpense = (expense: CorpusExpenseLog) => {
+    setEditingExpenseId(expense.id);
+    setExpenseDate(expense.date || new Date().toISOString().split('T')[0]);
+    setTitle(expense.title);
+    setAmount(expense.amount);
+    setCategory(expense.category);
+    setApprovedBy(expense.approvedBy || '');
+    setNotes(expense.notes || '');
+    setShowExpenseModal(true);
+  };
+
+  // Save Expense (Add or Edit)
+  const handleSaveExpense = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || amount <= 0) return;
 
-    const newExpense: CorpusExpenseLog = {
-      id: 'cexp-' + Date.now(),
-      date: new Date().toISOString().split('T')[0],
-      title,
-      amount: Number(amount),
-      category,
-      approvedBy,
-      notes,
-    };
+    let updatedExpenses: CorpusExpenseLog[] = [...(corpusConfig.corpusExpenses || [])];
+
+    if (editingExpenseId) {
+      // Edit existing expense
+      updatedExpenses = updatedExpenses.map((exp) => {
+        if (exp.id === editingExpenseId) {
+          return {
+            ...exp,
+            date: expenseDate,
+            title,
+            amount: Number(amount),
+            category,
+            approvedBy,
+            notes,
+          };
+        }
+        return exp;
+      });
+    } else {
+      // Add new expense
+      const newExpense: CorpusExpenseLog = {
+        id: 'cexp-' + Date.now(),
+        date: expenseDate,
+        title,
+        amount: Number(amount),
+        category,
+        approvedBy,
+        notes,
+      };
+      updatedExpenses = [newExpense, ...updatedExpenses];
+    }
 
     const updatedConfig: CorpusFundConfig = {
       ...corpusConfig,
-      corpusExpenses: [newExpense, ...(corpusConfig.corpusExpenses || [])],
+      corpusExpenses: updatedExpenses,
     };
 
     onUpdateCorpusConfig(updatedConfig);
-    setShowAddModal(false);
-    setTitle('');
-    setAmount(2000);
-    setNotes('');
+    setShowExpenseModal(false);
   };
 
+  // Delete Expense
   const handleDeleteExpense = (expenseId: string) => {
+    if (!window.confirm('Are you sure you want to delete this corpus expense entry?')) return;
     const updatedConfig: CorpusFundConfig = {
       ...corpusConfig,
       corpusExpenses: (corpusConfig.corpusExpenses || []).filter((e) => e.id !== expenseId),
     };
     onUpdateCorpusConfig(updatedConfig);
+  };
+
+  // Open Flat Corpus Edit Modal
+  const handleOpenEditFlat = (flatNo: string) => {
+    const override = flatOverrides[flatNo];
+    setEditingFlatNo(flatNo);
+    const mPaid = override?.monthsPaid !== undefined ? override.monthsPaid : pastMonths;
+    setFlatMonthsPaid(mPaid);
+    setFlatCustomAmount(override?.customPaidAmount !== undefined ? override.customPaidAmount : mPaid * monthlyRate);
+    setFlatNotes(override?.notes || '');
+    setShowFlatModal(true);
+  };
+
+  // Save Flat Corpus Override
+  const handleSaveFlatOverride = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingFlatNo) return;
+
+    const updatedFlatOverrides: Record<string, FlatCorpusOverride> = {
+      ...flatOverrides,
+      [editingFlatNo]: {
+        monthsPaid: Number(flatMonthsPaid),
+        customPaidAmount: Number(flatCustomAmount),
+        notes: flatNotes,
+      },
+    };
+
+    const updatedConfig: CorpusFundConfig = {
+      ...corpusConfig,
+      flatOverrides: updatedFlatOverrides,
+    };
+
+    onUpdateCorpusConfig(updatedConfig);
+    setShowFlatModal(false);
   };
 
   return (
@@ -106,18 +234,39 @@ export const CorpusFundTracker: React.FC<CorpusFundTrackerProps> = ({
         </div>
 
         {isAdmin && (
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="app-btn"
-            style={{
-              background: '#FFD166',
-              color: '#0E5A73',
-              fontWeight: 800,
-              boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)',
-            }}
-          >
-            <Plus size={16} /> Log Corpus Expenditure
-          </button>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            <button
+              onClick={() => {
+                setEditMonthlyRate(monthlyRate);
+                setEditPastMonths(pastMonths);
+                setEditBaseline(baselineCollected);
+                setShowSettingsModal(true);
+              }}
+              className="app-btn"
+              style={{
+                background: 'rgba(255, 255, 255, 0.2)',
+                color: '#FFFFFF',
+                border: '1px solid rgba(255, 255, 255, 0.4)',
+                fontWeight: 700,
+              }}
+              title="Edit Corpus Fund Settings (Monthly Rate, Collection Period, Baseline Total)"
+            >
+              <Settings size={16} /> Edit Settings
+            </button>
+
+            <button
+              onClick={handleOpenAddExpense}
+              className="app-btn"
+              style={{
+                background: '#FFD166',
+                color: '#0E5A73',
+                fontWeight: 800,
+                boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)',
+              }}
+            >
+              <Plus size={16} /> Log Corpus Expenditure
+            </button>
+          </div>
         )}
       </div>
 
@@ -125,9 +274,25 @@ export const CorpusFundTracker: React.FC<CorpusFundTrackerProps> = ({
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '24px' }}>
         
         {/* Card 1: Total Collected */}
-        <div className="app-card" style={{ background: '#FFFFFF', borderLeft: '5px solid #0096C7' }}>
-          <div style={{ fontSize: '0.76rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>
-            Total Corpus Collected
+        <div className="app-card" style={{ background: '#FFFFFF', borderLeft: '5px solid #0096C7', position: 'relative' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div style={{ fontSize: '0.76rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>
+              Total Corpus Collected
+            </div>
+            {isAdmin && (
+              <button
+                onClick={() => {
+                  setEditMonthlyRate(monthlyRate);
+                  setEditPastMonths(pastMonths);
+                  setEditBaseline(baselineCollected);
+                  setShowSettingsModal(true);
+                }}
+                style={{ background: 'none', border: 'none', color: '#0096C7', cursor: 'pointer', padding: 0 }}
+                title="Edit Total Collected Amount"
+              >
+                <Pencil size={14} />
+              </button>
+            )}
           </div>
           <div style={{ fontSize: '1.45rem', fontWeight: 800, color: '#0F172A', marginTop: '4px' }}>
             ₹{baselineCollected.toLocaleString('en-IN')}
@@ -146,7 +311,7 @@ export const CorpusFundTracker: React.FC<CorpusFundTrackerProps> = ({
             ₹{totalSpent.toLocaleString('en-IN')}
           </div>
           <div style={{ fontSize: '0.74rem', color: '#64748B', marginTop: '2px' }}>
-            Major Repairs & Maintenance
+            Major Repairs & Maintenance ({corpusConfig.corpusExpenses?.length || 0} Logged Items)
           </div>
         </div>
 
@@ -167,13 +332,22 @@ export const CorpusFundTracker: React.FC<CorpusFundTrackerProps> = ({
 
       {/* Flat-by-Flat 12-Month Corpus Status Grid */}
       <div className="app-card" style={{ marginBottom: '24px' }}>
-        <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F172A', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <CheckCircle2 size={18} color="#059669" /> Flat Corpus Contribution Breakdown (₹{monthlyRate}/Month per Flat)
-        </h3>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
+          <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F172A', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <CheckCircle2 size={18} color="#059669" /> Flat Corpus Contribution Breakdown (₹{monthlyRate}/Month per Flat)
+          </h3>
+          {isAdmin && (
+            <span style={{ fontSize: '0.76rem', color: '#64748B', fontStyle: 'italic' }}>
+              💡 Click "✏️" on any flat to update custom payment status or months paid
+            </span>
+          )}
+        </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))', gap: '12px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '12px' }}>
           {occupiedFlats.map((flat) => {
-            const flatTotalPaid = monthlyRate * pastMonths; // ₹2,400
+            const override = flatOverrides[flat.flatNo];
+            const mPaid = override?.monthsPaid !== undefined ? override.monthsPaid : pastMonths;
+            const flatTotalPaid = override?.customPaidAmount !== undefined ? override.customPaidAmount : mPaid * monthlyRate;
 
             return (
               <div
@@ -186,15 +360,30 @@ export const CorpusFundTracker: React.FC<CorpusFundTrackerProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
+                  position: 'relative',
                 }}
               >
                 <div>
-                  <div style={{ fontWeight: 800, color: '#1D4ED8', fontSize: '0.9rem' }}>
+                  <div style={{ fontWeight: 800, color: '#1D4ED8', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
                     Flat #{flat.flatNo}
+                    {isAdmin && (
+                      <button
+                        onClick={() => handleOpenEditFlat(flat.flatNo)}
+                        style={{ background: 'none', border: 'none', color: '#0096C7', cursor: 'pointer', padding: '2px' }}
+                        title={`Edit corpus payment status for Flat #${flat.flatNo}`}
+                      >
+                        <Pencil size={13} />
+                      </button>
+                    )}
                   </div>
                   <div style={{ fontSize: '0.78rem', color: '#475569', fontWeight: 600 }}>
                     {flat.residentName}
                   </div>
+                  {override?.notes && (
+                    <div style={{ fontSize: '0.7rem', color: '#0284C7', fontStyle: 'italic', marginTop: '2px' }}>
+                      {override.notes}
+                    </div>
+                  )}
                 </div>
 
                 <div style={{ textAlign: 'right' }}>
@@ -202,7 +391,7 @@ export const CorpusFundTracker: React.FC<CorpusFundTrackerProps> = ({
                     ₹{flatTotalPaid.toLocaleString('en-IN')}
                   </div>
                   <span style={{ fontSize: '0.68rem', background: '#ECFDF5', border: '1px solid #A7F3D0', color: '#059669', padding: '1px 6px', borderRadius: '6px', fontWeight: 700 }}>
-                    12 Months Paid
+                    {mPaid} Months Paid
                   </span>
                 </div>
               </div>
@@ -213,10 +402,19 @@ export const CorpusFundTracker: React.FC<CorpusFundTrackerProps> = ({
 
       {/* Corpus Expenditures History Table */}
       <div className="app-card" style={{ padding: 0, overflowX: 'auto' }}>
-        <div style={{ padding: '16px 20px', borderBottom: '1px solid #E2E8F0', background: '#F8FAFC' }}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid #E2E8F0', background: '#F8FAFC', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F172A', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
             <FileText size={18} color="#0096C7" /> Corpus Expenditure & Major Work Log
           </h3>
+          {isAdmin && (
+            <button
+              onClick={handleOpenAddExpense}
+              className="app-btn app-btn-primary"
+              style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+            >
+              <Plus size={14} /> Add Expenditure
+            </button>
+          )}
         </div>
 
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.86rem' }}>
@@ -259,31 +457,116 @@ export const CorpusFundTracker: React.FC<CorpusFundTrackerProps> = ({
                 </td>
 
                 {isAdmin && (
-                  <td style={{ padding: '12px 16px', textAlign: 'right' }}>
-                    <button
-                      onClick={() => handleDeleteExpense(exp.id)}
-                      style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer', padding: '4px' }}
-                      title="Delete Entry"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                  <td style={{ padding: '12px 16px', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                    <div style={{ display: 'inline-flex', gap: '8px' }}>
+                      <button
+                        onClick={() => handleOpenEditExpense(exp)}
+                        style={{ background: 'none', border: 'none', color: '#0096C7', cursor: 'pointer', padding: '4px' }}
+                        title="Edit Expense Entry"
+                      >
+                        <Edit2 size={16} />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteExpense(exp.id)}
+                        style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', padding: '4px' }}
+                        title="Delete Expense Entry"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </td>
                 )}
               </tr>
             ))}
+            {(corpusConfig.corpusExpenses || []).length === 0 && (
+              <tr>
+                <td colSpan={6} style={{ padding: '24px', textAlign: 'center', color: '#64748B' }}>
+                  No corpus fund expenditure items logged yet.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
 
-      {/* Log Modal */}
-      {showAddModal && (
-        <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
+      {/* MODAL 1: Corpus Settings Modal */}
+      {showSettingsModal && (
+        <div className="modal-overlay" onClick={() => setShowSettingsModal(false)}>
           <div className="modal-container" onClick={(e) => e.stopPropagation()}>
             <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0096C7', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Plus size={20} /> Log Corpus Fund Expenditure
+              <Settings size={20} /> Edit Corpus Fund Configuration
             </h3>
 
-            <form onSubmit={handleAddExpense}>
+            <form onSubmit={handleSaveSettings}>
+              <div className="form-group">
+                <label>Monthly Contribution Rate per Flat (₹):</label>
+                <input
+                  type="number"
+                  className="form-control"
+                  value={editMonthlyRate}
+                  onChange={(e) => setEditMonthlyRate(Number(e.target.value))}
+                  min="0"
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Number of Months Collected to Date:</label>
+                <input
+                  type="number"
+                  className="form-control"
+                  value={editPastMonths}
+                  onChange={(e) => setEditPastMonths(Number(e.target.value))}
+                  min="1"
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Total Baseline Corpus Collected Target (₹):</label>
+                <input
+                  type="number"
+                  className="form-control"
+                  value={editBaseline}
+                  onChange={(e) => setEditBaseline(Number(e.target.value))}
+                  min="0"
+                  required
+                />
+                <small style={{ color: '#64748B', display: 'block', marginTop: '4px' }}>
+                  Calculated default: ₹{(occupiedCount * editMonthlyRate * editPastMonths).toLocaleString('en-IN')} ({occupiedCount} flats × ₹{editMonthlyRate} × {editPastMonths} months)
+                </small>
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '20px' }}>
+                <button
+                  type="button"
+                  className="app-btn app-btn-secondary"
+                  onClick={() => setShowSettingsModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="app-btn app-btn-primary"
+                >
+                  Save Settings
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 2: Add / Edit Corpus Expense Modal */}
+      {showExpenseModal && (
+        <div className="modal-overlay" onClick={() => setShowExpenseModal(false)}>
+          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0096C7', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {editingExpenseId ? <Edit2 size={20} /> : <Plus size={20} />}
+              {editingExpenseId ? 'Edit Corpus Fund Expenditure' : 'Log Corpus Fund Expenditure'}
+            </h3>
+
+            <form onSubmit={handleSaveExpense}>
               <div className="form-group">
                 <label>Expense Work Title:</label>
                 <input
@@ -326,15 +609,28 @@ export const CorpusFundTracker: React.FC<CorpusFundTrackerProps> = ({
                 </div>
               </div>
 
-              <div className="form-group">
-                <label>Approved / Managed By:</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={approvedBy}
-                  onChange={(e) => setApprovedBy(e.target.value)}
-                  placeholder="e.g. Bobby (Flat 101)"
-                />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <div className="form-group">
+                  <label>Date of Expense:</label>
+                  <input
+                    type="date"
+                    className="form-control"
+                    value={expenseDate}
+                    onChange={(e) => setExpenseDate(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Approved / Managed By:</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={approvedBy}
+                    onChange={(e) => setApprovedBy(e.target.value)}
+                    placeholder="e.g. Bobby (Flat 101)"
+                  />
+                </div>
               </div>
 
               <div className="form-group">
@@ -352,7 +648,7 @@ export const CorpusFundTracker: React.FC<CorpusFundTrackerProps> = ({
                 <button
                   type="button"
                   className="app-btn app-btn-secondary"
-                  onClick={() => setShowAddModal(false)}
+                  onClick={() => setShowExpenseModal(false)}
                 >
                   Cancel
                 </button>
@@ -360,7 +656,76 @@ export const CorpusFundTracker: React.FC<CorpusFundTrackerProps> = ({
                   type="submit"
                   className="app-btn app-btn-primary"
                 >
-                  Log Expense
+                  {editingExpenseId ? 'Update Expense' : 'Log Expense'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 3: Flat Corpus Override Modal */}
+      {showFlatModal && editingFlatNo && (
+        <div className="modal-overlay" onClick={() => setShowFlatModal(false)}>
+          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0096C7', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Pencil size={20} /> Update Corpus Details for Flat #{editingFlatNo}
+            </h3>
+
+            <form onSubmit={handleSaveFlatOverride}>
+              <div className="form-group">
+                <label>Months Paid Count:</label>
+                <input
+                  type="number"
+                  className="form-control"
+                  value={flatMonthsPaid}
+                  onChange={(e) => {
+                    const m = Number(e.target.value);
+                    setFlatMonthsPaid(m);
+                    setFlatCustomAmount(m * monthlyRate);
+                  }}
+                  min="0"
+                  max="48"
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Total Corpus Amount Paid (₹):</label>
+                <input
+                  type="number"
+                  className="form-control"
+                  value={flatCustomAmount}
+                  onChange={(e) => setFlatCustomAmount(Number(e.target.value))}
+                  min="0"
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Status Notes (Optional):</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  value={flatNotes}
+                  onChange={(e) => setFlatNotes(e.target.value)}
+                  placeholder="e.g. Paid 1 year in advance via UPI"
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '16px' }}>
+                <button
+                  type="button"
+                  className="app-btn app-btn-secondary"
+                  onClick={() => setShowFlatModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="app-btn app-btn-primary"
+                >
+                  Save Flat Corpus
                 </button>
               </div>
             </form>

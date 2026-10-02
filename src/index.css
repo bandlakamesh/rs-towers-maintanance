@@ -568,7 +568,13 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Print Styles for PDF Export matching Excel layout */
 @media print {
+  @page {
+    size: A4 landscape;
+    margin: 6mm;
+  }
+
   .no-print,
+  .no-print-col,
   .bottom-nav,
   .mobile-bottom-nav,
   .chip-group,
@@ -592,25 +598,29 @@ h1, h2, h3, h4, h5, h6 {
     margin: 0 !important;
   }
 
-  .app-card {
+  .app-card, div {
     box-shadow: none !important;
-    border: 1px solid #000000 !important;
     background: #FFFFFF !important;
     backdrop-filter: none !important;
-    padding: 10px !important;
-    break-inside: avoid;
-    page-break-inside: avoid;
+    padding: 6px !important;
+    overflow: visible !important;
+    overflow-x: visible !important;
   }
 
   table {
     width: 100% !important;
+    min-width: 0 !important;
+    table-layout: auto !important;
     border-collapse: collapse !important;
-    font-size: 10pt !important;
+    font-size: 8pt !important;
   }
 
   th, td {
-    border: 1px solid #000000 !important;
-    padding: 4px 6px !important;
+    border: 1px solid #64748B !important;
+    padding: 3px 5px !important;
     color: #000000 !important;
+    font-size: 8pt !important;
+    white-space: nowrap !important;
   }
 }
+

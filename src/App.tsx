@@ -69,12 +69,8 @@ export const App: React.FC = () => {
 
   const activeRecord: MonthMaintenanceRecord = appState.months[appState.activeMonthId] || Object.values(appState.months)[0];
 
-  // Auto-reset activeTab to 'table' for non-admin residents if on an admin tab
-  useEffect(() => {
-    if (!isPrivilegedAdmin && ['analytics', 'occupants', 'corpus', 'amc', 'vendors', 'notices'].includes(activeTab)) {
-      setActiveTab('table');
-    }
-  }, [isPrivilegedAdmin, activeTab]);
+  // Active Tab state for navigation
+  // All tabs are accessible to all residents in read-only mode, with edit capabilities restricted to admins
 
   // Live Firebase Realtime DB listener & polling fallback
   useEffect(() => {
@@ -638,23 +634,19 @@ export const App: React.FC = () => {
             <Table size={15} /> 📊 Monthly Maintenance Sheet
           </button>
 
-          {isPrivilegedAdmin && (
-            <button
-              className={`chip ${activeTab === 'analytics' ? 'active' : ''}`}
-              onClick={() => setActiveTab('analytics')}
-            >
-              <BarChart2 size={15} /> 📈 Analytics & Leak Alerts
-            </button>
-          )}
+          <button
+            className={`chip ${activeTab === 'analytics' ? 'active' : ''}`}
+            onClick={() => setActiveTab('analytics')}
+          >
+            <BarChart2 size={15} /> 📈 Analytics & Leak Alerts
+          </button>
 
-          {isPrivilegedAdmin && (
-            <button
-              className={`chip ${activeTab === 'occupants' ? 'active' : ''}`}
-              onClick={() => setActiveTab('occupants')}
-            >
-              <UserCheck size={15} /> 👥 Flat Owners & Directory
-            </button>
-          )}
+          <button
+            className={`chip ${activeTab === 'occupants' ? 'active' : ''}`}
+            onClick={() => setActiveTab('occupants')}
+          >
+            <UserCheck size={15} /> 👥 Flat Owners & Directory
+          </button>
 
           <button
             className={`chip ${activeTab === 'committee' ? 'active' : ''}`}
@@ -663,41 +655,33 @@ export const App: React.FC = () => {
             <Shield size={15} /> 🏛️ Executive Committee
           </button>
 
-          {isPrivilegedAdmin && (
-            <button
-              className={`chip ${activeTab === 'corpus' ? 'active' : ''}`}
-              onClick={() => setActiveTab('corpus')}
-            >
-              <Landmark size={15} /> 🏛️ Corpus Fund Tracker (₹200/mo)
-            </button>
-          )}
+          <button
+            className={`chip ${activeTab === 'corpus' ? 'active' : ''}`}
+            onClick={() => setActiveTab('corpus')}
+          >
+            <Landmark size={15} /> 🏛️ Corpus Fund Tracker (₹200/mo)
+          </button>
 
-          {isPrivilegedAdmin && (
-            <button
-              className={`chip ${activeTab === 'amc' ? 'active' : ''}`}
-              onClick={() => setActiveTab('amc')}
-            >
-              <Wrench size={15} /> 🛠️ Building Asset AMC (Lift 6m, CCTV, Tank)
-            </button>
-          )}
+          <button
+            className={`chip ${activeTab === 'amc' ? 'active' : ''}`}
+            onClick={() => setActiveTab('amc')}
+          >
+            <Wrench size={15} /> 🛠️ Building Asset AMC (Lift 6m, CCTV, Tank)
+          </button>
 
-          {isPrivilegedAdmin && (
-            <button
-              className={`chip ${activeTab === 'vendors' ? 'active' : ''}`}
-              onClick={() => setActiveTab('vendors')}
-            >
-              <Contact size={15} /> ☎️ Vendor Directory ({appState.vendors?.length || 0})
-            </button>
-          )}
+          <button
+            className={`chip ${activeTab === 'vendors' ? 'active' : ''}`}
+            onClick={() => setActiveTab('vendors')}
+          >
+            <Contact size={15} /> ☎️ Vendor Directory ({appState.vendors?.length || 0})
+          </button>
 
-          {isPrivilegedAdmin && (
-            <button
-              className={`chip ${activeTab === 'notices' ? 'active' : ''}`}
-              onClick={() => setActiveTab('notices')}
-            >
-              <Megaphone size={15} /> 📢 Notice Board
-            </button>
-          )}
+          <button
+            className={`chip ${activeTab === 'notices' ? 'active' : ''}`}
+            onClick={() => setActiveTab('notices')}
+          >
+            <Megaphone size={15} /> 📢 Notice Board
+          </button>
         </nav>
 
         {/* Tab 1: Maintenance Calculations Table */}
@@ -1028,25 +1012,21 @@ export const App: React.FC = () => {
           <span>Sheet</span>
         </button>
 
-        {isAdmin && (
-          <button
-            className={`mobile-nav-item ${activeTab === 'analytics' ? 'active' : ''}`}
-            onClick={() => setActiveTab('analytics')}
-          >
-            <BarChart2 size={18} />
-            <span>Analytics</span>
-          </button>
-        )}
+        <button
+          className={`mobile-nav-item ${activeTab === 'analytics' ? 'active' : ''}`}
+          onClick={() => setActiveTab('analytics')}
+        >
+          <BarChart2 size={18} />
+          <span>Analytics</span>
+        </button>
 
-        {isAdmin && (
-          <button
-            className={`mobile-nav-item ${activeTab === 'occupants' ? 'active' : ''}`}
-            onClick={() => setActiveTab('occupants')}
-          >
-            <UserCheck size={18} />
-            <span>Directory</span>
-          </button>
-        )}
+        <button
+          className={`mobile-nav-item ${activeTab === 'occupants' ? 'active' : ''}`}
+          onClick={() => setActiveTab('occupants')}
+        >
+          <UserCheck size={18} />
+          <span>Directory</span>
+        </button>
 
         <button
           className={`mobile-nav-item ${activeTab === 'committee' ? 'active' : ''}`}
@@ -1056,45 +1036,37 @@ export const App: React.FC = () => {
           <span>Committee</span>
         </button>
 
-        {isAdmin && (
-          <button
-            className={`mobile-nav-item ${activeTab === 'corpus' ? 'active' : ''}`}
-            onClick={() => setActiveTab('corpus')}
-          >
-            <Landmark size={18} />
-            <span>Corpus</span>
-          </button>
-        )}
+        <button
+          className={`mobile-nav-item ${activeTab === 'corpus' ? 'active' : ''}`}
+          onClick={() => setActiveTab('corpus')}
+        >
+          <Landmark size={18} />
+          <span>Corpus</span>
+        </button>
 
-        {isAdmin && (
-          <button
-            className={`mobile-nav-item ${activeTab === 'amc' ? 'active' : ''}`}
-            onClick={() => setActiveTab('amc')}
-          >
-            <Wrench size={18} />
-            <span>AMC</span>
-          </button>
-        )}
+        <button
+          className={`mobile-nav-item ${activeTab === 'amc' ? 'active' : ''}`}
+          onClick={() => setActiveTab('amc')}
+        >
+          <Wrench size={18} />
+          <span>AMC</span>
+        </button>
 
-        {isAdmin && (
-          <button
-            className={`mobile-nav-item ${activeTab === 'vendors' ? 'active' : ''}`}
-            onClick={() => setActiveTab('vendors')}
-          >
-            <Contact size={18} />
-            <span>Vendors</span>
-          </button>
-        )}
+        <button
+          className={`mobile-nav-item ${activeTab === 'vendors' ? 'active' : ''}`}
+          onClick={() => setActiveTab('vendors')}
+        >
+          <Contact size={18} />
+          <span>Vendors</span>
+        </button>
 
-        {isAdmin && (
-          <button
-            className={`mobile-nav-item ${activeTab === 'notices' ? 'active' : ''}`}
-            onClick={() => setActiveTab('notices')}
-          >
-            <Megaphone size={18} />
-            <span>Notices</span>
-          </button>
-        )}
+        <button
+          className={`mobile-nav-item ${activeTab === 'notices' ? 'active' : ''}`}
+          onClick={() => setActiveTab('notices')}
+        >
+          <Megaphone size={18} />
+          <span>Notices</span>
+        </button>
       </nav>
 
     </div>

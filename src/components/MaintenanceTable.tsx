@@ -220,7 +220,7 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
               <th style={{ padding: '12px 14px', textAlign: 'right', whiteSpace: 'nowrap', minWidth: '105px' }}>Total Value</th>
               <th style={{ padding: '12px 14px', textAlign: 'right', whiteSpace: 'nowrap', minWidth: '110px' }}>Rounded Due</th>
               <th style={{ padding: '12px 14px', whiteSpace: 'nowrap', minWidth: '150px' }}>Resident Notes</th>
-              <th style={{ padding: '12px 14px', textAlign: 'right', whiteSpace: 'nowrap', minWidth: '130px' }}>Actions</th>
+              <th className="no-print" style={{ padding: '12px 14px', textAlign: 'right', whiteSpace: 'nowrap', minWidth: '130px' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -367,7 +367,7 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
                   </td>
 
                   {/* Action Buttons */}
-                  <td style={{ padding: '10px 14px', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                  <td className="no-print" style={{ padding: '10px 14px', textAlign: 'right', whiteSpace: 'nowrap' }}>
                     <div style={{ display: 'inline-flex', gap: '6px', alignItems: 'center' }}>
                       {!isWM && f.isOccupied && canPayThisFlat && (
                         <button
