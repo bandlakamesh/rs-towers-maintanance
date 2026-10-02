@@ -1262,6 +1262,16 @@ export const App: React.FC = () => {
           <Megaphone size={18} />
           <span>Notices</span>
         </button>
+
+        {isAdmin && userRole === 'RootAdmin' && (
+          <button
+            className={`mobile-nav-item ${activeTab === 'audit' ? 'active' : ''}`}
+            onClick={() => setActiveTab('audit')}
+          >
+            <History size={18} />
+            <span>Audit</span>
+          </button>
+        )}
       </nav>
 
     </div>
