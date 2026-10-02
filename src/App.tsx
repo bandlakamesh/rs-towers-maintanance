@@ -291,7 +291,32 @@ export const App: React.FC = () => {
   };
 
   const handleUpdateReadings = (updatedReadings: FlatReading[]) => {
-    logAuditAction('EDIT_READING', `Updated meter readings / notes in '${activeRecord.monthTitle}'`);
+    const changes: string[] = [];
+    updatedReadings.forEach((newF) => {
+      const prevF = activeRecord.flatReadings.find((p) => p.flatNo === newF.flatNo);
+      if (!prevF) return;
+
+      const flatDiffs: string[] = [];
+      if (prevF.currentReading !== newF.currentReading) {
+        flatDiffs.push(`Reading: ${prevF.currentReading} → ${newF.currentReading} (Units: ${prevF.consumedUnits} → ${newF.consumedUnits})`);
+      }
+      if ((prevF.notes || '') !== (newF.notes || '')) {
+        flatDiffs.push(`Notes: "${prevF.notes || 'none'}" → "${newF.notes || 'none'}"`);
+      }
+      if (prevF.paidAmount !== newF.paidAmount) {
+        flatDiffs.push(`Paid: ₹${prevF.paidAmount} → ₹${newF.paidAmount}`);
+      }
+
+      if (flatDiffs.length > 0) {
+        changes.push(`Flat #${newF.flatNo} [${flatDiffs.join(' | ')}]`);
+      }
+    });
+
+    const diffDesc = changes.length > 0
+      ? `Updated '${activeRecord.monthTitle}': ${changes.join(' ; ')}`
+      : `Updated meter readings / notes in '${activeRecord.monthTitle}'`;
+
+    logAuditAction('EDIT_READING', diffDesc);
     handleUpdateRecord({
       ...activeRecord,
       flatReadings: updatedReadings,
@@ -304,23 +329,47 @@ export const App: React.FC = () => {
       return;
     }
 
-    logAuditAction('DIRECTORY', `Updated Flat Directory entries & occupant details`);
-
-    const updatedDirMap: Record<string, FlatDirectoryEntry> = { ...(appState.flatDirectory || INITIAL_APP_STATE.flatDirectory || {}) };
+    const currentDirMap = appState.flatDirectory || INITIAL_APP_STATE.flatDirectory || {};
+    const updatedDirMap: Record<string, FlatDirectoryEntry> = { ...currentDirMap };
+    const diffs: string[] = [];
 
     updatedReadings.forEach((f) => {
       if (f.flatNo !== 'WM') {
+        const prev = currentDirMap[f.flatNo];
+        const newOwner = f.ownerName || '';
+        const newResident = f.residentName || f.ownerName || '';
+        const newType = f.residentType || 'Owner';
+        const newOccupied = f.isOccupied !== undefined ? f.isOccupied : true;
+
+        if (prev) {
+          const flatChanges: string[] = [];
+          if (prev.residentName !== newResident) flatChanges.push(`Resident: '${prev.residentName}' → '${newResident}'`);
+          if (prev.ownerName !== newOwner) flatChanges.push(`Owner: '${prev.ownerName}' → '${newOwner}'`);
+          if (prev.residentType !== newType) flatChanges.push(`Type: '${prev.residentType}' → '${newType}'`);
+          if (prev.isOccupied !== newOccupied) flatChanges.push(`Status: ${prev.isOccupied ? 'Occupied' : 'Vacant'} → ${newOccupied ? 'Occupied' : 'Vacant'}`);
+
+          if (flatChanges.length > 0) {
+            diffs.push(`Flat #${f.flatNo} [${flatChanges.join(', ')}]`);
+          }
+        }
+
         updatedDirMap[f.flatNo] = {
           flatNo: f.flatNo,
-          ownerName: f.ownerName || '',
+          ownerName: newOwner,
           ownerPhone: f.ownerPhone || '',
-          residentName: f.residentName || f.ownerName || '',
+          residentName: newResident,
           tenantPhone: f.tenantPhone || '',
-          residentType: f.residentType || 'Owner',
-          isOccupied: f.isOccupied !== undefined ? f.isOccupied : true,
+          residentType: newType,
+          isOccupied: newOccupied,
         };
       }
     });
+
+    const desc = diffs.length > 0
+      ? `Updated Flat Directory details: ${diffs.join(' ; ')}`
+      : `Updated Flat Directory entries & occupant details`;
+
+    logAuditAction('DIRECTORY', desc);
 
     const updatedMonths = { ...appState.months };
     Object.keys(updatedMonths).forEach((mId) => {
@@ -361,7 +410,33 @@ export const App: React.FC = () => {
   };
 
   const handleUpdateWaterConfig = (config: WaterCalculationConfig) => {
-    logAuditAction('EDIT_READING', `Updated water calculation rates/tanker config for '${activeRecord.monthTitle}'`);
+    const prev = activeRecord.waterConfig;
+    const diffs: string[] = [];
+
+    if (prev.panchayatWaterBill !== config.panchayatWaterBill) {
+      diffs.push(`Panchayat bill: ₹${prev.panchayatWaterBill.toLocaleString('en-IN')} → ₹${config.panchayatWaterBill.toLocaleString('en-IN')}`);
+    }
+    if (prev.municipalTankerCount !== config.municipalTankerCount) {
+      diffs.push(`Municipal tankers: ${prev.municipalTankerCount} → ${config.municipalTankerCount} (@ ₹${config.municipalTankerRate})`);
+    }
+    if (prev.municipalTankerRate !== config.municipalTankerRate) {
+      diffs.push(`Municipal rate: ₹${prev.municipalTankerRate} → ₹${config.municipalTankerRate}`);
+    }
+    if (prev.privateTankerCount !== config.privateTankerCount) {
+      diffs.push(`Private tankers: ${prev.privateTankerCount} → ${config.privateTankerCount} (@ ₹${config.privateTankerRate})`);
+    }
+    if (prev.watchmanUnits !== config.watchmanUnits) {
+      diffs.push(`Watchman units: ${prev.watchmanUnits} → ${config.watchmanUnits}`);
+    }
+    if (prev.manualUnitRate !== config.manualUnitRate) {
+      diffs.push(`Manual unit rate: ₹${prev.manualUnitRate || 0} → ₹${config.manualUnitRate || 0}`);
+    }
+
+    const desc = diffs.length > 0
+      ? `Updated water calculation rates in '${activeRecord.monthTitle}': ${diffs.join(' | ')}`
+      : `Updated water calculation config for '${activeRecord.monthTitle}'`;
+
+    logAuditAction('EDIT_READING', desc);
     handleUpdateRecord({
       ...activeRecord,
       waterConfig: config,
@@ -369,7 +444,31 @@ export const App: React.FC = () => {
   };
 
   const handleUpdateCommonExpenses = (expenses: CommonExpenseItem[]) => {
-    logAuditAction('EDIT_READING', `Updated common maintenance expenses breakdown for '${activeRecord.monthTitle}'`);
+    const prevMap = new Map(activeRecord.commonExpenses.map((e) => [e.id, e]));
+    const newMap = new Map(expenses.map((e) => [e.id, e]));
+
+    const diffs: string[] = [];
+
+    expenses.forEach((newE) => {
+      const prevE = prevMap.get(newE.id);
+      if (!prevE) {
+        diffs.push(`Added '${newE.name}': ₹${newE.amount.toLocaleString('en-IN')} (${newE.category})`);
+      } else if (prevE.amount !== newE.amount || prevE.name !== newE.name || prevE.category !== newE.category) {
+        diffs.push(`Modified '${newE.name}': ₹${prevE.amount.toLocaleString('en-IN')} → ₹${newE.amount.toLocaleString('en-IN')}`);
+      }
+    });
+
+    activeRecord.commonExpenses.forEach((prevE) => {
+      if (!newMap.has(prevE.id)) {
+        diffs.push(`Removed '${prevE.name}': ₹${prevE.amount.toLocaleString('en-IN')}`);
+      }
+    });
+
+    const desc = diffs.length > 0
+      ? `Updated common expenses in '${activeRecord.monthTitle}': ${diffs.join(' | ')}`
+      : `Updated common maintenance expenses for '${activeRecord.monthTitle}'`;
+
+    logAuditAction('EDIT_READING', desc);
     handleUpdateRecord({
       ...activeRecord,
       commonExpenses: expenses,
@@ -377,12 +476,19 @@ export const App: React.FC = () => {
   };
 
   const handleSavePayment = (flatNo: string, amount: number, paymentMode: PaymentMode, notes: string) => {
+    const targetFlat = activeRecord.flatReadings.find((f) => f.flatNo === flatNo);
+    const prevPaid = targetFlat ? targetFlat.paidAmount : 0;
+    const prevStatus = targetFlat ? targetFlat.status : 'Pending';
+    const newPaid = prevPaid + amount;
+    const targetTotal = targetFlat ? targetFlat.roundedValue : 0;
+    const newStatus = newPaid >= targetTotal ? 'Received' : newPaid > 0 ? 'Partial' : 'Pending';
+
     const updated = activeRecord.flatReadings.map((f) => {
       if (f.flatNo === flatNo) {
-        const newPaid = f.paidAmount + amount;
         return {
           ...f,
           paidAmount: newPaid,
+          status: newStatus as any,
           paymentMode,
           notes: notes || f.notes,
         };
@@ -390,8 +496,12 @@ export const App: React.FC = () => {
       return f;
     });
 
-    handleUpdateReadings(updated);
-    logAuditAction('PAYMENT_RECORDED', `Recorded payment of ₹${amount} (${paymentMode}) for Flat #${flatNo} in '${activeRecord.monthTitle}'`);
+    logAuditAction('PAYMENT_RECORDED', `Flat #${flatNo} Payment: Added ₹${amount.toLocaleString('en-IN')} (${paymentMode}) in '${activeRecord.monthTitle}'. Paid Amount: ₹${prevPaid.toLocaleString('en-IN')} → ₹${newPaid.toLocaleString('en-IN')} (Status: ${prevStatus} → ${newStatus})`);
+
+    handleUpdateRecord({
+      ...activeRecord,
+      flatReadings: updated,
+    });
 
     confetti({
       particleCount: 80,
