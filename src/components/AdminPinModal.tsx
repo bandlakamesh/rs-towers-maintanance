@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ShieldCheck, Lock, Unlock, X, KeyRound, Check, Crown, Smartphone, RefreshCw, Send, Save, Home } from 'lucide-react';
-import type { FlatReading } from '../types';
+import type { FlatReading, AuditLogEntry } from '../types';
 import { maskPhoneNumber, DEFAULT_FLAT_OWNERS, DEFAULT_FLAT_TENANTS } from './FlatOccupantsDirectory';
 
 const RENTED_FLATS_SET = ['102', '202', '402'];
@@ -21,6 +21,7 @@ interface AdminPinModalProps {
   treasurerPhone?: string;
   treasurerName?: string;
   onUpdateTreasurerSettings?: (upiId: string, phone: string, name: string) => void;
+  onAuditLogAction?: (actionType: AuditLogEntry['actionType'], description: string) => void;
 }
 
 export const AdminPinModal: React.FC<AdminPinModalProps> = ({
@@ -38,6 +39,7 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
   treasurerPhone = '9963275455',
   treasurerName = 'Bobby (Flat 101 - Maintenance Lead)',
   onUpdateTreasurerSettings,
+  onAuditLogAction,
 }) => {
   const [authMode, setAuthMode] = useState<'otp' | 'pin'>('otp');
   const [selectedFlat, setSelectedFlat] = useState<string>('302');
@@ -157,6 +159,7 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
       return;
     }
 
+    onAuditLogAction?.('PIN_CHANGE', `User verified & logged into Flat #${selectedFlat} via Mobile OTP`);
     onAdminLoginSuccess(selectedFlat);
     setSuccessMsg('✅ Authenticated successfully!');
     onClose();
@@ -175,6 +178,7 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
       return;
     }
 
+    onAuditLogAction?.('PIN_CHANGE', `User authenticated & logged into Flat #${selectedFlat} via Master PIN`);
     onAdminLoginSuccess(selectedFlat);
     setPinInput('');
     setErrorMsg('');
@@ -202,6 +206,8 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
     if (currentAdminFlat === rootFlat || currentAdminFlat === '302') {
       localStorage.setItem('rs_towers_maint_pin', newPinInput.trim());
     }
+
+    onAuditLogAction?.('PIN_CHANGE', `Security PIN for Flat #${currentAdminFlat} changed successfully`);
 
     setSuccessMsg(`✅ Security PIN for Flat #${currentAdminFlat} updated successfully!`);
     setCurrentPinInput('');
@@ -753,6 +759,7 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
                               onChange={(e) => {
                                 const newRole = e.target.value as any;
                                 onSetFlatRole?.(flat.flatNo, newRole);
+                                onAuditLogAction?.('PIN_CHANGE', `Assigned security role '${newRole}' to Flat #${flat.flatNo}`);
                                 setSuccessMsg(`✅ Role for Flat #${flat.flatNo} updated to '${newRole === 'MaintenanceLead' ? '🛠️ Maintenance Lead' : newRole === 'CoAdmin' ? '⭐ Co-Admin' : '👤 Normal Resident'}'. Saved!`);
                               }}
                               style={{

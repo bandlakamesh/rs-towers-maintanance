@@ -54,6 +54,36 @@ export const App: React.FC = () => {
   const isPrivilegedAdmin = userRole === 'RootAdmin' || userRole === 'MaintenanceLead' || userRole === 'CoAdmin';
   const canEditMaintenance = userRole === 'RootAdmin' || userRole === 'MaintenanceLead';
 
+  // Audit Log Action Helper
+  const logAuditAction = (
+    actionType: AuditLogEntry['actionType'],
+    description: string
+  ) => {
+    const now = new Date();
+    const formattedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+
+    const newLog: AuditLogEntry = {
+      id: 'audit-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6),
+      timestamp: formattedDate,
+      flatNo: currentAdminFlat || '302',
+      userRole,
+      actionType,
+      description,
+    };
+
+    setAppState((prev) => {
+      const currentLogs = prev.auditLogs || [];
+      const updatedState: AppState = {
+        ...prev,
+        auditLogs: [newLog, ...currentLogs].slice(0, 500),
+        lastUpdated: Date.now(),
+      };
+      saveAppStateLocal(updatedState);
+      syncToCloudRemote(updatedState);
+      return updatedState;
+    });
+  };
+
   // Payment & Month Modals State
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState<boolean>(false);
   const [selectedFlatForPayment, setSelectedFlatForPayment] = useState<string>('101');
@@ -240,6 +270,7 @@ export const App: React.FC = () => {
       message: `Root Admin Safeguard: Are you sure you want to PERMANENTLY DELETE calculation sheet '${monthId}'? All readings and calculation data for this month will be removed.`,
       actionType: 'delete',
       onConfirm: () => {
+        logAuditAction('DELETE_MONTH', `Permanently deleted calculation sheet '${monthId}'`);
         const remainingMonths = { ...appState.months };
         delete remainingMonths[monthId];
         const newActiveId = Object.keys(remainingMonths)[0];
@@ -272,6 +303,8 @@ export const App: React.FC = () => {
       alert('🔒 Permission Denied: Only Maintenance Lead & Admins can update flat directory details.');
       return;
     }
+
+    logAuditAction('DIRECTORY', `Updated Flat Directory entries & occupant details`);
 
     const updatedDirMap: Record<string, FlatDirectoryEntry> = { ...(appState.flatDirectory || INITIAL_APP_STATE.flatDirectory || {}) };
 
@@ -328,6 +361,7 @@ export const App: React.FC = () => {
   };
 
   const handleUpdateWaterConfig = (config: WaterCalculationConfig) => {
+    logAuditAction('EDIT_READING', `Updated water calculation rates/tanker config for '${activeRecord.monthTitle}'`);
     handleUpdateRecord({
       ...activeRecord,
       waterConfig: config,
@@ -335,6 +369,7 @@ export const App: React.FC = () => {
   };
 
   const handleUpdateCommonExpenses = (expenses: CommonExpenseItem[]) => {
+    logAuditAction('EDIT_READING', `Updated common maintenance expenses breakdown for '${activeRecord.monthTitle}'`);
     handleUpdateRecord({
       ...activeRecord,
       commonExpenses: expenses,
@@ -400,6 +435,8 @@ export const App: React.FC = () => {
     const exists = currentAdminFlats.includes(flatNo);
     const updated = exists ? currentAdminFlats.filter((f) => f !== flatNo) : [...currentAdminFlats, flatNo];
 
+    logAuditAction('PIN_CHANGE', `Toggled admin privileges for Flat #${flatNo}`);
+
     const newState: AppState = {
       ...appState,
       adminFlats: updated,
@@ -432,6 +469,8 @@ export const App: React.FC = () => {
       currentAdminFlats = currentAdminFlats.filter((f) => f !== flatNo);
     }
 
+    logAuditAction('PIN_CHANGE', `Updated role permission for Flat #${flatNo} to '${role}'`);
+
     const newState: AppState = {
       ...appState,
       adminFlats: currentAdminFlats,
@@ -444,6 +483,7 @@ export const App: React.FC = () => {
 
   // Handlers for Periodic AMC Tasks
   const handleUpdatePeriodicTask = (updatedTask: PeriodicTask) => {
+    logAuditAction('AMC_TASK', `Updated AMC task '${updatedTask.title}' (${updatedTask.category})`);
     const updatedTasks = (appState.periodicTasks || []).map((t) => (t.id === updatedTask.id ? updatedTask : t));
     const newState: AppState = {
       ...appState,
@@ -455,6 +495,7 @@ export const App: React.FC = () => {
   };
 
   const handleAddPeriodicTask = (newTask: PeriodicTask) => {
+    logAuditAction('AMC_TASK', `Added new AMC task '${newTask.title}' (${newTask.category})`);
     const updatedTasks = [newTask, ...(appState.periodicTasks || [])];
     const newState: AppState = {
       ...appState,
@@ -466,6 +507,7 @@ export const App: React.FC = () => {
   };
 
   const handleDeletePeriodicTask = (taskId: string) => {
+    logAuditAction('AMC_TASK', `Deleted AMC task (ID: ${taskId})`);
     const updatedTasks = (appState.periodicTasks || []).filter((t) => t.id !== taskId);
     const newState: AppState = {
       ...appState,
@@ -479,6 +521,7 @@ export const App: React.FC = () => {
 
   // Handlers for Vendors
   const handleAddVendor = (newVendor: ApartmentVendor) => {
+    logAuditAction('VENDOR', `Added vendor '${newVendor.name}' (${newVendor.role})`);
     const updatedVendors = [newVendor, ...(appState.vendors || [])];
     const newState: AppState = {
       ...appState,
@@ -490,6 +533,7 @@ export const App: React.FC = () => {
   };
 
   const handleDeleteVendor = (vendorId: string) => {
+    logAuditAction('VENDOR', `Deleted vendor (ID: ${vendorId})`);
     const updatedVendors = (appState.vendors || []).filter((v) => v.id !== vendorId);
     const newState: AppState = {
       ...appState,
@@ -502,6 +546,7 @@ export const App: React.FC = () => {
 
   // Handlers for Notices
   const handleAddNotice = (newNotice: NoticeItem) => {
+    logAuditAction('NOTICE', `Published notice '${newNotice.title}'`);
     const updatedNotices = [newNotice, ...(appState.notices || [])];
     const newState: AppState = {
       ...appState,
@@ -513,6 +558,7 @@ export const App: React.FC = () => {
   };
 
   const handleDeleteNotice = (noticeId: string) => {
+    logAuditAction('NOTICE', `Deleted notice (ID: ${noticeId})`);
     const updatedNotices = (appState.notices || []).filter((n) => n.id !== noticeId);
     const newState: AppState = {
       ...appState,
@@ -525,6 +571,7 @@ export const App: React.FC = () => {
 
   // Handlers for Committee Members
   const handleAddCommitteeMember = (newMember: CommitteeMember) => {
+    logAuditAction('DIRECTORY', `Added Executive Committee member '${newMember.name}' (${newMember.designation})`);
     const currentMembers = appState.committeeMembers || INITIAL_APP_STATE.committeeMembers || [];
     const newState: AppState = {
       ...appState,
@@ -536,6 +583,7 @@ export const App: React.FC = () => {
   };
 
   const handleUpdateCommitteeMember = (updatedMember: CommitteeMember) => {
+    logAuditAction('DIRECTORY', `Updated Executive Committee member '${updatedMember.name}' (${updatedMember.designation})`);
     const currentMembers = appState.committeeMembers || INITIAL_APP_STATE.committeeMembers || [];
     const updated = currentMembers.map((m) => (m.id === updatedMember.id ? updatedMember : m));
     const newState: AppState = {
@@ -548,6 +596,7 @@ export const App: React.FC = () => {
   };
 
   const handleDeleteCommitteeMember = (memberId: string) => {
+    logAuditAction('DIRECTORY', `Deleted Executive Committee member (ID: ${memberId})`);
     const currentMembers = appState.committeeMembers || INITIAL_APP_STATE.committeeMembers || [];
     const updated = currentMembers.filter((m) => m.id !== memberId);
     const newState: AppState = {
@@ -567,6 +616,8 @@ export const App: React.FC = () => {
       return;
     }
 
+    logAuditAction('TREASURER', `Updated Treasurer payment settings: UPI '${upiId}', Phone '${phone}', Name '${name}'`);
+
     const newState: AppState = {
       ...appState,
       treasurerUpiId: upiId,
@@ -580,6 +631,7 @@ export const App: React.FC = () => {
   };
 
   const handleUpdateCorpusConfig = (updatedConfig: CorpusFundConfig) => {
+    logAuditAction('CORPUS', `Updated Corpus Fund configuration & expenses`);
     const newState: AppState = {
       ...appState,
       corpusConfig: updatedConfig,
@@ -614,34 +666,6 @@ export const App: React.FC = () => {
   const collectionPercentage = activeRecord.totalGrandCollectionTarget > 0
     ? Math.round((totalCollected / activeRecord.totalGrandCollectionTarget) * 100)
     : 0;
-  const logAuditAction = (
-    actionType: AuditLogEntry['actionType'],
-    description: string
-  ) => {
-    const now = new Date();
-    const formattedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
-
-    const newLog: AuditLogEntry = {
-      id: 'audit-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6),
-      timestamp: formattedDate,
-      flatNo: currentAdminFlat || '302',
-      userRole,
-      actionType,
-      description,
-    };
-
-    setAppState((prev) => {
-      const currentLogs = prev.auditLogs || [];
-      const updatedState: AppState = {
-        ...prev,
-        auditLogs: [newLog, ...currentLogs].slice(0, 500),
-        lastUpdated: Date.now(),
-      };
-      saveAppStateLocal(updatedState);
-      syncToCloudRemote(updatedState);
-      return updatedState;
-    });
-  };
 
   const handleClearAuditLogs = () => {
     const newState: AppState = {
@@ -964,8 +988,10 @@ export const App: React.FC = () => {
             setIsAdmin(true);
             setCurrentAdminFlat(flatNo);
             saveLoginSession(flatNo);
+            logAuditAction('PIN_CHANGE', `Authenticated resident/admin session for Flat #${flatNo}`);
           }}
           onAdminLogout={() => {
+            logAuditAction('PIN_CHANGE', `Logged out member session (Flat #${currentAdminFlat})`);
             setIsAdmin(false);
             clearLoginSession();
           }}
@@ -979,6 +1005,7 @@ export const App: React.FC = () => {
           treasurerPhone={appState.treasurerPhone || '9963275455'}
           treasurerName={appState.treasurerName || 'Bobby (Flat 101 - Maintenance Lead)'}
           onUpdateTreasurerSettings={handleUpdateTreasurerSettings}
+          onAuditLogAction={logAuditAction}
         />
       )}
 
