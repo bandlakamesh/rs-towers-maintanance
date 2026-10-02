@@ -87,6 +87,8 @@ export const INITIAL_APP_STATE: AppState = {
   treasurerUpiId: '9963275455@upi',
   treasurerPhone: '9963275455',
   treasurerName: 'Bobby (Flat 101 - Maintenance Lead)',
+  flatPins: { '302': '2026', '101': '2026' },
+  masterPin: '2026',
   periodicTasks: [
     {
       id: 'task-lift-1',

@@ -608,8 +608,33 @@ export const App: React.FC = () => {
     syncToCloudRemote(newState);
   };
 
-  // Handler for Corpus Config
-  // Handler for Treasurer UPI & Contact Settings
+  // Handler for Persistent Security PIN Updates across Cloud & Storage
+  const handleUpdateFlatPin = (flatNo: string, newPin: string) => {
+    const currentPins = appState.flatPins || {};
+    const updatedPins = {
+      ...currentPins,
+      [flatNo]: newPin,
+    };
+
+    // Store in localStorage as immediate browser-level cache fallback
+    localStorage.setItem(`rs_towers_flat_pin_${flatNo}`, newPin);
+    if (flatNo === (appState.rootFlat || '302')) {
+      localStorage.setItem('rs_towers_maint_pin', newPin);
+    }
+
+    const newState: AppState = {
+      ...appState,
+      flatPins: updatedPins,
+      masterPin: flatNo === (appState.rootFlat || '302') ? newPin : (appState.masterPin || '2026'),
+      lastUpdated: Date.now(),
+    };
+
+    saveAppStateLocal(newState);
+    setAppState(newState);
+    syncToCloudRemote(newState);
+    logAuditAction('PIN_CHANGE', `Security PIN for Flat #${flatNo} updated and saved across all devices`);
+  };
+
   const handleUpdateTreasurerSettings = (upiId: string, phone: string, name: string) => {
     if (!isPrivilegedAdmin) {
       alert('🔒 Permission Denied: Only Root Super Admin or Maintenance Lead can update Treasurer settings.');
@@ -771,8 +796,8 @@ export const App: React.FC = () => {
           )}
         </nav>
 
-        {/* Dedicated Month Filter & Control Bar - ONLY shown for Monthly Maintenance Sheet & Analytics */}
-        {(activeTab === 'table' || activeTab === 'analytics') && (
+        {/* Dedicated Month Filter & Control Bar - ONLY shown for Monthly Maintenance Sheet */}
+        {activeTab === 'table' && (
           <div className="month-control-bar no-print" style={{ marginBottom: '16px' }}>
             <div className="month-pill-group">
               <div className="month-pill">
@@ -999,12 +1024,15 @@ export const App: React.FC = () => {
           adminFlats={appState.adminFlats}
           maintenanceLeadFlats={appState.maintenanceLeadFlats || ['101']}
           rootFlat={appState.rootFlat}
+          flatPins={appState.flatPins || {}}
+          masterPin={appState.masterPin || '2026'}
           onToggleFlatAdmin={handleToggleFlatAdmin}
           onSetFlatRole={handleSetFlatRole}
           treasurerUpiId={appState.treasurerUpiId || '9963275455@upi'}
           treasurerPhone={appState.treasurerPhone || '9963275455'}
           treasurerName={appState.treasurerName || 'Bobby (Flat 101 - Maintenance Lead)'}
           onUpdateTreasurerSettings={handleUpdateTreasurerSettings}
+          onUpdateFlatPin={handleUpdateFlatPin}
           onAuditLogAction={logAuditAction}
         />
       )}

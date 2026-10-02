@@ -173,6 +173,8 @@ export interface AppState {
   treasurerUpiId?: string; // default '9963275455@upi'
   treasurerPhone?: string; // default '9963275455'
   treasurerName?: string; // default 'Bobby (Flat 101 - Maintenance Lead)'
+  flatPins?: Record<string, string>; // e.g. { '302': '4321', '101': '1234' }
+  masterPin?: string; // Master Security PIN fallback
   auditLogs?: AuditLogEntry[];
 }
 

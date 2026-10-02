@@ -15,12 +15,15 @@ interface AdminPinModalProps {
   adminFlats?: string[];
   maintenanceLeadFlats?: string[];
   rootFlat?: string;
+  flatPins?: Record<string, string>;
+  masterPin?: string;
   onToggleFlatAdmin?: (flatNo: string) => void;
   onSetFlatRole?: (flatNo: string, role: 'MaintenanceLead' | 'CoAdmin' | 'Resident') => void;
   treasurerUpiId?: string;
   treasurerPhone?: string;
   treasurerName?: string;
   onUpdateTreasurerSettings?: (upiId: string, phone: string, name: string) => void;
+  onUpdateFlatPin?: (flatNo: string, newPin: string) => void;
   onAuditLogAction?: (actionType: AuditLogEntry['actionType'], description: string) => void;
 }
 
@@ -34,11 +37,14 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
   adminFlats = ['302'],
   maintenanceLeadFlats = ['101'],
   rootFlat = '302',
+  flatPins = {},
+  masterPin = '2026',
   onSetFlatRole,
   treasurerUpiId = '9963275455@upi',
   treasurerPhone = '9963275455',
   treasurerName = 'Bobby (Flat 101 - Maintenance Lead)',
   onUpdateTreasurerSettings,
+  onUpdateFlatPin,
   onAuditLogAction,
 }) => {
   const [authMode, setAuthMode] = useState<'otp' | 'pin'>('otp');
@@ -93,9 +99,9 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
 
   const getStoredPin = (): string => {
     return (
+      (flatPins && flatPins[currentAdminFlat]) ||
       localStorage.getItem(`rs_towers_flat_pin_${currentAdminFlat}`) ||
-      localStorage.getItem('rs_towers_maint_pin') ||
-      '2026'
+      (currentAdminFlat === rootFlat ? (flatPins && flatPins[rootFlat]) || masterPin || localStorage.getItem('rs_towers_maint_pin') || '2026' : '2026')
     );
   };
 
@@ -169,16 +175,16 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
     e.preventDefault();
     setErrorMsg('');
 
-    const storedFlatPin = localStorage.getItem(`rs_towers_flat_pin_${selectedFlat}`);
-    const masterPin = localStorage.getItem('rs_towers_maint_pin') || '2026';
+    const storedFlatPin = (flatPins && flatPins[selectedFlat]) || localStorage.getItem(`rs_towers_flat_pin_${selectedFlat}`);
+    const currentMasterPin = (flatPins && flatPins[rootFlat]) || masterPin || localStorage.getItem('rs_towers_maint_pin') || '2026';
     const entered = pinInput.trim();
 
-    if (entered !== masterPin && entered !== '2026' && entered !== storedFlatPin) {
+    if (entered !== currentMasterPin && entered !== '2026' && entered !== storedFlatPin) {
       setErrorMsg('❌ Incorrect Security PIN. Access denied.');
       return;
     }
 
-    onAuditLogAction?.('PIN_CHANGE', `User authenticated & logged into Flat #${selectedFlat} via Master PIN`);
+    onAuditLogAction?.('PIN_CHANGE', `User authenticated & logged into Flat #${selectedFlat} via Master/Flat PIN`);
     onAdminLoginSuccess(selectedFlat);
     setPinInput('');
     setErrorMsg('');
@@ -192,7 +198,9 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
     const storedPin = getStoredPin();
     const entered = currentPinInput.trim();
 
-    if (entered !== storedPin && entered !== '2026') {
+    const currentMasterPin = (flatPins && flatPins[rootFlat]) || masterPin || localStorage.getItem('rs_towers_maint_pin') || '2026';
+
+    if (entered !== storedPin && entered !== '2026' && entered !== currentMasterPin) {
       setErrorMsg('❌ Current Security PIN is incorrect.');
       return;
     }
@@ -202,16 +210,20 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
       return;
     }
 
-    localStorage.setItem(`rs_towers_flat_pin_${currentAdminFlat}`, newPinInput.trim());
+    const trimmedNew = newPinInput.trim();
+    localStorage.setItem(`rs_towers_flat_pin_${currentAdminFlat}`, trimmedNew);
     if (currentAdminFlat === rootFlat || currentAdminFlat === '302') {
-      localStorage.setItem('rs_towers_maint_pin', newPinInput.trim());
+      localStorage.setItem('rs_towers_maint_pin', trimmedNew);
     }
 
-    onAuditLogAction?.('PIN_CHANGE', `Security PIN for Flat #${currentAdminFlat} changed successfully`);
+    onUpdateFlatPin?.(currentAdminFlat, trimmedNew);
+    onAuditLogAction?.('PIN_CHANGE', `Security PIN for Flat #${currentAdminFlat} changed and saved across all sessions.`);
 
-    setSuccessMsg(`✅ Security PIN for Flat #${currentAdminFlat} updated successfully!`);
+    setSuccessMsg(`✅ Security PIN for Flat #${currentAdminFlat} updated & saved to cloud storage successfully!`);
     setCurrentPinInput('');
     setNewPinInput('');
+    setAdminTab('overview');
+  };
     setAdminTab('overview');
   };
 
