@@ -70,12 +70,15 @@ export const App: React.FC = () => {
 
   const activeRecord: MonthMaintenanceRecord = appState.months[appState.activeMonthId] || Object.values(appState.months)[0];
 
-  // Auto-reset activeTab to 'table' for non-admin residents if on Corpus tab
+  // Auto-reset activeTab to 'table' for non-permitted users if on Corpus or Audit tab
   useEffect(() => {
     if (!isPrivilegedAdmin && activeTab === 'corpus') {
       setActiveTab('table');
     }
-  }, [isPrivilegedAdmin, activeTab]);
+    if ((!isAdmin || userRole !== 'RootAdmin') && activeTab === 'audit') {
+      setActiveTab('table');
+    }
+  }, [isPrivilegedAdmin, isAdmin, userRole, activeTab]);
 
   // Live Firebase Realtime DB listener & polling fallback
   useEffect(() => {
@@ -715,7 +718,7 @@ export const App: React.FC = () => {
             <Megaphone size={15} /> 📢 Notice Board
           </button>
 
-          {(userRole === 'RootAdmin' || currentAdminFlat === rootFlat || currentAdminFlat === '302') && (
+          {isAdmin && userRole === 'RootAdmin' && (
             <button
               className={`chip ${activeTab === 'audit' ? 'active' : ''}`}
               onClick={() => setActiveTab('audit')}
@@ -906,7 +909,7 @@ export const App: React.FC = () => {
         )}
 
         {/* Tab 9: System Audit Log View (Root Super Admin Only) */}
-        {activeTab === 'audit' && (userRole === 'RootAdmin' || currentAdminFlat === rootFlat || currentAdminFlat === '302') && (
+        {activeTab === 'audit' && isAdmin && userRole === 'RootAdmin' && (
           <AuditLogViewer
             logs={appState.auditLogs || []}
             onClearLogs={handleClearAuditLogs}
