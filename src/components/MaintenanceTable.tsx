@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Table, Send, CheckCircle2, AlertCircle, Edit2, AlertTriangle, Bell, CreditCard } from 'lucide-react';
+import { Table, Send, CheckCircle2, AlertCircle, Edit2, AlertTriangle, Bell, CreditCard, Lock, Droplets } from 'lucide-react';
 import type { MonthMaintenanceRecord, FlatReading, UserRole, FlatDirectoryEntry } from '../types';
 import { generateWhatsAppFlatBillText, generateWhatsAppOverdueReminderText, openWhatsAppShareLink } from '../utils/whatsappFormatter';
 
@@ -33,7 +33,6 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
   onOpenAdminModal,
 }) => {
   const [editingFlatNo, setEditingFlatNo] = useState<string | null>(null);
-  const [tempPrev, setTempPrev] = useState<number>(0);
   const [tempCurr, setTempCurr] = useState<number>(0);
   const [tempNotes, setTempNotes] = useState<string>('');
 
@@ -58,7 +57,6 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
 
   const handleStartEdit = (flat: FlatReading) => {
     setEditingFlatNo(flat.flatNo);
-    setTempPrev(flat.previousReading);
     setTempCurr(flat.currentReading);
     setTempNotes(flat.notes || '');
   };
@@ -68,7 +66,7 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
       if (f.flatNo === flatNo) {
         return {
           ...f,
-          previousReading: Number(tempPrev),
+          previousReading: f.previousReading,
           currentReading: Number(tempCurr),
           notes: tempNotes,
         };
@@ -290,30 +288,27 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
                     </div>
                   </td>
 
-                  {/* Previous Reading */}
+                  {/* Previous Reading (Locked & Derived from Last Month) */}
                   <td style={{ padding: '6px 6px', textAlign: 'center', whiteSpace: 'nowrap' }}>
                     {isEditing ? (
-                      <input
-                        type="number"
-                        className="form-control"
-                        style={{ width: '65px', padding: '2px 4px', textAlign: 'center', fontSize: '0.8rem' }}
-                        value={tempPrev}
-                        onChange={(e) => setTempPrev(Number(e.target.value))}
-                      />
+                      <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748B', display: 'inline-flex', alignItems: 'center', gap: '3px', background: '#F1F5F9', border: '1px solid #CBD5E1', padding: '3px 7px', borderRadius: '4px' }} title="Previous reading is auto-derived from last month ending reading and cannot be edited.">
+                        <Lock size={11} color="#94A3B8" /> {f.previousReading}
+                      </span>
                     ) : (
                       <span style={{ fontWeight: 600, color: '#334155' }}>{f.previousReading}</span>
                     )}
                   </td>
 
-                  {/* Current Reading */}
+                  {/* Current Reading (Editable in Edit Mode) */}
                   <td style={{ padding: '6px 6px', textAlign: 'center', whiteSpace: 'nowrap' }}>
                     {isEditing ? (
                       <input
                         type="number"
                         className="form-control"
-                        style={{ width: '65px', padding: '2px 4px', textAlign: 'center', fontSize: '0.8rem' }}
+                        style={{ width: '70px', padding: '3px 6px', textAlign: 'center', fontSize: '0.84rem', fontWeight: 800, color: '#0096C7', borderColor: '#0096C7' }}
                         value={tempCurr}
                         onChange={(e) => setTempCurr(Number(e.target.value))}
+                        autoFocus
                       />
                     ) : (
                       <span style={{ fontWeight: 700, color: '#0096C7' }}>{f.currentReading}</span>
@@ -545,22 +540,79 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
                 )}
               </div>
 
-              {/* Meter Readings & Consumed Units Pill */}
-              <div style={{ background: 'rgba(255, 255, 255, 0.8)', border: '1px solid #E2E8F0', padding: '8px 10px', borderRadius: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', fontSize: '0.82rem' }}>
-                <span style={{ color: '#475569' }}>
-                  Readings: {isEditing ? (
-                    <span style={{ display: 'inline-flex', gap: '4px', alignItems: 'center' }}>
-                      <input type="number" value={tempPrev} onChange={(e) => setTempPrev(Number(e.target.value))} style={{ width: '55px', padding: '2px 4px', fontSize: '0.78rem' }} />
-                      →
-                      <input type="number" value={tempCurr} onChange={(e) => setTempCurr(Number(e.target.value))} style={{ width: '55px', padding: '2px 4px', fontSize: '0.78rem' }} />
+              {/* Meter Readings Card Section */}
+              <div style={{
+                background: 'linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%)',
+                border: '1px solid #CBD5E1',
+                borderRadius: '12px',
+                padding: '10px 12px',
+                marginBottom: '10px',
+                boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.03)',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    <Droplets size={13} color="#0096C7" /> Water Readings
+                  </span>
+                  <span style={{
+                    fontWeight: 900,
+                    fontSize: '0.78rem',
+                    color: isWM ? '#B45309' : '#059669',
+                    background: isWM ? '#FEF3C7' : '#ECFDF5',
+                    border: isWM ? '1px solid #FDE68A' : '1px solid #A7F3D0',
+                    padding: '2px 8px',
+                    borderRadius: '6px',
+                  }}>
+                    {isEditing ? Math.max(0, tempCurr - f.previousReading) : f.consumedUnits} Units Consumed
+                  </span>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  {/* Previous Reading Box (Un-editable & Derived from Last Month) */}
+                  <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '6px 8px' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '0.68rem', color: '#64748B', fontWeight: 700 }}>
+                      <Lock size={10} color="#94A3B8" /> Prev (Last Month)
                     </span>
-                  ) : (
-                    <strong>{f.previousReading} → {f.currentReading}</strong>
-                  )}
-                </span>
-                <span style={{ fontWeight: 800, color: isWM ? '#B45309' : '#059669', background: isWM ? '#FEF3C7' : '#ECFDF5', border: isWM ? '1px solid #FDE68A' : '1px solid #A7F3D0', padding: '2px 8px', borderRadius: '6px' }}>
-                  {f.consumedUnits} Units
-                </span>
+                    <div style={{ fontSize: '0.94rem', fontWeight: 800, color: '#475569', marginTop: '2px' }}>
+                      {f.previousReading}
+                    </div>
+                  </div>
+
+                  {/* Current Reading Box (Editable when in Edit mode) */}
+                  <div style={{
+                    background: isEditing ? '#FFFBEB' : '#FFFFFF',
+                    border: isEditing ? '1.5px solid #F59E0B' : '1px solid #E2E8F0',
+                    borderRadius: '8px',
+                    padding: '6px 8px',
+                  }}>
+                    <span style={{ fontSize: '0.68rem', color: isEditing ? '#D97706' : '#0077B6', fontWeight: 800, display: 'block' }}>
+                      Current Reading {isEditing ? '✏️' : ''}
+                    </span>
+                    {isEditing ? (
+                      <input
+                        type="number"
+                        value={tempCurr}
+                        onChange={(e) => setTempCurr(Number(e.target.value))}
+                        style={{
+                          width: '100%',
+                          padding: '3px 6px',
+                          fontSize: '0.94rem',
+                          fontWeight: 800,
+                          color: '#0F172A',
+                          border: '1px solid #F59E0B',
+                          borderRadius: '4px',
+                          background: '#FFFFFF',
+                          boxSizing: 'border-box',
+                          marginTop: '2px',
+                        }}
+                        autoFocus
+                      />
+                    ) : (
+                      <div style={{ fontSize: '0.96rem', fontWeight: 900, color: '#0096C7', marginTop: '2px' }}>
+                        {f.currentReading}
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
 
               {/* Financial Cost Breakdown Grid */}

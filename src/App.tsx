@@ -155,12 +155,42 @@ export const App: React.FC = () => {
 
     const applyMutation = () => {
       const recalculated = recalculateMonthRecord(updatedRecord);
+      
+      const monthKeys = Object.keys(appState.months);
+      const updatedMonths: Record<string, MonthMaintenanceRecord> = {
+        ...appState.months,
+        [recalculated.monthId]: recalculated,
+      };
+
+      // Cascade updated current readings to starting previous readings for subsequent months
+      const updatedIndex = monthKeys.indexOf(recalculated.monthId);
+      if (updatedIndex >= 0 && updatedIndex < monthKeys.length - 1) {
+        for (let i = updatedIndex; i < monthKeys.length - 1; i++) {
+          const prevM = updatedMonths[monthKeys[i]];
+          const nextMId = monthKeys[i + 1];
+          const nextM = updatedMonths[nextMId];
+
+          const nextReadings = nextM.flatReadings.map((nf) => {
+            const pf = prevM.flatReadings.find((p) => p.flatNo === nf.flatNo);
+            if (pf) {
+              return {
+                ...nf,
+                previousReading: pf.currentReading,
+              };
+            }
+            return nf;
+          });
+
+          updatedMonths[nextMId] = recalculateMonthRecord({
+            ...nextM,
+            flatReadings: nextReadings,
+          });
+        }
+      }
+
       const newState: AppState = {
         ...appState,
-        months: {
-          ...appState.months,
-          [recalculated.monthId]: recalculated,
-        },
+        months: updatedMonths,
         lastUpdated: Date.now(),
       };
       saveAppStateLocal(newState);
