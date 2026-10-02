@@ -93,6 +93,7 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
     return localStorage.getItem('rs_towers_maint_pin') || '2026';
   };
 
+  const isRootOrLead = currentAdminFlat === rootFlat || currentAdminFlat === '302' || maintenanceLeadFlats.includes(currentAdminFlat) || currentAdminFlat === '101';
   const selectedFlatObj = flatsList.find((f) => f.flatNo === selectedFlat);
   const defaultOwner = DEFAULT_FLAT_OWNERS[selectedFlat] || { name: 'Flat Resident', phone: '9849030200' };
   const rawPhone = selectedFlatObj?.ownerPhone || selectedFlatObj?.tenantPhone || defaultOwner.phone;
@@ -554,14 +555,16 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
                 </button>
               )}
 
-              <button
-                type="button"
-                className={`chip ${adminTab === 'treasurer_settings' ? 'active' : ''}`}
-                onClick={() => setAdminTab('treasurer_settings')}
-                style={{ fontSize: '0.76rem', padding: '6px 12px', background: adminTab === 'treasurer_settings' ? '#ECFDF5' : undefined, color: adminTab === 'treasurer_settings' ? '#065F46' : undefined, borderColor: adminTab === 'treasurer_settings' ? '#A7F3D0' : undefined }}
-              >
-                💳 Treasurer UPI & Contact
-              </button>
+              {isRootOrLead && (
+                <button
+                  type="button"
+                  className={`chip ${adminTab === 'treasurer_settings' ? 'active' : ''}`}
+                  onClick={() => setAdminTab('treasurer_settings')}
+                  style={{ fontSize: '0.76rem', padding: '6px 12px', background: adminTab === 'treasurer_settings' ? '#ECFDF5' : undefined, color: adminTab === 'treasurer_settings' ? '#065F46' : undefined, borderColor: adminTab === 'treasurer_settings' ? '#A7F3D0' : undefined }}
+                >
+                  💳 Treasurer UPI & Contact
+                </button>
+              )}
 
               {(currentAdminFlat === rootFlat || currentAdminFlat === '302') && (
                 <button
@@ -618,14 +621,16 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <button
-                    type="button"
-                    className="app-btn app-btn-secondary"
-                    onClick={() => setAdminTab('treasurer_settings')}
-                    style={{ width: '100%', justifyContent: 'center', background: '#ECFDF5', color: '#065F46', border: '1px solid #A7F3D0', padding: '10px 14px', fontSize: '0.82rem', fontWeight: 700 }}
-                  >
-                    💳 Edit / View Treasurer Payment UPI & Contact Details ({upiInput})
-                  </button>
+                  {isRootOrLead && (
+                    <button
+                      type="button"
+                      className="app-btn app-btn-secondary"
+                      onClick={() => setAdminTab('treasurer_settings')}
+                      style={{ width: '100%', justifyContent: 'center', background: '#ECFDF5', color: '#065F46', border: '1px solid #A7F3D0', padding: '10px 14px', fontSize: '0.82rem', fontWeight: 700 }}
+                    >
+                      💳 Edit / View Treasurer Payment UPI & Contact Details ({upiInput})
+                    </button>
+                  )}
 
                   {currentAdminFlat === rootFlat && (
                     <button

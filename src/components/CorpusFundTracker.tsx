@@ -504,7 +504,11 @@ export const CorpusFundTracker: React.FC<CorpusFundTrackerProps> = ({
                   type="number"
                   className="form-control"
                   value={editMonthlyRate}
-                  onChange={(e) => setEditMonthlyRate(Number(e.target.value))}
+                  onChange={(e) => {
+                    const r = Number(e.target.value);
+                    setEditMonthlyRate(r);
+                    setEditBaseline(occupiedCount * r * editPastMonths);
+                  }}
                   min="0"
                   required
                 />
@@ -516,7 +520,11 @@ export const CorpusFundTracker: React.FC<CorpusFundTrackerProps> = ({
                   type="number"
                   className="form-control"
                   value={editPastMonths}
-                  onChange={(e) => setEditPastMonths(Number(e.target.value))}
+                  onChange={(e) => {
+                    const m = Number(e.target.value);
+                    setEditPastMonths(m);
+                    setEditBaseline(occupiedCount * editMonthlyRate * m);
+                  }}
                   min="1"
                   required
                 />

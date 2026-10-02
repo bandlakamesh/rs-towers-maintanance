@@ -183,23 +183,25 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
             <span title={`Recipient: ${treasurerName} (Ph: ${treasurerPhone})`}>
               Payee UPI: <strong style={{ color: '#0F172A', fontFamily: 'monospace', fontSize: '0.88rem' }}>{treasurerUpiId}</strong> ({treasurerName})
             </span>
-            <button
-              onClick={onOpenAdminModal}
-              style={{
-                background: '#059669',
-                color: '#FFFFFF',
-                border: 'none',
-                borderRadius: '6px',
-                padding: '3px 8px',
-                fontSize: '0.74rem',
-                fontWeight: 800,
-                cursor: 'pointer',
-                marginLeft: '4px',
-              }}
-              title="Edit Treasurer UPI ID & Phone Number"
-            >
-              ✏️ Edit
-            </button>
+            {isRootOrLead && (
+              <button
+                onClick={onOpenAdminModal}
+                style={{
+                  background: '#059669',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '3px 8px',
+                  fontSize: '0.74rem',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  marginLeft: '4px',
+                }}
+                title="Edit Treasurer UPI ID & Phone Number"
+              >
+                ✏️ Edit
+              </button>
+            )}
           </div>
         )}
       </div>
