@@ -69,8 +69,12 @@ export const App: React.FC = () => {
 
   const activeRecord: MonthMaintenanceRecord = appState.months[appState.activeMonthId] || Object.values(appState.months)[0];
 
-  // Active Tab state for navigation
-  // All tabs are accessible to all residents in read-only mode, with edit capabilities restricted to admins
+  // Auto-reset activeTab to 'table' for non-admin residents if on Corpus tab
+  useEffect(() => {
+    if (!isPrivilegedAdmin && activeTab === 'corpus') {
+      setActiveTab('table');
+    }
+  }, [isPrivilegedAdmin, activeTab]);
 
   // Live Firebase Realtime DB listener & polling fallback
   useEffect(() => {
@@ -655,12 +659,14 @@ export const App: React.FC = () => {
             <Shield size={15} /> 🏛️ Executive Committee
           </button>
 
-          <button
-            className={`chip ${activeTab === 'corpus' ? 'active' : ''}`}
-            onClick={() => setActiveTab('corpus')}
-          >
-            <Landmark size={15} /> 🏛️ Corpus Fund Tracker (₹200/mo)
-          </button>
+          {isPrivilegedAdmin && (
+            <button
+              className={`chip ${activeTab === 'corpus' ? 'active' : ''}`}
+              onClick={() => setActiveTab('corpus')}
+            >
+              <Landmark size={15} /> 🏛️ Corpus Fund Tracker (₹200/mo)
+            </button>
+          )}
 
           <button
             className={`chip ${activeTab === 'amc' ? 'active' : ''}`}
@@ -753,8 +759,8 @@ export const App: React.FC = () => {
           />
         )}
 
-        {/* Tab 5: Dedicated Corpus Fund Tracker */}
-        {activeTab === 'corpus' && (
+        {/* Tab 5: Dedicated Corpus Fund Tracker (Privileged Admins Only) */}
+        {activeTab === 'corpus' && isPrivilegedAdmin && (
           <CorpusFundTracker
             corpusConfig={defaultCorpusConfig}
             activeRecord={activeRecord}
@@ -1036,13 +1042,15 @@ export const App: React.FC = () => {
           <span>Committee</span>
         </button>
 
-        <button
-          className={`mobile-nav-item ${activeTab === 'corpus' ? 'active' : ''}`}
-          onClick={() => setActiveTab('corpus')}
-        >
-          <Landmark size={18} />
-          <span>Corpus</span>
-        </button>
+        {isPrivilegedAdmin && (
+          <button
+            className={`mobile-nav-item ${activeTab === 'corpus' ? 'active' : ''}`}
+            onClick={() => setActiveTab('corpus')}
+          >
+            <Landmark size={18} />
+            <span>Corpus</span>
+          </button>
+        )}
 
         <button
           className={`mobile-nav-item ${activeTab === 'amc' ? 'active' : ''}`}
