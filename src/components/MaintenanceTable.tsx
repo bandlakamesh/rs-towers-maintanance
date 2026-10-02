@@ -222,7 +222,6 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
               <th style={{ padding: '8px 6px', textAlign: 'right', whiteSpace: 'nowrap' }}>Panchayat</th>
               <th style={{ padding: '8px 6px', textAlign: 'right', whiteSpace: 'nowrap' }}>Common</th>
               <th style={{ padding: '8px 6px', textAlign: 'right', whiteSpace: 'nowrap' }}>Exact Total</th>
-              <th style={{ padding: '8px 6px', textAlign: 'right', whiteSpace: 'nowrap' }}>Due Amount</th>
               <th style={{ padding: '8px 6px', whiteSpace: 'nowrap' }}>Notes</th>
               <th className="no-print" style={{ padding: '8px 6px', textAlign: 'right', whiteSpace: 'nowrap' }}>Actions</th>
             </tr>
@@ -273,23 +272,28 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
                           Tenant
                         </span>
                       )}
-                      
-                      {!isWM && effFlat.isOccupied && (
-                        isPaid ? (
-                          <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#059669', background: '#ECFDF5', border: '1px solid #A7F3D0', padding: '1px 5px', borderRadius: '8px', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
-                            <CheckCircle2 size={10} /> Paid
-                          </span>
-                        ) : isPastDueDate ? (
-                          <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#B91C1C', background: '#FEE2E2', border: '1px solid #FCA5A5', padding: '1px 5px', borderRadius: '8px', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
-                            <AlertTriangle size={10} /> OVERDUE
-                          </span>
-                        ) : (
-                          <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#D97706', background: '#FEF3C7', border: '1px solid #FDE68A', padding: '1px 5px', borderRadius: '8px', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
-                            <AlertCircle size={10} /> Pending
-                          </span>
-                        )
-                      )}
                     </div>
+                  </td>
+
+                  {/* Status Badge */}
+                  <td style={{ padding: '6px 6px', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                    {!isWM && effFlat.isOccupied ? (
+                      isPaid ? (
+                        <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#059669', background: '#ECFDF5', border: '1px solid #A7F3D0', padding: '1px 5px', borderRadius: '8px', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+                          <CheckCircle2 size={10} /> Paid
+                        </span>
+                      ) : isPastDueDate ? (
+                        <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#B91C1C', background: '#FEE2E2', border: '1px solid #FCA5A5', padding: '1px 5px', borderRadius: '8px', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+                          <AlertTriangle size={10} /> OVERDUE
+                        </span>
+                      ) : (
+                        <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#D97706', background: '#FEF3C7', border: '1px solid #FDE68A', padding: '1px 5px', borderRadius: '8px', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+                          <AlertCircle size={10} /> Pending
+                        </span>
+                      )
+                    ) : (
+                      <span style={{ fontSize: '0.68rem', color: '#94A3B8' }}>-</span>
+                    )}
                   </td>
 
                   {/* Previous Reading (Locked & Derived from Last Month) */}
@@ -342,11 +346,6 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
                   </td>
 
                   {/* Exact Total Value */}
-                  <td style={{ padding: '6px 6px', textAlign: 'right', whiteSpace: 'nowrap', color: '#64748B', fontSize: '0.76rem' }}>
-                    ₹{f.totalValue.toFixed(2)}
-                  </td>
-
-                  {/* Rounded Due Value */}
                   <td style={{ padding: '6px 6px', textAlign: 'right', whiteSpace: 'nowrap', fontWeight: 800, color: isWM ? '#64748B' : '#0F172A', fontSize: '0.86rem' }}>
                     ₹{f.roundedValue.toLocaleString('en-IN')}
                   </td>
@@ -451,9 +450,11 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
           {/* Table Footer Totals */}
           <tfoot>
             <tr style={{ background: '#F8FAFC', borderTop: '2px solid #CBD5E1', fontWeight: 800, color: '#0F172A' }}>
-              <td colSpan={4} style={{ padding: '12px 14px' }}>
+              <td colSpan={3} style={{ padding: '12px 14px' }}>
                 Building Summary & Totals:
               </td>
+              <td style={{ padding: '12px 14px', textAlign: 'center', color: '#64748B' }}>-</td>
+              <td style={{ padding: '12px 14px', textAlign: 'center', color: '#64748B' }}>-</td>
               <td style={{ padding: '12px 14px', textAlign: 'center', color: '#059669' }}>
                 {record.totalUnitsConsumed} Units
               </td>
@@ -466,14 +467,11 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
               <td style={{ padding: '12px 14px', textAlign: 'right', color: '#475569' }}>
                 ₹{record.totalCommonMaintenance.toLocaleString('en-IN')}
               </td>
-              <td style={{ padding: '12px 14px', textAlign: 'right', color: '#64748B' }}>
-                -
-              </td>
-              <td style={{ padding: '12px 14px', textAlign: 'right', color: '#1D4ED8', fontSize: '1.05rem' }}>
+              <td style={{ padding: '12px 14px', textAlign: 'right', color: '#1D4ED8', fontSize: '1rem', fontWeight: 900 }}>
                 ₹{record.totalGrandCollectionTarget.toLocaleString('en-IN')}
               </td>
-              <td colSpan={2} style={{ padding: '12px 14px', textAlign: 'right', color: '#059669' }}>
-                Rounded Target Total
+              <td colSpan={2} style={{ padding: '12px 14px', textAlign: 'right', color: '#059669', fontSize: '0.78rem' }}>
+                Total Target Collection
               </td>
             </tr>
           </tfoot>
