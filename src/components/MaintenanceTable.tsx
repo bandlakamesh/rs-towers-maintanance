@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Table, Send, CheckCircle2, AlertCircle, Edit2, AlertTriangle, Bell, CreditCard, Maximize2, Minimize2 } from 'lucide-react';
+import { Table, Send, CheckCircle2, AlertCircle, Edit2, AlertTriangle, Bell, CreditCard } from 'lucide-react';
 import type { MonthMaintenanceRecord, FlatReading, UserRole, FlatDirectoryEntry } from '../types';
 import { generateWhatsAppFlatBillText, generateWhatsAppOverdueReminderText, openWhatsAppShareLink } from '../utils/whatsappFormatter';
 
@@ -36,7 +36,6 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
   const [tempPrev, setTempPrev] = useState<number>(0);
   const [tempCurr, setTempCurr] = useState<number>(0);
   const [tempNotes, setTempNotes] = useState<string>('');
-  const [isFitScreen, setIsFitScreen] = useState<boolean>(true);
 
   const todayDate = new Date().getDate();
   const isPastDueDate = todayDate > dueDateDay;
@@ -165,85 +164,63 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
           </p>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-          {/* Single Screen View Toggle Button */}
-          <button
-            onClick={() => setIsFitScreen(!isFitScreen)}
-            className="app-btn no-print"
-            style={{
-              background: isFitScreen ? 'linear-gradient(135deg, #059669 0%, #047857 100%)' : '#F1F5F9',
-              color: isFitScreen ? '#FFFFFF' : '#334155',
-              border: isFitScreen ? '1px solid #A7F3D0' : '1px solid #CBD5E1',
-              padding: '6px 12px',
-              fontSize: '0.78rem',
-              fontWeight: 700,
-              borderRadius: '8px',
-              boxShadow: isFitScreen ? '0 2px 8px rgba(5, 150, 105, 0.25)' : 'none',
-            }}
-            title={isFitScreen ? "Switch to Wide Scroll View" : "Fit all columns onto single screen without scrolling"}
-          >
-            {isFitScreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
-            {isFitScreen ? '⚡ Single Screen View (Active)' : '↔️ Scroll View'}
-          </button>
-
-          {/* Integrated Treasurer UPI Pill - Privileged Admins Only */}
-          {isPrivilegedAdmin && (
-            <div style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              background: '#ECFDF5',
-              border: '1.5px solid #A7F3D0',
-              borderRadius: '10px',
-              padding: '6px 12px',
-              fontSize: '0.8rem',
-              color: '#065F46',
-              fontWeight: 700,
-              boxShadow: '0 2px 6px rgba(5, 150, 105, 0.08)',
-            }}>
-              <CreditCard size={15} color="#059669" />
-              <span title={`Recipient: ${treasurerName} (Ph: ${treasurerPhone})`}>
-                Payee UPI: <strong style={{ color: '#0F172A', fontFamily: 'monospace', fontSize: '0.88rem' }}>{treasurerUpiId}</strong> ({treasurerName})
-              </span>
-              <button
-                onClick={onOpenAdminModal}
-                style={{
-                  background: '#059669',
-                  color: '#FFFFFF',
-                  border: 'none',
-                  borderRadius: '6px',
-                  padding: '3px 8px',
-                  fontSize: '0.74rem',
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                  marginLeft: '4px',
-                }}
-                title="Edit Treasurer UPI ID & Phone Number"
-              >
-                ✏️ Edit
-              </button>
-            </div>
-          )}
-        </div>
+        {/* Integrated Treasurer UPI Pill - Privileged Admins Only */}
+        {isPrivilegedAdmin && (
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            background: '#ECFDF5',
+            border: '1.5px solid #A7F3D0',
+            borderRadius: '10px',
+            padding: '6px 12px',
+            fontSize: '0.8rem',
+            color: '#065F46',
+            fontWeight: 700,
+            boxShadow: '0 2px 6px rgba(5, 150, 105, 0.08)',
+          }}>
+            <CreditCard size={15} color="#059669" />
+            <span title={`Recipient: ${treasurerName} (Ph: ${treasurerPhone})`}>
+              Payee UPI: <strong style={{ color: '#0F172A', fontFamily: 'monospace', fontSize: '0.88rem' }}>{treasurerUpiId}</strong> ({treasurerName})
+            </span>
+            <button
+              onClick={onOpenAdminModal}
+              style={{
+                background: '#059669',
+                color: '#FFFFFF',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '3px 8px',
+                fontSize: '0.74rem',
+                fontWeight: 800,
+                cursor: 'pointer',
+                marginLeft: '4px',
+              }}
+              title="Edit Treasurer UPI ID & Phone Number"
+            >
+              ✏️ Edit
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Main Table Container */}
-      <div className="app-card" style={{ overflowX: 'auto', padding: 0 }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: isFitScreen ? '0.78rem' : '0.86rem', minWidth: isFitScreen ? '0px' : '920px' }}>
+      {/* Main Table Container (Single Screen Fit Layout - No Scroll) */}
+      <div className="app-card" style={{ overflowX: 'hidden', padding: 0 }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.75rem', tableLayout: 'auto' }}>
           <thead>
             <tr style={{ background: '#F0F9FF', borderBottom: '2px solid #B2D8E5', color: '#0077B6', fontFamily: 'var(--font-title)', userSelect: 'none' }}>
-              <th style={{ padding: isFitScreen ? '8px 6px' : '12px 14px', whiteSpace: 'nowrap' }}>Flat</th>
-              <th style={{ padding: isFitScreen ? '8px 6px' : '12px 14px', whiteSpace: 'nowrap' }}>Resident</th>
-              <th style={{ padding: isFitScreen ? '8px 6px' : '12px 14px', textAlign: 'center', whiteSpace: 'nowrap' }}>Prev</th>
-              <th style={{ padding: isFitScreen ? '8px 6px' : '12px 14px', textAlign: 'center', whiteSpace: 'nowrap' }}>Curr</th>
-              <th style={{ padding: isFitScreen ? '8px 6px' : '12px 14px', textAlign: 'center', whiteSpace: 'nowrap' }}>Units</th>
-              <th style={{ padding: isFitScreen ? '8px 6px' : '12px 14px', textAlign: 'right', whiteSpace: 'nowrap' }}>Water</th>
-              <th style={{ padding: isFitScreen ? '8px 6px' : '12px 14px', textAlign: 'right', whiteSpace: 'nowrap' }}>Panchayat</th>
-              <th style={{ padding: isFitScreen ? '8px 6px' : '12px 14px', textAlign: 'right', whiteSpace: 'nowrap' }}>Common</th>
-              <th style={{ padding: isFitScreen ? '8px 6px' : '12px 14px', textAlign: 'right', whiteSpace: 'nowrap' }}>Exact Total</th>
-              <th style={{ padding: isFitScreen ? '8px 6px' : '12px 14px', textAlign: 'right', whiteSpace: 'nowrap' }}>Due Amount</th>
-              <th style={{ padding: isFitScreen ? '8px 6px' : '12px 14px', whiteSpace: 'nowrap' }}>Notes</th>
-              <th className="no-print" style={{ padding: isFitScreen ? '8px 6px' : '12px 14px', textAlign: 'right', whiteSpace: 'nowrap' }}>Actions</th>
+              <th style={{ padding: '6px 4px', whiteSpace: 'nowrap' }}>Flat</th>
+              <th style={{ padding: '6px 4px', whiteSpace: 'nowrap' }}>Resident</th>
+              <th style={{ padding: '6px 4px', textAlign: 'center', whiteSpace: 'nowrap' }}>Prev</th>
+              <th style={{ padding: '6px 4px', textAlign: 'center', whiteSpace: 'nowrap' }}>Curr</th>
+              <th style={{ padding: '6px 4px', textAlign: 'center', whiteSpace: 'nowrap' }}>Units</th>
+              <th style={{ padding: '6px 4px', textAlign: 'right', whiteSpace: 'nowrap' }}>Water</th>
+              <th style={{ padding: '6px 4px', textAlign: 'right', whiteSpace: 'nowrap' }}>Panch.</th>
+              <th style={{ padding: '6px 4px', textAlign: 'right', whiteSpace: 'nowrap' }}>Common</th>
+              <th style={{ padding: '6px 4px', textAlign: 'right', whiteSpace: 'nowrap' }}>Total</th>
+              <th style={{ padding: '6px 4px', textAlign: 'right', whiteSpace: 'nowrap' }}>Due</th>
+              <th style={{ padding: '6px 4px', whiteSpace: 'nowrap' }}>Notes</th>
+              <th className="no-print" style={{ padding: '6px 4px', textAlign: 'right', whiteSpace: 'nowrap' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -267,13 +244,13 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
                   }}
                 >
                   {/* Flat Number */}
-                  <td style={{ padding: isFitScreen ? '6px 6px' : '10px 14px', whiteSpace: 'nowrap', fontWeight: 800 }}>
+                  <td style={{ padding: '6px 6px', whiteSpace: 'nowrap', fontWeight: 800 }}>
                     <span style={{
                       display: 'inline-flex',
                       alignItems: 'center',
-                      padding: isFitScreen ? '2px 5px' : '3px 8px',
+                      padding: '2px 5px',
                       borderRadius: '6px',
-                      fontSize: isFitScreen ? '0.78rem' : '0.82rem',
+                      fontSize: '0.78rem',
                       color: isWM ? '#B45309' : isUserFlat && isAdmin ? '#0284C7' : '#1D4ED8',
                       background: isWM ? '#FEF3C7' : isUserFlat && isAdmin ? '#E0F2FE' : '#EFF6FF',
                       border: isWM ? '1px solid #FDE68A' : isUserFlat && isAdmin ? '1.5px solid #7DD3FC' : '1px solid #BFDBFE',
@@ -284,7 +261,7 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
                   </td>
 
                   {/* Resident Name with Inline Status Badge */}
-                  <td style={{ padding: isFitScreen ? '6px 6px' : '10px 14px', fontWeight: 600, color: '#0F172A', whiteSpace: 'nowrap' }}>
+                  <td style={{ padding: '6px 6px', fontWeight: 600, color: '#0F172A', whiteSpace: 'nowrap' }}>
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', flexWrap: 'nowrap' }}>
                       <span>{effFlat.residentName}</span>
                       {effFlat.residentType === 'Tenant' && (
@@ -312,7 +289,7 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
                   </td>
 
                   {/* Previous Reading */}
-                  <td style={{ padding: isFitScreen ? '6px 6px' : '10px 14px', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                  <td style={{ padding: '6px 6px', textAlign: 'center', whiteSpace: 'nowrap' }}>
                     {isEditing ? (
                       <input
                         type="number"
@@ -327,7 +304,7 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
                   </td>
 
                   {/* Current Reading */}
-                  <td style={{ padding: isFitScreen ? '6px 6px' : '10px 14px', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                  <td style={{ padding: '6px 6px', textAlign: 'center', whiteSpace: 'nowrap' }}>
                     {isEditing ? (
                       <input
                         type="number"
@@ -342,39 +319,39 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
                   </td>
 
                   {/* Consumed Units */}
-                  <td style={{ padding: isFitScreen ? '6px 6px' : '10px 14px', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                  <td style={{ padding: '6px 6px', textAlign: 'center', whiteSpace: 'nowrap' }}>
                     <span style={{ fontWeight: 800, color: isWM ? '#D97706' : '#059669', background: isWM ? '#FEF3C7' : '#ECFDF5', padding: '1px 6px', borderRadius: '6px' }}>
                       {f.consumedUnits}
                     </span>
                   </td>
 
                   {/* Water Cost */}
-                  <td style={{ padding: isFitScreen ? '6px 6px' : '10px 14px', textAlign: 'right', whiteSpace: 'nowrap', fontWeight: 600, color: '#0F172A' }}>
+                  <td style={{ padding: '6px 6px', textAlign: 'right', whiteSpace: 'nowrap', fontWeight: 600, color: '#0F172A' }}>
                     ₹{f.waterCost.toLocaleString('en-IN')}
                   </td>
 
                   {/* Panchayat Water Share */}
-                  <td style={{ padding: isFitScreen ? '6px 6px' : '10px 14px', textAlign: 'right', whiteSpace: 'nowrap', color: '#475569' }}>
+                  <td style={{ padding: '6px 6px', textAlign: 'right', whiteSpace: 'nowrap', color: '#475569' }}>
                     ₹{f.panchayatShare.toFixed(2)}
                   </td>
 
                   {/* Common Maintenance Share */}
-                  <td style={{ padding: isFitScreen ? '6px 6px' : '10px 14px', textAlign: 'right', whiteSpace: 'nowrap', color: '#475569' }}>
+                  <td style={{ padding: '6px 6px', textAlign: 'right', whiteSpace: 'nowrap', color: '#475569' }}>
                     ₹{f.commonMaintenanceShare.toFixed(2)}
                   </td>
 
                   {/* Exact Total Value */}
-                  <td style={{ padding: isFitScreen ? '6px 6px' : '10px 14px', textAlign: 'right', whiteSpace: 'nowrap', color: '#64748B', fontSize: isFitScreen ? '0.76rem' : '0.82rem' }}>
+                  <td style={{ padding: '6px 6px', textAlign: 'right', whiteSpace: 'nowrap', color: '#64748B', fontSize: '0.76rem' }}>
                     ₹{f.totalValue.toFixed(2)}
                   </td>
 
                   {/* Rounded Due Value */}
-                  <td style={{ padding: isFitScreen ? '6px 6px' : '10px 14px', textAlign: 'right', whiteSpace: 'nowrap', fontWeight: 800, color: isWM ? '#64748B' : '#0F172A', fontSize: isFitScreen ? '0.86rem' : '0.94rem' }}>
+                  <td style={{ padding: '6px 6px', textAlign: 'right', whiteSpace: 'nowrap', fontWeight: 800, color: isWM ? '#64748B' : '#0F172A', fontSize: '0.86rem' }}>
                     ₹{f.roundedValue.toLocaleString('en-IN')}
                   </td>
 
                   {/* Resident Notes */}
-                  <td style={{ padding: isFitScreen ? '6px 6px' : '10px 14px', whiteSpace: 'nowrap', fontSize: '0.76rem', color: '#DC2626', fontWeight: 600 }}>
+                  <td style={{ padding: '6px 6px', whiteSpace: 'nowrap', fontSize: '0.76rem', color: '#DC2626', fontWeight: 600 }}>
                     {isEditing ? (
                       <input
                         type="text"
@@ -390,7 +367,7 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
                   </td>
 
                   {/* Action Buttons */}
-                  <td className="no-print" style={{ padding: isFitScreen ? '6px 6px' : '10px 14px', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                  <td className="no-print" style={{ padding: '6px 6px', textAlign: 'right', whiteSpace: 'nowrap' }}>
                     <div style={{ display: 'inline-flex', gap: '6px', alignItems: 'center' }}>
                       {!isWM && f.isOccupied && canPayThisFlat && (
                         <button

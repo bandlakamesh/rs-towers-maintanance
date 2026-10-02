@@ -401,7 +401,7 @@ export const CorpusFundTracker: React.FC<CorpusFundTrackerProps> = ({
       </div>
 
       {/* Corpus Expenditures History Table */}
-      <div className="app-card" style={{ padding: 0, overflowX: 'auto' }}>
+      <div className="app-card" style={{ padding: 0, overflowX: 'hidden' }}>
         <div style={{ padding: '16px 20px', borderBottom: '1px solid #E2E8F0', background: '#F8FAFC', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F172A', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
             <FileText size={18} color="#0096C7" /> Corpus Expenditure & Major Work Log
