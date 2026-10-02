@@ -440,7 +440,7 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
                             )
                           )}
 
-                          {!isWM && f.isOccupied && (
+                          {isPrivilegedAdmin && !isWM && f.isOccupied && (
                             <>
                               <button
                                 onClick={() => handleSendFlatWhatsApp(f)}
