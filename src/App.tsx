@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
-import { Table, Wrench, Contact, Megaphone, Landmark, BarChart2, Calendar, Plus, UserCheck, Trash2, ShieldAlert, Shield, X } from 'lucide-react';
-import type { AppState, MonthMaintenanceRecord, FlatReading, WaterCalculationConfig, CommonExpenseItem, PaymentMode, PeriodicTask, ApartmentVendor, NoticeItem, CorpusFundConfig, UserRole, CommitteeMember, FlatDirectoryEntry } from './types';
+import { Table, Wrench, Contact, Megaphone, Landmark, BarChart2, Calendar, Plus, UserCheck, Trash2, ShieldAlert, Shield, X, History } from 'lucide-react';
+import type { AppState, MonthMaintenanceRecord, FlatReading, WaterCalculationConfig, CommonExpenseItem, PaymentMode, PeriodicTask, ApartmentVendor, NoticeItem, CorpusFundConfig, UserRole, CommitteeMember, FlatDirectoryEntry, AuditLogEntry } from './types';
 import { loadAppState, saveAppStateLocal, fetchLatestCloudState, syncToCloudRemote, getStoredLoginSession, saveLoginSession, clearLoginSession } from './utils/storage';
 import { recalculateMonthRecord } from './utils/calculator';
 
@@ -18,12 +18,13 @@ import { NoticeBoard } from './components/NoticeBoard';
 import { CorpusFundTracker } from './components/CorpusFundTracker';
 import { AnalyticsDashboard } from './components/AnalyticsDashboard';
 import { ApartmentCommittee } from './components/ApartmentCommittee';
+import { AuditLogViewer } from './components/AuditLogViewer';
 import { INITIAL_APP_STATE } from './data/initialData';
 import { subscribeToFirebaseState } from './utils/firebaseStorage';
 
 export const App: React.FC = () => {
   const [appState, setAppState] = useState<AppState>(() => loadAppState());
-  const [activeTab, setActiveTab] = useState<'table' | 'analytics' | 'occupants' | 'committee' | 'corpus' | 'amc' | 'vendors' | 'notices'>('table');
+  const [activeTab, setActiveTab] = useState<'table' | 'analytics' | 'occupants' | 'committee' | 'corpus' | 'amc' | 'vendors' | 'notices' | 'audit'>('table');
 
   // Role Security & Persistent Session State
   const initialSession = getStoredLoginSession();
@@ -247,6 +248,7 @@ export const App: React.FC = () => {
   };
 
   const handleUpdateReadings = (updatedReadings: FlatReading[]) => {
+    logAuditAction('EDIT_READING', `Updated meter readings / notes in '${activeRecord.monthTitle}'`);
     handleUpdateRecord({
       ...activeRecord,
       flatReadings: updatedReadings,
@@ -342,6 +344,7 @@ export const App: React.FC = () => {
     });
 
     handleUpdateReadings(updated);
+    logAuditAction('PAYMENT_RECORDED', `Recorded payment of ₹${amount} (${paymentMode}) for Flat #${flatNo} in '${activeRecord.monthTitle}'`);
 
     confetti({
       particleCount: 80,
@@ -351,6 +354,7 @@ export const App: React.FC = () => {
   };
 
   const handleCreateMonth = (newMonthRecord: MonthMaintenanceRecord) => {
+    logAuditAction('CREATE_MONTH', `Created new monthly calculation sheet '${newMonthRecord.monthTitle}'`);
     const newState: AppState = {
       ...appState,
       activeMonthId: newMonthRecord.monthId,
@@ -360,6 +364,7 @@ export const App: React.FC = () => {
       },
       lastUpdated: Date.now(),
     };
+    saveAppStateLocal(newState);
     setAppState(newState);
     syncToCloudRemote(newState);
   };
@@ -440,6 +445,18 @@ export const App: React.FC = () => {
       periodicTasks: updatedTasks,
       lastUpdated: Date.now(),
     };
+    setAppState(newState);
+    syncToCloudRemote(newState);
+  };
+
+  const handleDeletePeriodicTask = (taskId: string) => {
+    const updatedTasks = (appState.periodicTasks || []).filter((t) => t.id !== taskId);
+    const newState: AppState = {
+      ...appState,
+      periodicTasks: updatedTasks,
+      lastUpdated: Date.now(),
+    };
+    saveAppStateLocal(newState);
     setAppState(newState);
     syncToCloudRemote(newState);
   };
@@ -581,6 +598,45 @@ export const App: React.FC = () => {
   const collectionPercentage = activeRecord.totalGrandCollectionTarget > 0
     ? Math.round((totalCollected / activeRecord.totalGrandCollectionTarget) * 100)
     : 0;
+  const logAuditAction = (
+    actionType: AuditLogEntry['actionType'],
+    description: string
+  ) => {
+    const now = new Date();
+    const formattedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+
+    const newLog: AuditLogEntry = {
+      id: 'audit-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6),
+      timestamp: formattedDate,
+      flatNo: currentAdminFlat || '302',
+      userRole,
+      actionType,
+      description,
+    };
+
+    setAppState((prev) => {
+      const currentLogs = prev.auditLogs || [];
+      const updatedState: AppState = {
+        ...prev,
+        auditLogs: [newLog, ...currentLogs].slice(0, 500),
+        lastUpdated: Date.now(),
+      };
+      saveAppStateLocal(updatedState);
+      syncToCloudRemote(updatedState);
+      return updatedState;
+    });
+  };
+
+  const handleClearAuditLogs = () => {
+    const newState: AppState = {
+      ...appState,
+      auditLogs: [],
+      lastUpdated: Date.now(),
+    };
+    saveAppStateLocal(newState);
+    setAppState(newState);
+    syncToCloudRemote(newState);
+  };
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -599,68 +655,8 @@ export const App: React.FC = () => {
       {/* Main Container */}
       <main style={{ maxWidth: '1240px', width: '100%', margin: '0 auto', padding: '16px 16px 0 16px', flex: 1 }}>
         
-        {/* Dedicated Month Filter & Control Bar */}
-        <div className="month-control-bar no-print">
-          <div className="month-pill-group">
-            <div className="month-pill">
-              <Calendar size={18} color="#FFD166" style={{ flexShrink: 0 }} />
-              <span className="month-label">Maintenance Month:</span>
-              <select
-                value={appState.activeMonthId}
-                onChange={(e) => handleSelectMonth(e.target.value)}
-                className="month-select"
-              >
-                {monthIds.map((id) => (
-                  <option key={id} value={id} style={{ color: '#0F172A', background: '#FFFFFF' }}>
-                    {appState.months[id]?.monthTitle || id}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="month-actions-group">
-            {/* Quick Month Collection Summary Pill */}
-            <div className="month-kpi-pill">
-              <span>Target: <strong>₹{activeRecord.totalGrandCollectionTarget.toLocaleString('en-IN')}</strong></span>
-              <span>•</span>
-              <span>Collected: <strong style={{ color: '#059669' }}>₹{totalCollected.toLocaleString('en-IN')}</strong> ({collectionPercentage}%)</span>
-            </div>
-
-            {/* Admin Action for New Month - Root Admin & Maintenance Lead */}
-            {canEditMaintenance && (
-              <button
-                onClick={() => setIsNewMonthModalOpen(true)}
-                className="app-btn app-btn-primary month-new-btn"
-                style={{ padding: '7px 14px', fontSize: '0.82rem' }}
-                title="Create New Month Calculation Sheet"
-              >
-                <Plus size={15} /> Create New Month
-              </button>
-            )}
-
-            {/* Root Admin Only Delete Month Sheet Button */}
-            {userRole === 'RootAdmin' && monthIds.length > 1 && (
-              <button
-                onClick={() => handleDeleteMonthSheet(appState.activeMonthId)}
-                className="app-btn"
-                style={{
-                  background: '#FEF2F2',
-                  color: '#DC2626',
-                  border: '1px solid #FCA5A5',
-                  padding: '7px 12px',
-                  fontSize: '0.82rem',
-                }}
-                title="Delete Active Historical Calculation Sheet (Root Admin Kamesh Only)"
-              >
-                <Trash2 size={15} /> Delete Sheet
-              </button>
-            )}
-          </div>
-        </div>
-        
         {/* Navigation Tabs (Desktop) */}
-        <nav className="chip-group desktop-chip-nav" style={{ marginBottom: '20px' }}>
+        <nav className="chip-group desktop-chip-nav" style={{ marginBottom: '16px' }}>
           <button
             className={`chip ${activeTab === 'table' ? 'active' : ''}`}
             onClick={() => setActiveTab('table')}
@@ -718,7 +714,84 @@ export const App: React.FC = () => {
           >
             <Megaphone size={15} /> 📢 Notice Board
           </button>
+
+          {(userRole === 'RootAdmin' || currentAdminFlat === rootFlat || currentAdminFlat === '302') && (
+            <button
+              className={`chip ${activeTab === 'audit' ? 'active' : ''}`}
+              onClick={() => setActiveTab('audit')}
+              style={{
+                background: activeTab === 'audit' ? 'linear-gradient(135deg, #312E81 0%, #1E1B4B 100%)' : '#FFFBEB',
+                color: activeTab === 'audit' ? '#FFFFFF' : '#B45309',
+                borderColor: activeTab === 'audit' ? '#4338CA' : '#FDE68A',
+                fontWeight: 800,
+              }}
+            >
+              <History size={15} color={activeTab === 'audit' ? '#A5B4FC' : '#D97706'} /> 📜 Audit Logs ({appState.auditLogs?.length || 0})
+            </button>
+          )}
         </nav>
+
+        {/* Dedicated Month Filter & Control Bar - ONLY shown for Monthly Maintenance Sheet & Analytics */}
+        {(activeTab === 'table' || activeTab === 'analytics') && (
+          <div className="month-control-bar no-print" style={{ marginBottom: '16px' }}>
+            <div className="month-pill-group">
+              <div className="month-pill">
+                <Calendar size={18} color="#FFD166" style={{ flexShrink: 0 }} />
+                <span className="month-label">Maintenance Month:</span>
+                <select
+                  value={appState.activeMonthId}
+                  onChange={(e) => handleSelectMonth(e.target.value)}
+                  className="month-select"
+                >
+                  {monthIds.map((id) => (
+                    <option key={id} value={id} style={{ color: '#0F172A', background: '#FFFFFF' }}>
+                      {appState.months[id]?.monthTitle || id}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="month-actions-group">
+              {/* Quick Month Collection Summary Pill */}
+              <div className="month-kpi-pill">
+                <span>Target: <strong>₹{activeRecord.totalGrandCollectionTarget.toLocaleString('en-IN')}</strong></span>
+                <span>•</span>
+                <span>Collected: <strong style={{ color: '#059669' }}>₹{totalCollected.toLocaleString('en-IN')}</strong> ({collectionPercentage}%)</span>
+              </div>
+
+              {/* Admin Action for New Month - Root Admin & Maintenance Lead */}
+              {canEditMaintenance && (
+                <button
+                  onClick={() => setIsNewMonthModalOpen(true)}
+                  className="app-btn app-btn-primary month-new-btn"
+                  style={{ padding: '7px 14px', fontSize: '0.82rem' }}
+                  title="Create New Month Calculation Sheet"
+                >
+                  <Plus size={15} /> Create New Month
+                </button>
+              )}
+
+              {/* Root Admin Only Delete Month Sheet Button */}
+              {userRole === 'RootAdmin' && monthIds.length > 1 && (
+                <button
+                  onClick={() => handleDeleteMonthSheet(appState.activeMonthId)}
+                  className="app-btn"
+                  style={{
+                    background: '#FEF2F2',
+                    color: '#DC2626',
+                    border: '1px solid #FCA5A5',
+                    padding: '7px 12px',
+                    fontSize: '0.82rem',
+                  }}
+                  title="Delete Active Historical Calculation Sheet (Root Admin Kamesh Only)"
+                >
+                  <Trash2 size={15} /> Delete Sheet
+                </button>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Tab 1: Maintenance Calculations Table */}
         {activeTab === 'table' && (
@@ -804,8 +877,10 @@ export const App: React.FC = () => {
           <PeriodicMaintenanceHub
             tasks={appState.periodicTasks || []}
             isAdmin={canEditMaintenance}
+            userRole={userRole}
             onUpdateTask={handleUpdatePeriodicTask}
             onAddTask={handleAddPeriodicTask}
+            onDeleteTask={handleDeletePeriodicTask}
           />
         )}
 
@@ -827,6 +902,14 @@ export const App: React.FC = () => {
             userRole={userRole}
             onAddNotice={handleAddNotice}
             onDeleteNotice={handleDeleteNotice}
+          />
+        )}
+
+        {/* Tab 9: System Audit Log View (Root Super Admin Only) */}
+        {activeTab === 'audit' && (userRole === 'RootAdmin' || currentAdminFlat === rootFlat || currentAdminFlat === '302') && (
+          <AuditLogViewer
+            logs={appState.auditLogs || []}
+            onClearLogs={handleClearAuditLogs}
           />
         )}
 

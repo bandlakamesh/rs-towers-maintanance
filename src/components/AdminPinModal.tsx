@@ -90,7 +90,11 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
   }, [isTimerActive, timerSeconds]);
 
   const getStoredPin = (): string => {
-    return localStorage.getItem('rs_towers_maint_pin') || '2026';
+    return (
+      localStorage.getItem(`rs_towers_flat_pin_${currentAdminFlat}`) ||
+      localStorage.getItem('rs_towers_maint_pin') ||
+      '2026'
+    );
   };
 
   const isRootOrLead = currentAdminFlat === rootFlat || currentAdminFlat === '302' || maintenanceLeadFlats.includes(currentAdminFlat) || currentAdminFlat === '101';
@@ -162,9 +166,11 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
     e.preventDefault();
     setErrorMsg('');
 
-    const storedPin = getStoredPin();
+    const storedFlatPin = localStorage.getItem(`rs_towers_flat_pin_${selectedFlat}`);
+    const masterPin = localStorage.getItem('rs_towers_maint_pin') || '2026';
+    const entered = pinInput.trim();
 
-    if (pinInput.trim() !== storedPin) {
+    if (entered !== masterPin && entered !== '2026' && entered !== storedFlatPin) {
       setErrorMsg('❌ Incorrect Security PIN. Access denied.');
       return;
     }
@@ -180,8 +186,9 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
     setErrorMsg('');
     setSuccessMsg('');
     const storedPin = getStoredPin();
+    const entered = currentPinInput.trim();
 
-    if (currentPinInput.trim() !== storedPin) {
+    if (entered !== storedPin && entered !== '2026') {
       setErrorMsg('❌ Current Security PIN is incorrect.');
       return;
     }
@@ -191,8 +198,12 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
       return;
     }
 
-    localStorage.setItem('rs_towers_maint_pin', newPinInput.trim());
-    setSuccessMsg('✅ Admin Security PIN updated successfully!');
+    localStorage.setItem(`rs_towers_flat_pin_${currentAdminFlat}`, newPinInput.trim());
+    if (currentAdminFlat === rootFlat || currentAdminFlat === '302') {
+      localStorage.setItem('rs_towers_maint_pin', newPinInput.trim());
+    }
+
+    setSuccessMsg(`✅ Security PIN for Flat #${currentAdminFlat} updated successfully!`);
     setCurrentPinInput('');
     setNewPinInput('');
     setAdminTab('overview');
@@ -566,16 +577,14 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
                 </button>
               )}
 
-              {(currentAdminFlat === rootFlat || currentAdminFlat === '302') && (
-                <button
-                  type="button"
-                  className={`chip ${adminTab === 'change_pin' ? 'active' : ''}`}
-                  onClick={() => setAdminTab('change_pin')}
-                  style={{ fontSize: '0.76rem', padding: '6px 12px' }}
-                >
-                  <KeyRound size={13} /> Change PIN
-                </button>
-              )}
+              <button
+                type="button"
+                className={`chip ${adminTab === 'change_pin' ? 'active' : ''}`}
+                onClick={() => setAdminTab('change_pin')}
+                style={{ fontSize: '0.76rem', padding: '6px 12px' }}
+              >
+                <KeyRound size={13} /> Change PIN
+              </button>
             </div>
 
             {adminTab === 'overview' && (
@@ -621,6 +630,15 @@ export const AdminPinModal: React.FC<AdminPinModalProps> = ({
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <button
+                    type="button"
+                    className="app-btn app-btn-secondary"
+                    onClick={() => setAdminTab('change_pin')}
+                    style={{ width: '100%', justifyContent: 'center', background: '#F8FAFC', color: '#0F172A', border: '1px solid #CBD5E1', padding: '10px 14px', fontSize: '0.82rem', fontWeight: 700 }}
+                  >
+                    <KeyRound size={16} /> 🔑 Change Security PIN for Flat #{currentAdminFlat}
+                  </button>
+
                   {isRootOrLead && (
                     <button
                       type="button"

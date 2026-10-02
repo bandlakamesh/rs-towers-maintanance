@@ -1,24 +1,34 @@
 import React, { useState } from 'react';
-import type { PeriodicTask, ServiceLogEntry } from '../types';
-import { Wrench, Calendar, CheckCircle2, AlertTriangle, Plus, History, Phone, MessageSquare, Clock } from 'lucide-react';
+import type { PeriodicTask, ServiceLogEntry, UserRole } from '../types';
+import { Wrench, Calendar, CheckCircle2, AlertTriangle, Plus, History, Phone, MessageSquare, Clock, Edit2, Trash2, Save, X } from 'lucide-react';
 
 interface PeriodicMaintenanceHubProps {
   tasks: PeriodicTask[];
   isAdmin: boolean;
+  userRole?: UserRole;
   onUpdateTask: (updatedTask: PeriodicTask) => void;
   onAddTask: (newTask: PeriodicTask) => void;
+  onDeleteTask?: (taskId: string) => void;
 }
 
 export const PeriodicMaintenanceHub: React.FC<PeriodicMaintenanceHubProps> = ({
   tasks,
   isAdmin,
+  userRole = 'PublicResident',
   onUpdateTask,
   onAddTask,
+  onDeleteTask,
 }) => {
   const [selectedTask, setSelectedTask] = useState<PeriodicTask | null>(null);
   const [showLogModal, setShowLogModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [showNewTaskModal, setShowNewTaskModal] = useState(false);
+
+  // Edit AMC Task state
+  const [editingTask, setEditingTask] = useState<PeriodicTask | null>(null);
+  const [showEditTaskModal, setShowEditTaskModal] = useState(false);
+
+  const isRootOrLead = userRole === 'RootAdmin' || userRole === 'MaintenanceLead' || isAdmin;
 
   // Form states for Logging Service
   const [serviceDate, setServiceDate] = useState(new Date().toISOString().split('T')[0]);
@@ -34,6 +44,17 @@ export const PeriodicMaintenanceHub: React.FC<PeriodicMaintenanceHubProps> = ({
   const [newTaskVendor, setNewTaskVendor] = useState('');
   const [newTaskPhone, setNewTaskPhone] = useState('');
   const [newTaskNotes, setNewTaskNotes] = useState('');
+
+  // Form states for Edit AMC Task
+  const [editTaskTitle, setEditTaskTitle] = useState('');
+  const [editTaskCategory, setEditTaskCategory] = useState<PeriodicTask['category']>('Lift AMC');
+  const [editTaskInterval, setEditTaskInterval] = useState(6);
+  const [editTaskLastServiced, setEditTaskLastServiced] = useState('');
+  const [editTaskNextDue, setEditTaskNextDue] = useState('');
+  const [editTaskCost, setEditTaskCost] = useState(3000);
+  const [editTaskVendor, setEditTaskVendor] = useState('');
+  const [editTaskPhone, setEditTaskPhone] = useState('');
+  const [editTaskNotes, setEditTaskNotes] = useState('');
 
   const getStatusBadge = (nextDueDateStr: string) => {
     const today = new Date();
@@ -63,6 +84,10 @@ export const PeriodicMaintenanceHub: React.FC<PeriodicMaintenanceHubProps> = ({
     e.preventDefault();
     if (!selectedTask) return;
 
+    if (!window.confirm(`⚠️ Confirm Service Log:\n\nLog completed servicing for '${selectedTask.title}' on ${serviceDate}?`)) {
+      return;
+    }
+
     const dateObj = new Date(serviceDate);
     dateObj.setMonth(dateObj.getMonth() + selectedTask.intervalMonths);
     const calculatedNextDue = dateObj.toISOString().split('T')[0];
@@ -90,6 +115,10 @@ export const PeriodicMaintenanceHub: React.FC<PeriodicMaintenanceHubProps> = ({
     e.preventDefault();
     if (!newTaskTitle) return;
 
+    if (!window.confirm(`⚠️ Confirm Create AMC Schedule:\n\nAdd new AMC schedule '${newTaskTitle}'?`)) {
+      return;
+    }
+
     const todayStr = new Date().toISOString().split('T')[0];
     const dateObj = new Date();
     dateObj.setMonth(dateObj.getMonth() + Number(newTaskInterval));
@@ -112,6 +141,46 @@ export const PeriodicMaintenanceHub: React.FC<PeriodicMaintenanceHubProps> = ({
     onAddTask(newTask);
     setShowNewTaskModal(false);
     setNewTaskTitle('');
+  };
+
+  const handleOpenEditModal = (task: PeriodicTask) => {
+    setEditingTask(task);
+    setEditTaskTitle(task.title);
+    setEditTaskCategory(task.category);
+    setEditTaskInterval(task.intervalMonths);
+    setEditTaskLastServiced(task.lastServicedDate || '');
+    setEditTaskNextDue(task.nextDueDate);
+    setEditTaskCost(task.estimatedCost);
+    setEditTaskVendor(task.vendorName || '');
+    setEditTaskPhone(task.vendorPhone || '');
+    setEditTaskNotes(task.notes || '');
+    setShowEditTaskModal(true);
+  };
+
+  const handleSaveTaskEdit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingTask || !editTaskTitle) return;
+
+    if (!window.confirm(`⚠️ Confirm Save Changes:\n\nUpdate AMC schedule for '${editTaskTitle}'?`)) {
+      return;
+    }
+
+    const updated: PeriodicTask = {
+      ...editingTask,
+      title: editTaskTitle,
+      category: editTaskCategory,
+      intervalMonths: Number(editTaskInterval),
+      lastServicedDate: editTaskLastServiced,
+      nextDueDate: editTaskNextDue,
+      estimatedCost: Number(editTaskCost),
+      vendorName: editTaskVendor,
+      vendorPhone: editTaskPhone,
+      notes: editTaskNotes,
+    };
+
+    onUpdateTask(updated);
+    setShowEditTaskModal(false);
+    setEditingTask(null);
   };
 
   return (
@@ -300,25 +369,36 @@ export const PeriodicMaintenanceHub: React.FC<PeriodicMaintenanceHubProps> = ({
               </div>
 
               {/* Action Buttons */}
-              <div style={{ marginTop: '16px', paddingTop: '10px', borderTop: '1px solid #E2E8F0', display: 'flex', gap: '8px' }}>
+              <div style={{ marginTop: '16px', paddingTop: '10px', borderTop: '1px solid #E2E8F0', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                 <button
                   onClick={() => {
                     setSelectedTask(task);
                     setShowHistoryModal(true);
                   }}
                   className="app-btn app-btn-secondary"
-                  style={{ flex: 1, padding: '6px 10px', fontSize: '0.78rem' }}
+                  style={{ flex: 1, padding: '6px 8px', fontSize: '0.76rem' }}
                 >
-                  <History size={14} color="#0096C7" /> History ({task.serviceLogs?.length || 0})
+                  <History size={13} color="#0096C7" /> History ({task.serviceLogs?.length || 0})
                 </button>
+
+                {isRootOrLead && (
+                  <button
+                    onClick={() => handleOpenEditModal(task)}
+                    className="app-btn app-btn-secondary"
+                    style={{ padding: '6px 10px', fontSize: '0.76rem', color: '#2563EB', borderColor: '#BFDBFE', background: '#EFF6FF' }}
+                    title="Edit AMC Task Details & Due Dates"
+                  >
+                    <Edit2 size={13} /> Edit
+                  </button>
+                )}
 
                 {isAdmin && (
                   <button
                     onClick={() => handleOpenLogModal(task)}
                     className="app-btn app-btn-primary"
-                    style={{ flex: 1, padding: '6px 10px', fontSize: '0.78rem' }}
+                    style={{ flex: 1, padding: '6px 8px', fontSize: '0.76rem' }}
                   >
-                    <CheckCircle2 size={14} /> Log Service
+                    <CheckCircle2 size={13} /> Log Service
                   </button>
                 )}
               </div>
@@ -561,6 +641,170 @@ export const PeriodicMaintenanceHub: React.FC<PeriodicMaintenanceHubProps> = ({
                 >
                   Create Task
                 </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit AMC Task Modal */}
+      {showEditTaskModal && editingTask && (
+        <div className="modal-overlay" onClick={() => setShowEditTaskModal(false)}>
+          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', borderBottom: '1px solid #E2E8F0', paddingBottom: '10px' }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0096C7', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Edit2 size={18} /> Edit AMC Task Details
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowEditTaskModal(false)}
+                style={{ background: '#F1F5F9', border: 'none', borderRadius: '50%', width: '30px', height: '30px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveTaskEdit}>
+              <div className="form-group">
+                <label>Task Title:</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  value={editTaskTitle}
+                  onChange={(e) => setEditTaskTitle(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <div className="form-group">
+                  <label>Category:</label>
+                  <select
+                    className="form-control"
+                    value={editTaskCategory}
+                    onChange={(e: any) => setEditTaskCategory(e.target.value)}
+                  >
+                    <option value="Lift AMC">Lift AMC</option>
+                    <option value="CCTV Audit">CCTV Audit</option>
+                    <option value="Water Tank Sump">Water Tank Sump</option>
+                    <option value="Generator & Pump">Generator & Pump</option>
+                    <option value="Fire Safety">Fire Safety</option>
+                    <option value="Pest Control">Pest Control</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Cycle Interval (Months):</label>
+                  <input
+                    type="number"
+                    className="form-control"
+                    value={editTaskInterval}
+                    onChange={(e) => setEditTaskInterval(Number(e.target.value))}
+                    min="1"
+                    max="24"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <div className="form-group">
+                  <label>Last Serviced Date:</label>
+                  <input
+                    type="date"
+                    className="form-control"
+                    value={editTaskLastServiced}
+                    onChange={(e) => setEditTaskLastServiced(e.target.value)}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Next Due Date:</label>
+                  <input
+                    type="date"
+                    className="form-control"
+                    value={editTaskNextDue}
+                    onChange={(e) => setEditTaskNextDue(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <div className="form-group">
+                  <label>Est. AMC Cost (₹):</label>
+                  <input
+                    type="number"
+                    className="form-control"
+                    value={editTaskCost}
+                    onChange={(e) => setEditTaskCost(Number(e.target.value))}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Vendor Name:</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={editTaskVendor}
+                    onChange={(e) => setEditTaskVendor(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Vendor Phone Number:</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  value={editTaskPhone}
+                  onChange={(e) => setEditTaskPhone(e.target.value)}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Maintenance Notes:</label>
+                <textarea
+                  className="form-control"
+                  style={{ height: '60px', resize: 'vertical' }}
+                  value={editTaskNotes}
+                  onChange={(e) => setEditTaskNotes(e.target.value)}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '8px', justifyContent: 'space-between', marginTop: '16px', alignItems: 'center' }}>
+                {onDeleteTask && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (window.confirm(`🚨 Confirm Delete AMC Schedule:\n\nAre you sure you want to PERMANENTLY delete task '${editingTask.title}'?`)) {
+                        onDeleteTask(editingTask.id);
+                        setShowEditTaskModal(false);
+                        setEditingTask(null);
+                      }
+                    }}
+                    style={{ background: '#FEF2F2', color: '#DC2626', border: '1px solid #FCA5A5', borderRadius: '8px', padding: '8px 12px', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                  >
+                    <Trash2 size={15} /> Delete Task
+                  </button>
+                )}
+
+                <div style={{ display: 'flex', gap: '8px', marginLeft: 'auto' }}>
+                  <button
+                    type="button"
+                    className="app-btn app-btn-secondary"
+                    onClick={() => setShowEditTaskModal(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="app-btn app-btn-primary"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                  >
+                    <Save size={15} /> Save Changes
+                  </button>
+                </div>
               </div>
             </form>
           </div>

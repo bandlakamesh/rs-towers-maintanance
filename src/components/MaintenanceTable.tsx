@@ -62,6 +62,9 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
   };
 
   const handleSaveEdit = (flatNo: string) => {
+    if (!window.confirm(`⚠️ Confirm Meter Reading Update for Flat #${flatNo}:\n\nSet Current Reading to ${tempCurr}?`)) {
+      return;
+    }
     const updated = record.flatReadings.map((f) => {
       if (f.flatNo === flatNo) {
         return {
@@ -211,6 +214,7 @@ export const MaintenanceTable: React.FC<MaintenanceTableProps> = ({
             <tr style={{ background: '#F0F9FF', borderBottom: '2px solid #B2D8E5', color: '#0077B6', fontFamily: 'var(--font-title)', userSelect: 'none' }}>
               <th style={{ padding: '8px 6px', whiteSpace: 'nowrap' }}>Flat</th>
               <th style={{ padding: '8px 6px', whiteSpace: 'nowrap' }}>Resident</th>
+              <th style={{ padding: '8px 6px', textAlign: 'center', whiteSpace: 'nowrap' }}>Status</th>
               <th style={{ padding: '8px 6px', textAlign: 'center', whiteSpace: 'nowrap' }}>Prev</th>
               <th style={{ padding: '8px 6px', textAlign: 'center', whiteSpace: 'nowrap' }}>Curr</th>
               <th style={{ padding: '8px 6px', textAlign: 'center', whiteSpace: 'nowrap' }}>Units</th>

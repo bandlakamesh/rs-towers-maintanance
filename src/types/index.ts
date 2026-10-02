@@ -143,6 +143,15 @@ export interface FlatDirectoryEntry {
   isOccupied: boolean;
 }
 
+export interface AuditLogEntry {
+  id: string;
+  timestamp: string;
+  flatNo: string;
+  userRole: string;
+  actionType: 'EDIT_READING' | 'PAYMENT_RECORDED' | 'CREATE_MONTH' | 'DELETE_MONTH' | 'AMC_TASK' | 'NOTICE' | 'VENDOR' | 'TREASURER' | 'PIN_CHANGE' | 'DIRECTORY' | 'CORPUS';
+  description: string;
+}
+
 export type UserRole = 'RootAdmin' | 'MaintenanceLead' | 'CoAdmin' | 'VerifiedResident' | 'PublicResident';
 
 export interface AppState {
@@ -164,6 +173,7 @@ export interface AppState {
   treasurerUpiId?: string; // default '9963275455@upi'
   treasurerPhone?: string; // default '9963275455'
   treasurerName?: string; // default 'Bobby (Flat 101 - Maintenance Lead)'
+  auditLogs?: AuditLogEntry[];
 }
 
 
